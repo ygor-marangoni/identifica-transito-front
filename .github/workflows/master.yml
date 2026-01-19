@@ -21,7 +21,7 @@ jobs:
     
     - name: 🏗️ Build project
       # run: npm run build
-      run: npm run build
+      run: npm run generate
     
     - name: 📂 Deploy dist folder only
       uses: SamKirkland/FTP-Deploy-Action@4.3.0

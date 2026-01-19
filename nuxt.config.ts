@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   app: {
     baseURL: '/identifica-transito/'
   },
+  image: { dir: 'images' },
   modules: ['@nuxt/fonts', '@nuxt/image', '@primevue/nuxt-module'],
   vite: {    plugins: [      tailwindcss(),    ],  },
   css: ['./app/assets/css/main.css', './app/assets/css/styles.scss'],
