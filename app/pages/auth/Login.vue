@@ -60,7 +60,9 @@
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         />
         <div class="text-right mt-2">
-          <a href="#" class="text-sm text-blue-600 hover:text-blue-700 font-medium">Esqueceu sua senha?</a>
+          <NuxtLink to="/auth/forgot-password" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Esqueceu sua senha?
+          </NuxtLink>
         </div>
       </div>
 
