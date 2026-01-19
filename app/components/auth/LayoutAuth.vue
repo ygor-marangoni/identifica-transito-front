@@ -18,7 +18,7 @@
 
 
 <template>
-  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-10 lg:p-0">
+  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-5 lg:p-0">
 
     <div id="col-one" class="hidden lg:flex w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
       <div class="text-center relative z-1">
