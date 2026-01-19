@@ -32,8 +32,8 @@
 
 <template>
   <LayoutAuth>
-    <h1 class="text-[28px]! font-bold text-it-primary mb-2!">Faça seu Login</h1>
-    <p class="text-it-gray text-md mb-8!">Acesse sua conta para gerenciar seus veículos e etiquetas.</p>
+    <h1 class="text-[28px]! font-bold text-center lg:text-left text-it-primary mb-2!">Faça seu Login</h1>
+    <p class="text-it-gray text-md text-center lg:text-left mb-8!">Acesse sua conta para gerenciar seus veículos e etiquetas.</p>
 
     <form @submit.prevent="handleLogin" class="space-y-6">
       <!-- Email -->
