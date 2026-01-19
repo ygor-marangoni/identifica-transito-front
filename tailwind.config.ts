@@ -1,3 +1,5 @@
+import colors from 'tailwindcss/colors'
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -9,7 +11,19 @@ module.exports = {
     './plugins/**/*.{js,ts}'
   ],
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        it: {
+          primary: '#1422E4',
+          secondary: '#1925E2',
+          text: '#999999',
+          accent: '#424EFF',
+        }
+        // Adicione suas cores personalizadas aqui
+        // exemplo:
+        // brand: '#your-color'
+      }
+    }
   },
   plugins: [
     require('tailwindcss-primeui')

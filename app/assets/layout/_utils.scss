@@ -23,3 +23,42 @@
         top: 100px;
     }
 }
+
+:root {
+    --it-primary: #1E40AF;
+    --it-secondary: #2563EB;
+}
+
+button {
+    cursor: pointer;
+}
+
+.bg-it-primary {
+    background-color: var(--it-primary);
+
+    &:hover {
+        background-color: var(--it-secondary);
+    }
+}
+.bg-it-secondary {
+    background-color: var(--it-secondary);
+}
+
+.text-it-primary {
+    color: var(--it-primary);
+}
+.text-it-secondary {
+    color: var(--it-secondary);
+}
+
+.border-it-primary {
+    border-color: var(--it-primary);
+}
+
+.border-it-secondary {
+    border-color: var(--it-secondary);
+}
+
+.text-it-gray {
+    color: #666;
+}
