@@ -37,24 +37,22 @@
 
     <form @submit.prevent="handleLogin" class="space-y-6">
       <!-- Email -->
-      <div>
-        <label for="email" class="block text-md font-medium text-gray-600 mb-2">E-mail</label>
-        <InputText
-          v-model="email"
-          type="email"
-          id="email"
-          placeholder="Digite seu e-mail de login"
-          required
-          inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-        />
-      </div>
+      <InputText
+        v-model="email"
+        type="email"
+        id="email"
+        label="E-mail"
+        placeholder="Digite seu e-mail de login"
+        required
+        inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
+      />
 
       <!-- Senha -->
       <div>
-        <label for="password" class="block text-md font-medium text-gray-600 mb-2">Senha</label>
         <InputPassword
           v-model="password"
           id="password"
+          label="Senha"
           placeholder="••••••••••••••••"
           required
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
@@ -74,7 +72,10 @@
 
     <!-- Cadastro -->
     <p class="text-center text-gray-600 text-sm mt-6">
-      Não tem uma conta? <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">Cadastre-se</a>
+      Não tem uma conta? 
+      <NuxtLink to="/auth/register" class="text-blue-600 hover:text-blue-700 font-medium">
+        Cadastre-se
+      </NuxtLink>
     </p>
   </LayoutAuth>
 </template>

@@ -1,5 +1,8 @@
 <template>
     <div :class="wrapperClass">
+        <label v-if="label" :for="id" :class="labelClass">
+            {{ label }}
+        </label>
         <!-- With icon -->
         <IconField v-if="showIcon && icon">
             <template v-if="iconPosition === 'left'">
@@ -109,6 +112,8 @@ const props = withDefaults(defineProps<{
     iconPosition?: IconPosition;
     inputClass?: string;
     wrapperClass?: string;
+    label?: string;
+    labelClass?: string;
 }>(), {
     modelValue: '',
     type: 'text',
@@ -123,7 +128,9 @@ const props = withDefaults(defineProps<{
     icon: '',
     iconPosition: 'left',
     inputClass: '',
-    wrapperClass: ''
+    wrapperClass: '',
+    label: '',
+    labelClass: 'block text-md font-medium text-gray-600 mb-2'
 });
 
 const emit = defineEmits<{

@@ -1,5 +1,8 @@
 <template>
   <div :class="wrapperClass">
+    <label v-if="label" :for="id" :class="labelClass">
+      {{ label }}
+    </label>
     <InputText
       v-model="valueProxy"
       :type="inputType"
@@ -52,6 +55,8 @@ const props = withDefaults(defineProps<{
   autocomplete?: string;
   inputClass?: string;
   wrapperClass?: string;
+  label?: string;
+  labelClass?: string;
 }>(), {
   modelValue: '',
   placeholder: '••••••••••••••••',
@@ -62,7 +67,9 @@ const props = withDefaults(defineProps<{
   id: undefined,
   autocomplete: 'current-password',
   inputClass: '',
-  wrapperClass: ''
+  wrapperClass: '',
+  label: '',
+  labelClass: 'block text-md font-medium text-gray-600 mb-2'
 });
 
 const emit = defineEmits<{

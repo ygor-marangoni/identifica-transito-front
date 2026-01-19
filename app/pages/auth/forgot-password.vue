@@ -51,29 +51,32 @@
             Voltar para o login
           </Button>
         </NuxtLink>
+        <NuxtLink to="/auth/register">
+          <Button fullWidth variant="text">
+            Criar nova conta
+          </Button>
+        </NuxtLink>
       </div>
     </div>
 
     <!-- Formulário -->
     <div v-else>
-      <h1 class="text-[28px] font-bold text-it-primary mb-2">Esqueceu sua senha?</h1>
+      <h1 class="text-[24px]! font-bold text-it-primary mb-2">Esqueceu sua senha?</h1>
       <p class="text-it-gray text-md mb-8!">
         Digite seu e-mail e enviaremos um link para redefinir sua senha.
       </p>
 
       <form @submit.prevent="handleResetPassword" class="space-y-6">
         <!-- Email -->
-        <div>
-          <label for="email" class="block text-md font-medium text-gray-600 mb-2">E-mail</label>
-          <InputText
-            v-model="email"
-            type="email"
-            id="email"
-            placeholder="Digite seu e-mail cadastrado"
-            required
-            inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-          />
-        </div>
+        <InputText
+          v-model="email"
+          type="email"
+          id="email"
+          label="E-mail"
+          placeholder="Digite seu e-mail cadastrado"
+          required
+          inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
+        />
 
         <!-- Botão Enviar -->
         <Button type="submit" fullWidth :loading="loading">
