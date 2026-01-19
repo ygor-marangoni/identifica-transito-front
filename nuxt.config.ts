@@ -10,10 +10,7 @@ export default defineNuxtConfig({
     baseURL: '/identifica-transito/'
   },
   image: {
-    provider: 'ipx',
-    ipx: {
-      baseURL: '/identifica-transito/'
-    }
+    provider: 'static'
   },
   modules: ['@nuxt/fonts', '@nuxt/image', '@primevue/nuxt-module'],
   vite: {    plugins: [      tailwindcss(),    ],  },

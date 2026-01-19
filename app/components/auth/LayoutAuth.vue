@@ -18,7 +18,7 @@
 
 
 <template>
-  <div class="flex h-screen bg-it-primary lg:bg-[#F0F1FF]!">
+  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary md:bg-[#F0F1FF]">
 
     <div id="col-one" class="hidden md:flex w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
       <div class="text-center relative z-1">
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Lado Direito - Formulário de Login -->
-    <div class="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-0 overflow-hidden">
+    <div class="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-0 min-h-screen md:min-h-full md:overflow-hidden">
       <div class="w-full md:w-[85%] max-w-171.25 bg-white p-8 md:p-16 rounded-[20px] relative z-1">
         <NuxtImg src="/images/logo-it.svg" alt="Logo" class="h-22 mx-auto mb-4 lg:hidden" />
         <slot />
