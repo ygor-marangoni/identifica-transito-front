@@ -29,5 +29,5 @@ jobs:
         server: ${{ secrets.ftp_host }}
         username: ${{ secrets.ftp_username }}
         password: ${{ secrets.ftp_password }}
-        local-dir: ./.output/public/;
+        local-dir: ./.output/public/
         server-dir: projects.wesleysouza.dev/identifica-transito/
