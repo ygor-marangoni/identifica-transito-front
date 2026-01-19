@@ -18,9 +18,9 @@
 
 
 <template>
-  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]!">
+  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-10 lg:p-0">
 
-    <div id="col-one" class="hidden md:flex w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
+    <div id="col-one" class="hidden lg:flex w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
       <div class="text-center relative z-1">
         <img src="/images/logo-it-white.svg" alt="Logo" class="h-52 mx-auto mb-4" />
       </div>
@@ -50,8 +50,8 @@
     </div>
 
     <!-- Lado Direito - Formulário de Login -->
-    <div class="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-0 min-h-screen md:min-h-full md:overflow-hidden">
-      <div class="w-full md:w-[85%] max-w-171.25 bg-white p-8 md:p-16 rounded-[20px] relative z-1">
+    <div class="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-0 min-h-screen md:min-h-full md:overflow-hidden">
+      <div class="w-full md:w-[85%] max-w-171.25 bg-white p-8 lg:p-12 rounded-[20px] relative z-1">
         <img src="/images/logo-it.svg" alt="Logo" class="h-22 mx-auto mb-4 lg:hidden" />
         <slot />
       </div>
@@ -64,8 +64,8 @@
       </div>
 
       <!-- Shapes -->
-      <div class="absolute -top-[10%] -right-[5%] w-118.75 h-118.75 rounded-full bg-linear-to-b from-[#F0F1FF] to-[#D1D4FE] opacity-[0.05] lg:opacity-[0.3]"></div>
-      <div class="absolute -bottom-[10%] -left-[5%] w-118.75 h-118.75 rounded-full bg-linear-to-b from-[#F0F1FF] to-[#D1D4FE] opacity-[0.05] lg:opacity-[0.3]"></div>
+      <div class="absolute -top-[10%] -right-[5%] w-118.75 h-118.75 hidden lg:inline-block rounded-full bg-linear-to-b from-[#F0F1FF] to-[#D1D4FE] opacity-[0.05] lg:opacity-[0.3]"></div>
+      <div class="absolute -bottom-[10%] -left-[5%] w-118.75 h-118.75 hidden lg:inline-block rounded-full bg-linear-to-b from-[#F0F1FF] to-[#D1D4FE] opacity-[0.05] lg:opacity-[0.3]"></div>
     </div>
   </div>
 </template>
