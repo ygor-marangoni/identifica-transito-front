@@ -1,5 +1,11 @@
-<script setup>
+<script setup lang="ts">
   import Carousel from 'primevue/carousel';  
+  
+  const props = withDefaults(defineProps<{
+    hiddenLinksFooter?: boolean;
+  }>(), {
+    hiddenLinksFooter: false
+  });
   
   // Carousel data and options
   const items = [
@@ -8,7 +14,6 @@
     { text: 'Com a Identifica Trânsito, esperamos contribuir para um sistema de transporte mais organizado e seguro para todos. Faça parte dessa transformação!' }
   ];
 
-  const responsiveOptions = [];
 </script>
 
 
@@ -17,19 +22,19 @@
 
     <div id="col-one" class="w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
       <div class="text-center relative z-1">
-        <NuxtImg src="/images/logo-it-white.svg" alt="Logo" class="h-42 mx-auto mb-4" />
+        <NuxtImg src="/images/logo-it-white.svg" alt="Logo" class="h-52 mx-auto mb-4" />
       </div>
 
-      <Carousel :value="items" :numVisible="1" :numScroll="1" :responsiveOptions="responsiveOptions" circular :autoplay-interval="10000"  class="w-full max-w-lg mb-8">
+      <Carousel :value="items" :numVisible="1" :numScroll="1" circular :autoplay-interval="10000"  class="w-full max-w-lg mb-8">
         <template #item="slotProps">
-            <p class="text-center text-lg font-light leading-8 max-w-sm m-auto w-full">
+            <p class="text-center text-lg font-light leading-8 max-w-md m-auto w-full px-2">
               {{ slotProps.data.text }}
             </p>
         </template>
     </Carousel>
 
-      <div class="flex flex-col items-center">
-        <p class="text-md font-light italic mb-4">Acompanhe nossas redes sociais</p>
+      <div id="socials" class="flex flex-col items-center relative">
+        <p class="text-md font-light italic mb-4 bg-[#1925E2] px-4">Acompanhe nossas redes sociais</p>
         <div class="flex gap-4">
           <a href="#" class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10">
             <i class="pi pi-instagram"></i>
@@ -51,7 +56,7 @@
       </div>
 
       <!-- Rodapé -->
-      <div class="absolute bottom-6 text-center text-gray-400 text-xs">
+      <div v-if="!hiddenLinksFooter" class="absolute bottom-6 text-center text-gray-400 text-xs z-3">
         <a href="#" class="hover:text-gray-600">Política de Privacidade</a>
         <span class="mx-2">|</span>
         <a href="#" class="hover:text-gray-600">Termos LGPD</a>
@@ -108,5 +113,17 @@
     --p-carousel-indicator-background: #424EFF;
     --p-carousel-indicator-hover-background: rgba(255, 255, 255, 0.6);
     --p-carousel-indicator-active-background: #BABFFF;
+  }
+
+  #socials::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: -15%;
+    width: 130%;
+    height: 40px;
+    z-index: -1;
+    padding: 0 50px;
+    border: 1px solid #2735F8;
   }
 </style>

@@ -38,24 +38,23 @@
         </svg>
       </div>
       <h1 class="text-[28px] font-bold text-it-primary mb-2">Email enviado!</h1>
-      <p class="text-it-gray text-md mb-8">
-        Enviamos um link de recuperação para <strong>{{ email }}</strong>. 
+      <p class="text-it-gray text-md mb-8 leading-6">
+        Enviamos um link de recuperação para <strong>{{ email }}</strong>. <br />
         Verifique sua caixa de entrada e spam.
       </p>
-      <div class="space-y-4">
-        <Button fullWidth @click="emailSent = false" variant="outline">
+      <div class="space-y-6">
+        <Button fullWidth @click="emailSent = false" variant="primary">
           Enviar novamente
         </Button>
-        <NuxtLink to="/auth/login">
-          <Button fullWidth variant="text">
-            Voltar para o login
-          </Button>
-        </NuxtLink>
-        <NuxtLink to="/auth/register">
-          <Button fullWidth variant="text">
-            Criar nova conta
-          </Button>
-        </NuxtLink>
+        <div class="flex justify-center gap-4">
+          <NuxtLink to="/auth/login">
+              Voltar para o login
+          </NuxtLink>
+          <span>|</span>
+          <NuxtLink to="/auth/register">
+              Criar nova conta
+          </NuxtLink>
+        </div>
       </div>
     </div>
 

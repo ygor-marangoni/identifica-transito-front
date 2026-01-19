@@ -14,12 +14,12 @@
   });
 
   const formData = ref({
-    fullName: '',
-    email: '',
-    cpf: '',
-    birthDate: '',
-    phone: '',
-    password: '',
+    fullName: 'Wesley Souza',
+    email: 'wesleysouza.dev@gmail.com',
+    cpf: '411.222.333-44',
+    birthDate: '01/10/1991',
+    phone: '(11) 99233-6903',
+    password: 'abc123',
     acceptTerms: false
   });
 
@@ -43,13 +43,13 @@
 </script>
 
 <template>
-  <LayoutAuth>
-    <h1 class="text-[24px]! font-bold text-it-primary">Crie sua Conta</h1>
+  <LayoutAuth hiddenLinksFooter>
+    <h1 class="text-[24px]! font-bold text-it-primary mb-2!">Crie sua Conta</h1>
     <p class="text-it-gray text-sm mb-8!">Preencha todos os dados abaixo para se registrar na plataforma</p>
 
     <form @submit.prevent="handleRegister" class="space-y-4">
       <!-- Grid de 2 colunas no desktop -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Nome Completo -->
         <InputText
           v-model="formData.fullName"
@@ -85,6 +85,7 @@
           id="cpf"
           label="CPF"
           placeholder="000.000.000-00"
+          mask="999.999.999-*?*"
           required
           showIcon
           icon="pi pi-id-card"
@@ -98,6 +99,7 @@
           id="birthDate"
           label="Data de Nascimento"
           placeholder="01/10/1991"
+          mask="99/99/9999"
           required
           showIcon
           icon="pi pi-calendar"
@@ -111,6 +113,7 @@
           id="phone"
           label="Celular / Whatsapp"
           placeholder="99999-9999"
+          mask="(99) ?99999-9999"
           required
           showIcon
           icon="pi pi-phone"

@@ -7,7 +7,8 @@
         <IconField v-if="showIcon && icon">
             <template v-if="iconPosition === 'left'">
                 <InputIcon :class="icon" />
-                <InputText
+                <component
+                    :is="InputComponent"
                     v-model="valueProxy"
                     :type="type"
                     :placeholder="placeholder"
@@ -17,6 +18,9 @@
                     :name="name"
                     :id="id"
                     :autocomplete="autocomplete"
+                    :mask="mask"
+                    :slotChar="slotChar"
+                    :autoClear="autoClear"
                     :class="computedInputClass"
                     @input="onInput"
                     @change="onChange"
@@ -25,7 +29,8 @@
                 />
             </template>
             <template v-else>
-                <InputText
+                <component
+                    :is="InputComponent"
                     v-model="valueProxy"
                     :type="type"
                     :placeholder="placeholder"
@@ -35,6 +40,9 @@
                     :name="name"
                     :id="id"
                     :autocomplete="autocomplete"
+                    :mask="mask"
+                    :slotChar="slotChar"
+                    :autoClear="autoClear"
                     :class="computedInputClass"
                     @input="onInput"
                     @change="onChange"
@@ -47,7 +55,8 @@
 
         <!-- With append slot (custom content after input) -->
         <div v-else-if="$slots.append" class="relative">
-            <InputText
+            <component
+                :is="InputComponent"
                 v-model="valueProxy"
                 :type="type"
                 :placeholder="placeholder"
@@ -57,6 +66,9 @@
                 :name="name"
                 :id="id"
                 :autocomplete="autocomplete"
+                :mask="mask"
+                :slotChar="slotChar"
+                :autoClear="autoClear"
                 :class="computedInputClass"
                 @input="onInput"
                 @change="onChange"
@@ -69,7 +81,8 @@
         </div>
 
         <!-- Without icon -->
-        <InputText
+        <component
+            :is="InputComponent"
             v-else
             v-model="valueProxy"
             :type="type"
@@ -80,6 +93,9 @@
             :name="name"
             :id="id"
             :autocomplete="autocomplete"
+            :mask="mask"
+            :slotChar="slotChar"
+            :autoClear="autoClear"
             :class="computedInputClass"
             @input="onInput"
             @change="onChange"
@@ -92,6 +108,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import InputText from 'primevue/inputtext';
+import InputMask from 'primevue/inputmask';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 
@@ -114,6 +131,9 @@ const props = withDefaults(defineProps<{
     wrapperClass?: string;
     label?: string;
     labelClass?: string;
+    mask?: string;
+    slotChar?: string;
+    autoClear?: boolean;
 }>(), {
     modelValue: '',
     type: 'text',
@@ -130,7 +150,10 @@ const props = withDefaults(defineProps<{
     inputClass: '',
     wrapperClass: '',
     label: '',
-    labelClass: 'block text-md font-medium text-gray-600 mb-2'
+    labelClass: 'block text-md font-medium text-gray-600 mb-2',
+    mask: undefined,
+    slotChar: '_',
+    autoClear: true
 });
 
 const emit = defineEmits<{
@@ -149,7 +172,7 @@ const valueProxy = computed({
 const computedInputClass = computed(() => {
     return `h-[60px] ${props.inputClass}`.trim();
 });
-
+const InputComponent = computed(() => props.mask ? InputMask : InputText);
 function onInput(event: Event) {
     emit('input', event);
 }
@@ -165,5 +188,11 @@ function onBlur(event: FocusEvent) {
 </script>
 
 <style scoped>
-/* No additional styles – relies on PrimeVue styling */
+/* Focus color styling for inputs */
+:deep(.p-inputtext:focus),
+:deep(.p-inputmask:focus),
+:deep(input:focus) {
+    border-color: var(--it-primary-color, #081AE7) !important;
+    outline: none !important;
+}
 </style>
