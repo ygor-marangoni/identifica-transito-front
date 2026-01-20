@@ -29,24 +29,26 @@
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col lg:flex-row gap-6">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col lg:flex-row gap-6 items-center">
         <!-- Imagem Fixa -->
         <div class="lg:w-1/3 shrink-0">
-            <div class="w-full aspect-square bg-linear-to-br from-blue-50 to-indigo-100 rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden">
+            <div class="relative w-full aspect-square bg-linear-to-br from-blue-50 to-indigo-100 rounded-2xl border border-gray-200 overflow-hidden">
                 <img 
                     src="/images/dashboard/sobre-it.jpg" 
                     alt="Identifica Trânsito" 
                     class="w-full h-full object-cover"
                 />
+                <!-- Máscara escura -->
+                <div class="absolute inset-0 bg-black/40 rounded-2xl"></div>
+                <!-- Texto por cima -->
+                <div class="absolute inset-0 flex items-center justify-center rounded-2xl max-w-[90%] mx-auto">
+                    <h3 class="text-2xl font-bold text-white! text-center px-4">Conheça os benefícios do projeto</h3>
+                </div>
             </div>
         </div>
 
         <!-- Carrossel de Benefícios -->
-        <div class="lg:w-2/3 flex flex-col gap-4">
-            <div>
-                <h3 class="text-2xl text-center font-bold text-gray-900">Conheça os benefícios do projeto</h3>
-            </div>
-
+        <div class="lg:w-2/3 flex items-center flex-col gap-4">
             <Carousel 
                 :value="benefits" 
                 :numVisible="1" 
