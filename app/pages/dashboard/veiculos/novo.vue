@@ -30,7 +30,7 @@ const tiposVeiculo = [
     { label: 'Automóvel', value: 'automovel', icon: 'pi pi-car' },
     { label: 'Motocicleta', value: 'motocicleta', icon: 'pi pi-motorcycle' },
     { label: 'Caminhão', value: 'caminhao', icon: 'pi pi-truck' },
-    { label: '^Ônibus', value: 'onibus', icon: 'pi pi-bus' },
+    { label: 'Ônibus', value: 'onibus', icon: 'pi pi-bus' },
     { label: 'Outro', value: 'outro', icon: 'pi pi-ellipsis-h' }
 ];
 

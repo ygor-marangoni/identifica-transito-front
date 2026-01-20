@@ -88,7 +88,7 @@ const normalizedOptions = computed(() => {
             {{ label }}
         </label>
 
-        <!-- Select com Icon -->
+        <!-- Select com Icon no lado esquerdo -->
         <div v-if="showIcon && icon" class="relative">
             <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-it-primary pointer-events-none z-10">
                 <i :class="icon"></i>
@@ -103,17 +103,9 @@ const normalizedOptions = computed(() => {
                 :filter="filter"
                 :filterPlaceholder="filterPlaceholder"
                 :showClear="showClear"
-                :class="computedSelectClass"
-                :inputClass="'!pl-10'"
+                :class="[computedSelectClass, '!pl-10']"
                 @change="handleChange"
-            >
-                <template #option="slotProps">
-                    <div class="flex items-center gap-2">
-                        <i v-if="slotProps.option.icon" :class="slotProps.option.icon" class="text-it-primary"></i>
-                        <span>{{ slotProps.option.label }}</span>
-                    </div>
-                </template>
-            </Select>
+            />
         </div>
 
         <!-- Select sem Icon -->
@@ -130,14 +122,7 @@ const normalizedOptions = computed(() => {
             :showClear="showClear"
             :class="computedSelectClass"
             @change="handleChange"
-        >
-            <template #option="slotProps">
-                <div class="flex items-center gap-2">
-                    <i v-if="slotProps.option.icon" :class="slotProps.option.icon" class="text-it-primary"></i>
-                    <span>{{ slotProps.option.label }}</span>
-                </div>
-            </template>
-        </Select>
+        />
     </div>
 </template>
 
