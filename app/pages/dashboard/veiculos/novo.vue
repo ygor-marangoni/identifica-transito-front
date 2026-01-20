@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import InputText from '~/components/forms/InputText.vue';
 import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
+import { useToast } from 'primevue/usetoast';
 
 definePageMeta({
     layout: 'dashboard'
@@ -25,6 +26,53 @@ const formData = ref({
 });
 
 const loading = ref(false);
+const toast = useToast();
+const municipios = ref<Array<{ label: string; value: string }>>([]);
+const municipiosLoading = ref(false);
+
+// Buscar municípios da API IBGE
+const fetchMunicipios = async (uf: string) => {
+    if (!uf) {
+        municipios.value = [];
+        formData.value.cidadeRegistro = '';
+        return;
+    }
+
+    municipiosLoading.value = true;
+    try {
+        const response = await fetch(
+            `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`
+        );
+        const data = await response.json();
+        
+        // Mapear resultado da API para formato do SelectInput
+        municipios.value = data.map((municipio: any) => ({
+            label: municipio.nome,
+            value: municipio.nome
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label));
+        
+        // Limpar seleção anterior de cidade
+        formData.value.cidadeRegistro = '';
+    } catch (error) {
+        console.error('Erro ao buscar municípios:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Não foi possível carregar as cidades.',
+            life: 3000
+        });
+        municipios.value = [];
+    } finally {
+        municipiosLoading.value = false;
+    }
+};
+
+// Watchers para monitorar mudanças no estado
+watch(() => formData.value.estadoRegistro, (newUF) => {
+    if (newUF) {
+        fetchMunicipios(newUF);
+    }
+});
 
 // Opções para dropdowns
 const tiposVeiculo = [
@@ -36,9 +84,33 @@ const tiposVeiculo = [
 ];
 
 const estadosRegistro = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+    { label: 'Acre', value: 'AC' },
+    { label: 'Alagoas', value: 'AL' },
+    { label: 'Amapá', value: 'AP' },
+    { label: 'Amazonas', value: 'AM' },
+    { label: 'Bahia', value: 'BA' },
+    { label: 'Ceará', value: 'CE' },
+    { label: 'Distrito Federal', value: 'DF' },
+    { label: 'Espírito Santo', value: 'ES' },
+    { label: 'Goiás', value: 'GO' },
+    { label: 'Maranhão', value: 'MA' },
+    { label: 'Mato Grosso', value: 'MT' },
+    { label: 'Mato Grosso do Sul', value: 'MS' },
+    { label: 'Minas Gerais', value: 'MG' },
+    { label: 'Pará', value: 'PA' },
+    { label: 'Paraíba', value: 'PB' },
+    { label: 'Paraná', value: 'PR' },
+    { label: 'Pernambuco', value: 'PE' },
+    { label: 'Piauí', value: 'PI' },
+    { label: 'Rio de Janeiro', value: 'RJ' },
+    { label: 'Rio Grande do Norte', value: 'RN' },
+    { label: 'Rio Grande do Sul', value: 'RS' },
+    { label: 'Rondônia', value: 'RO' },
+    { label: 'Roraima', value: 'RR' },
+    { label: 'Santa Catarina', value: 'SC' },
+    { label: 'São Paulo', value: 'SP' },
+    { label: 'Sergipe', value: 'SE' },
+    { label: 'Tocantins', value: 'TO' }
 ];
 
 const perfisUso = [
@@ -55,7 +127,12 @@ const perfisUso = [
 
 const handleRegisterVehicle = () => {
     if (!formData.value.placa || !formData.value.tipoVeiculo || !formData.value.estadoRegistro || !formData.value.cidadeRegistro || !formData.value.perfilUso) {
-        alert('Preencha todos os campos obrigatórios.');
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao cadastrar',
+            detail: 'Por favor, preencha todos os campos obrigatórios.',
+            life: 3000
+        });
         return;
     }
 
@@ -65,8 +142,22 @@ const handleRegisterVehicle = () => {
     // Simular cadastro
     setTimeout(() => {
         loading.value = false;
-        // Redirecionar para dashboard/veiculos
-        navigateTo('/dashboard/veiculos');
+        toast.add({
+            severity: 'success',
+            summary: 'Veículo cadastrado!',
+            detail: 'Seu veículo foi cadastrado com sucesso, compre agora sua etiqueta.',
+            life: 3000
+        });
+        // Limpar formulário
+        formData.value = {
+            placa: '',
+            tipoVeiculo: '',
+            estadoRegistro: '',
+            cidadeRegistro: '',
+            perfilUso: ''
+        };
+        // Redirecionar para dashboard/veiculos (simulado)
+        // navigateTo('/dashboard/veiculos');
     }, 2000);
 };
 </script>
@@ -126,6 +217,8 @@ const handleRegisterVehicle = () => {
                                 label="Estado de Registro"
                                 :options="estadosRegistro"
                                 placeholder="Selecione o estado (UF)"
+                                optionLabel="label"
+                                optionValue="value"
                                 :filter="true"
                                 filterPlaceholder="Buscar estado..."
                                 icon="pi pi-map"
@@ -133,16 +226,20 @@ const handleRegisterVehicle = () => {
                             />
 
                             <!-- Cidade de Registro -->
-                            <InputText
+                            <SelectInput
+                                :key="formData.estadoRegistro"
                                 v-model="formData.cidadeRegistro"
-                                type="text"
                                 id="cidadeRegistro"
                                 label="Cidade de Registro"
-                                placeholder="Nome da cidade"
-                                required
-                                showIcon
+                                :options="municipios"
+                                placeholder="Selecione a cidade"
+                                optionLabel="label"
+                                optionValue="value"
+                                :filter="true"
+                                filterPlaceholder="Buscar cidade..."
                                 icon="pi pi-map-marker"
-                                inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
+                                :disabled="!formData.estadoRegistro || municipiosLoading"
+                                required
                             />
                         </div>
                     </div>
@@ -179,7 +276,7 @@ const handleRegisterVehicle = () => {
 
                     <!-- Botão Submit -->
                     <Button type="submit" fullWidth :loading="loading" size="lg">
-                        <i class="pi pi-check"></i>
+                        <i v-if="!loading" class="pi pi-check"></i>
                         Cadastrar veículo
                     </Button>
                 </form>
