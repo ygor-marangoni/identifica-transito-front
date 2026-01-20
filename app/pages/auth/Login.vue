@@ -23,6 +23,8 @@
 
     setTimeout(() => {
       loading.value = false;
+      // Redirecionar para o dashboard ou outra página
+      navigateTo('/dashboard');
     }, 2000);
   };
 

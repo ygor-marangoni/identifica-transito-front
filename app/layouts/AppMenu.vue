@@ -50,7 +50,7 @@ const model = ref([
 const handleLogout = () => {
     console.log('Fazendo logout...');
     // Adicione lógica de logout aqui
-    // navigateTo('/auth/login');
+    navigateTo('/auth/login');
 };
 </script>
 

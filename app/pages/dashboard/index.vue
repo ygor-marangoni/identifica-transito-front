@@ -1,23 +1,31 @@
 <script setup>
-import QuickLink from '~/components/dashboard/QuickLink.vue';
-import OrderStatusItem from '~/components/dashboard/OrderStatusItem.vue';
+    import QuickLink from '~/components/dashboard/QuickLink.vue';
+    import OrderStatusItem from '~/components/dashboard/OrderStatusItem.vue';
+    import ProjectHighlights from '~/components/dashboard/ProjectHighlights.vue';
 
-definePageMeta({
-    layout: 'dashboard'
-});
+    definePageMeta({
+        layout: 'dashboard',
+    });
 
-// Dados de contagem (você pode buscar da API later)
-const stats = {
-    vehicles: 3,
-    orders: 2
-};
+  useHead({
+    title: 'Dashboard - Identifica Trânsito',
+    meta: [
+      { name: 'description', content: 'Visão geral do seu painel de controle.' }
+    ]
+  });
 
-// Últimos pedidos
-const recentOrders = [
-    { id: '#PED-1234', title: 'Etiqueta Laranja - 2 unidades', status: 'entregue' },
-    { id: '#PED-1235', title: 'Etiqueta Amarela - 1 unidade', status: 'em-rota' },
-    { id: '#PED-1236', title: 'Etiqueta Azul - 3 unidades', status: 'em-andamento' }
-];
+    // Dados de contagem (você pode buscar da API later)
+    const stats = {
+        vehicles: 3,
+        orders: 2
+    };
+
+    // Últimos pedidos
+    const recentOrders = [
+        { id: '#PED-1234', title: 'Etiqueta Laranja - 2 unidades', status: 'entregue' },
+        { id: '#PED-1235', title: 'Etiqueta Amarela - 1 unidade', status: 'em-rota' },
+        { id: '#PED-1236', title: 'Etiqueta Azul - 3 unidades', status: 'em-andamento' }
+    ];
 </script>
 
 <template>
@@ -59,24 +67,8 @@ const recentOrders = [
 
         <!-- Painéis principais -->
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <!-- Projeto -->
-            <div class="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-it-primary text-xl">
-                        <i class="pi pi-bolt"></i>
-                    </div>
-                <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Conheça o Projeto Identifica Trânsito</h3>
-                        <p class="text-sm text-gray-500">Como as etiquetas promovem um trânsito mais seguro e inclusivo.</p>
-                    </div>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    <NuxtLink to="/project" class="px-4 py-2 rounded-lg bg-it-primary text-white text-sm font-medium hover:bg-it-secondary transition">Saber Mais</NuxtLink>
-                    <NuxtLink to="/project/faq" class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-it-primary hover:text-it-primary transition">Perguntas frequentes</NuxtLink>
-                </div>
-            </div>
-
-            <!-- Status dos Pedidos -->
+            <!-- Projeto com Carrossel -->
+            <ProjectHighlights class="xl:col-span-2" />
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900">Últimos Pedidos</h3>

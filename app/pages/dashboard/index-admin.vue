@@ -1,6 +1,8 @@
 <script setup>
     definePageMeta({
-        layout: 'dashboard'
+        layout: 'dashboard',
+        title: 'Dashboard Admin - Identifica Trânsito',
+        meta: []
     });
 </script>
 
