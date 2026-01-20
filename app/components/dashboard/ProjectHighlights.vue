@@ -48,7 +48,7 @@
         </div>
 
         <!-- Carrossel de Benefícios -->
-        <div class="lg:w-2/3 flex items-center flex-col gap-4 w-full lg:pr-5">
+        <div class="lg:w-2/3 flex items-center flex-col gap-8 w-full lg:pr-5">
             <Carousel 
                 :value="benefits" 
                 :numVisible="1" 

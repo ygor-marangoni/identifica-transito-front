@@ -72,10 +72,12 @@
             <ProjectHighlights class="xl:col-span-2" />
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg! font-semibold text-gray-900">Últimos Pedidos</h3>
+                    <h3 class="text-lg! font-semibold text-gray-900 mb-0!">Últimos Pedidos</h3>
                     <NuxtLink to="/orders" class="text-xs text-it-primary font-medium hover:underline">Ver todos</NuxtLink>
                 </div>
-                <div class="space-y-4">
+                
+                <!-- Com pedidos -->
+                <div v-if="recentOrders.length > 0" class="space-y-4">
                     <OrderStatusItem
                         v-for="order in recentOrders"
                         :key="order.id"
@@ -83,6 +85,18 @@
                         :title="order.title"
                         :status="order.status"
                     />
+                </div>
+
+                <!-- Sem pedidos -->
+                <div v-else class="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-2xl">
+                        <i class="pi pi-inbox"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600 font-medium">Nenhum pedido ainda</p>
+                        <p class="text-sm text-gray-500 mt-1">Comece agora fazendo seu primeiro pedido</p>
+                    </div>
+                    <NuxtLink to="/orders/new" class="px-4 py-2 rounded-lg bg-it-primary text-white text-sm font-medium hover:bg-it-secondary transition mt-2">Fazer Primeiro Pedido</NuxtLink>
                 </div>
             </div>
         </section>
@@ -94,7 +108,7 @@
                     <i class="pi pi-plus"></i>
                 </div>
                 <div>
-                    <h3 class="text-xl! font-semibold text-gray-900">Cadastre seu Primeiro Veículo</h3>
+                    <h3 class="text-xl! font-semibold text-gray-900 mb-0!">Cadastre seu Primeiro Veículo</h3>
                     <p class="text-sm text-gray-500">Prepare-se para gerar sua etiqueta de identificação personalizada.</p>
                 </div>
             </div>
