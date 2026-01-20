@@ -9,7 +9,7 @@ const model = ref([
             {
                 label: 'Resumo',
                 icon: 'pi pi-fw pi-home',
-                to: '/'
+                to: '/dashboard'
             }
         ]
     },
@@ -20,28 +20,28 @@ const model = ref([
             {
                 label: 'Meus Veículos',
                 icon: 'pi pi-fw pi-car',
-                to: '/'
+                to: '/dashboard/veiculos'
             },
             {
                 label: 'Meus Pedidos',
                 icon: 'pi pi-fw pi-shopping-cart',
-                to: '/'
+                to: '/dashboard/pedidos'
             },
             {
                 label: 'Sobre o Projeto',
                 icon: 'pi pi-fw pi-info-circle',
-                to: '/',
+                to: '/dashboard/sobre',
                 class: 'rotated-icon'
             },
             {
                 label: 'Suporte',
                 icon: 'pi pi-fw pi-question-circle',
-                to: '/'
+                to: '/dashboard/suporte'
             },
             {
                 label: 'Configurações',
                 icon: 'pi pi-fw pi-cog',
-                to: '/'
+                to: '/dashboard/configuracoes'
             }
         ]
     }

@@ -65,3 +65,8 @@ button {
 .text-it-gray {
     color: #666;
 }
+
+.layout-menu li a.active-route {
+    background-color: var(--it-primary)!important;
+    color: var(--color-white)!important;
+}

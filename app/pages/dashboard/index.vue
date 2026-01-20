@@ -1,4 +1,5 @@
 <script setup>
+    import HeroSection from '~/components/dashboard/HeroSection.vue';
     import QuickLink from '~/components/dashboard/QuickLink.vue';
     import OrderStatusItem from '~/components/dashboard/OrderStatusItem.vue';
     import ProjectHighlights from '~/components/dashboard/ProjectHighlights.vue';
@@ -27,29 +28,23 @@
         { id: '#PED-1236', title: 'Etiqueta Azul - 3 unidades', status: 'em-andamento' },
         { id: '#PED-1237', title: 'Etiqueta Verde - 1 unidade', status: 'cancelado' }
     ];
+
+    const heroStats = {
+        vehicles: { label: 'Veículos ativos', count: '03' },
+        orders: { label: 'Pedidos em andamento', count: '02' }
+    };
 </script>
 
 <template>
     <div class="space-y-10">
         <!-- Hero / Boas-vindas -->
-        <section class="bg-it-primary hover:bg-[#1E40AF]! text-white rounded-2xl px-8 py-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <p class="text-sm text-white/80">Bem-vindo(a) de volta</p>
-                <h1 class="text-3xl font-bold mt-1 text-white!">Olá, Wesley!</h1>
-                <p class="text-white/80 mt-2">Acesse rapidamente seus veículos, pedidos e suporte.</p>
-            </div>
-            <div class="flex items-center gap-4 bg-white/10 rounded-xl px-4 py-3">
-                <div>
-                    <p class="text-sm text-white/80">Veículos ativos</p>
-                    <p class="text-2xl font-semibold">03</p>
-                </div>
-                <div class="w-px h-10 bg-white/20"></div>
-                <div>
-                    <p class="text-sm text-white/80">Pedidos em andamento</p>
-                    <p class="text-2xl font-semibold">02</p>
-                </div>
-            </div>
-        </section>
+        <HeroSection
+            greeting="Bem-vindo(a) de volta"
+            title="Olá, Wesley!"
+            subtitle="Acesse rapidamente seus veículos, pedidos e suporte."
+            :showStats="true"
+            :stats="heroStats"
+        />
 
         <!-- Acesso Rápido -->
         <section class="space-y-4">
@@ -59,10 +54,10 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                <QuickLink icon="pi pi-car" title="Meus Veículos" to="/vehicles" subtitle="Gerencie e acompanhe" :badge="stats.vehicles" />
-                <QuickLink icon="pi pi-list" title="Meus Pedidos" to="/orders" subtitle="Status e histórico" :badge="stats.orders" />
-                <QuickLink icon="pi pi-user" title="Meu Perfil" to="/profile" subtitle="Dados e segurança" />
-                <QuickLink icon="pi pi-question-circle" title="Suporte" to="/support" subtitle="Fale com a gente" />
+                <QuickLink icon="pi pi-car" title="Meus Veículos" to="/dashboard/veiculos" subtitle="Gerencie e acompanhe" :badge="stats.vehicles" />
+                <QuickLink icon="pi pi-list" title="Meus Pedidos" to="/dashboard/pedidos" subtitle="Status e histórico" :badge="stats.orders" />
+                <QuickLink icon="pi pi-user" title="Meu Perfil" to="/dashboard/perfil" subtitle="Dados e segurança" />
+                <QuickLink icon="pi pi-question-circle" title="Suporte" to="/dashboard/suporte" subtitle="Fale com a gente" />
             </div>
         </section>
 
