@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import InputText from '~/components/forms/InputText.vue';
 import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
+import HeroSection from '~/components/dashboard/HeroSection.vue';
 
 definePageMeta({
     layout: 'dashboard'
@@ -71,107 +72,118 @@ const handleRegisterVehicle = () => {
 </script>
 
 <template>
-    <div class="max-w-3xl mx-auto">
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-            <h1 class="text-3xl! font-bold text-it-primary mb-2">Cadastrar Novo Veículo</h1>
-            <p class="text-gray-600 mb-8!">Preencha as informações do seu veículo para gerar a etiqueta de identificação Identifica Trânsito.</p>
+    <div class="space-y-10">
+        <!-- Hero -->
+        <HeroSection
+            title="Novo Veículo"
+            subtitle="Cadastre seu veículo para gerar a etiqueta Identifica Trânsito."
+            :showButton="true"
+            buttonLabel="Voltar para Meus Veículos"
+            buttonLink="/dashboard/veiculos"
+            buttonIcon="pi pi-arrow-left"
+        />
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                <h1 class="text-3xl! font-bold text-it-primary mb-2">Cadastrar Novo Veículo</h1>
+                <p class="text-gray-600 mb-8!">Preencha as informações do seu veículo para gerar a etiqueta de identificação Identifica Trânsito.</p>
 
-            <form @submit.prevent="handleRegisterVehicle" class="space-y-8">
-                <!-- Seção 1: Dados do Veículo -->
-                <div class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Placa do Veículo -->
-                        <InputText
-                            v-model="formData.placa"
-                            type="text"
-                            id="placa"
-                            label="Placa do Veículo"
-                            placeholder="AAA0A00 ou ABC1234"
-                            required
-                            showIcon
-                            icon="pi pi-car"
-                            inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-                        />
-
-                        <!-- Tipo do Veículo -->
-                        <SelectInput
-                            v-model="formData.tipoVeiculo"
-                            id="tipoVeiculo"
-                            label="Tipo do Veículo"
-                            :options="tiposVeiculo"
-                            placeholder="Selecione o tipo"
-                            optionLabel="label"
-                            optionValue="value"
-                            :filter="true"
-                            filterPlaceholder="Buscar tipo..."
-                            required
-                        />
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Estado de Registro -->
-                        <SelectInput
-                            v-model="formData.estadoRegistro"
-                            id="estadoRegistro"
-                            label="Estado de Registro"
-                            :options="estadosRegistro"
-                            placeholder="Selecione o estado (UF)"
-                            :filter="true"
-                            filterPlaceholder="Buscar estado..."
-                            required
-                        />
-
-                        <!-- Cidade de Registro -->
-                        <InputText
-                            v-model="formData.cidadeRegistro"
-                            type="text"
-                            id="cidadeRegistro"
-                            label="Cidade de Registro"
-                            placeholder="Nome da cidade"
-                            required
-                            showIcon
-                            icon="pi pi-map-marker"
-                            inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-                        />
-                    </div>
-                </div>
-
-                <!-- Divisor -->
-                <div class="border-t border-gray-200"></div>
-
-                <!-- Seção 2: Perfil de Uso -->
-                <div class="space-y-4">
-                    <div>
-                        <h2 class="text-lg! font-semibold text-gray-900 mb-2!">Perfil de Uso</h2>
-                        <p class="text-md text-gray-600">Selecione o perfil que melhor descreve o uso principal do veículo.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                        <div v-for="perfil in perfisUso" :key="perfil.id" class="flex items-center gap-3">
-                            <input
-                                type="radio"
-                                :id="perfil.id"
-                                :value="perfil.id"
-                                v-model="formData.perfilUso"
+                <form @submit.prevent="handleRegisterVehicle" class="space-y-8">
+                    <!-- Seção 1: Dados do Veículo -->
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Placa do Veículo -->
+                            <InputText
+                                v-model="formData.placa"
+                                type="text"
+                                id="placa"
+                                label="Placa do Veículo"
+                                placeholder="AAA0A00 ou ABC1234"
                                 required
-                                class="mt-1 w-5 h-5 text-it-primary border-gray-300 focus:ring-it-primary cursor-pointer"
+                                showIcon
+                                icon="pi pi-car"
+                                inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
                             />
-                            <label :for="perfil.id" class="text-md font-medium text-gray-900 cursor-pointer">
-                                {{ perfil.label }}
-                            </label>
+
+                            <!-- Tipo do Veículo -->
+                            <SelectInput
+                                v-model="formData.tipoVeiculo"
+                                id="tipoVeiculo"
+                                label="Tipo do Veículo"
+                                :options="tiposVeiculo"
+                                placeholder="Selecione o tipo"
+                                optionLabel="label"
+                                optionValue="value"
+                                icon="pi pi-list"
+                                required
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Estado de Registro -->
+                            <SelectInput
+                                v-model="formData.estadoRegistro"
+                                id="estadoRegistro"
+                                label="Estado de Registro"
+                                :options="estadosRegistro"
+                                placeholder="Selecione o estado (UF)"
+                                :filter="true"
+                                filterPlaceholder="Buscar estado..."
+                                icon="pi pi-map"
+                                required
+                            />
+
+                            <!-- Cidade de Registro -->
+                            <InputText
+                                v-model="formData.cidadeRegistro"
+                                type="text"
+                                id="cidadeRegistro"
+                                label="Cidade de Registro"
+                                placeholder="Nome da cidade"
+                                required
+                                showIcon
+                                icon="pi pi-map-marker"
+                                inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
+                            />
                         </div>
                     </div>
-                </div>
 
-                <!-- Divisor -->
-                <div class="border-t border-gray-200"></div>
+                    <!-- Divisor -->
+                    <div class="border-t border-gray-200"></div>
 
-                <!-- Botão Submit -->
-                <Button type="submit" fullWidth :loading="loading" size="lg">
-                    <i class="pi pi-check"></i>
-                    Cadastrar veículo
-                </Button>
-            </form>
+                    <!-- Seção 2: Perfil de Uso -->
+                    <div class="space-y-4">
+                        <div>
+                            <h2 class="text-lg! font-semibold text-gray-900 mb-2!">Perfil de Uso</h2>
+                            <p class="text-md text-gray-600">Selecione o perfil que melhor descreve o uso principal do veículo.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                            <div v-for="perfil in perfisUso" :key="perfil.id" class="flex items-center gap-3">
+                                <input
+                                    type="radio"
+                                    :id="perfil.id"
+                                    :value="perfil.id"
+                                    v-model="formData.perfilUso"
+                                    required
+                                    class="mt-1 w-5 h-5 text-it-primary border-gray-300 focus:ring-it-primary cursor-pointer"
+                                />
+                                <label :for="perfil.id" class="text-md font-medium text-gray-900 cursor-pointer">
+                                    {{ perfil.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Divisor -->
+                    <div class="border-t border-gray-200"></div>
+
+                    <!-- Botão Submit -->
+                    <Button type="submit" fullWidth :loading="loading" size="lg">
+                        <i class="pi pi-check"></i>
+                        Cadastrar veículo
+                    </Button>
+                </form>
+            </div>
         </div>
     </div>
 </template>

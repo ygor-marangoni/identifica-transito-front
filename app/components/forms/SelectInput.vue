@@ -79,6 +79,9 @@ const normalizedOptions = computed(() => {
         return option as SelectOption;
     });
 });
+
+// Ícone fixo do campo (não muda conforme a opção)
+const selectedOptionIcon = computed(() => props.icon || null);
 </script>
 
 <template>
@@ -89,9 +92,9 @@ const normalizedOptions = computed(() => {
         </label>
 
         <!-- Select com Icon no lado esquerdo -->
-        <div v-if="showIcon && icon" class="relative">
-            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-it-primary pointer-events-none z-10">
-                <i :class="icon"></i>
+        <div v-if="selectedOptionIcon" class="relative">
+            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#94a3b8] pointer-events-none z-10">
+                <i :class="selectedOptionIcon"></i>
             </div>
             <Select
                 v-model="modelValueProxy"

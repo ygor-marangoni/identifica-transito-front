@@ -7,7 +7,8 @@ const props = defineProps({
     stats: { type: Object, default: () => ({}) },
     showButton: { type: Boolean, default: false },
     buttonLabel: { type: String, default: '' },
-    buttonLink: { type: String, default: '' }
+    buttonLink: { type: String, default: '' },
+    buttonIcon: { type: String, default: 'pi pi-plus' }
 });
 </script>
 
@@ -32,7 +33,7 @@ const props = defineProps({
 
         <!-- Botão (opcional) -->
         <NuxtLink v-if="props.showButton && props.buttonLink" :to="props.buttonLink" class="px-4 py-2 rounded-lg bg-white text-it-primary font-semibold hover:bg-gray-100 transition flex items-center gap-2 whitespace-nowrap">
-            <i class="pi pi-plus"></i>
+            <i :class="props.buttonIcon"></i>
             {{ props.buttonLabel }}
         </NuxtLink>
     </section>
