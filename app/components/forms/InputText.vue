@@ -150,7 +150,7 @@ const props = withDefaults(defineProps<{
     inputClass: '',
     wrapperClass: '',
     label: '',
-    labelClass: 'block text-md font-medium text-gray-600 mb-2',
+    labelClass: 'block text-md font-bold text-gray-600 mb-2',
     mask: undefined,
     slotChar: '_',
     autoClear: true
