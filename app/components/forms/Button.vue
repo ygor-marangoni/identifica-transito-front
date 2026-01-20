@@ -48,9 +48,9 @@ const computedClass = computed(() => {
 
   // Size styles
   if (props.size === 'sm') {
-    classes.push('h-[60px] px-4 py-2 text-sm');
+    classes.push('h-[40px] px-4 py-2 text-md');
   } else if (props.size === 'md') {
-    classes.push('h-[60px] px-6 py-3 text-base');
+    classes.push('h-[50px] px-6 py-3 text-base');
   } else if (props.size === 'lg') {
     classes.push('h-[60px] px-8 py-4 text-lg');
   }

@@ -55,7 +55,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <QuickLink icon="pi pi-car" title="Meus Veículos" to="/dashboard/veiculos" subtitle="Gerencie e acompanhe" :badge="stats.vehicles" />
-                <QuickLink icon="pi pi-list" title="Meus Pedidos" to="/dashboard/pedidos" subtitle="Status e histórico" :badge="stats.orders" />
+                <QuickLink icon="pi pi-list" title="Minhas Etiquetas" to="/dashboard/pedidos" subtitle="Status e histórico" :badge="stats.orders" />
                 <QuickLink icon="pi pi-user" title="Meu Perfil" to="/dashboard/perfil" subtitle="Dados e segurança" />
                 <QuickLink icon="pi pi-question-circle" title="Suporte" to="/dashboard/suporte" subtitle="Fale com a gente" />
             </div>

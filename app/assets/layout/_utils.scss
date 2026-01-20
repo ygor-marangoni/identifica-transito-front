@@ -25,7 +25,8 @@
 }
 
 :root {
-    --it-primary: #1E40AF;
+    --it-primary: #1925e2;
+    // --it-primary: #1E40AF;
     --it-secondary: #2563EB;
     --it-secondary-selected-focus: #d7e0ff;
 }
@@ -37,10 +38,15 @@ button {
 .bg-it-primary {
     background-color: var(--it-primary);
 
-    &:hover {
-        background-color: var(--it-secondary);
-    }
+    // &:hover {
+    //     background-color: var(--it-secondary);
+    // }
 }
+
+button.bg-it-primary:hover {
+    background-color: var(--it-secondary);
+}
+
 .bg-it-primary-hover {
     background-color: var(--it-secondary);
 }

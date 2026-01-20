@@ -13,7 +13,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <section class="bg-it-primary hover:bg-[#1E40AF]! text-white rounded-2xl px-8 py-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <section class="bg-it-primary text-white rounded-2xl px-8 py-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex-1">
             <p v-if="props?.greeting" class="text-sm text-white/80">{{ props.greeting }}</p>
             <h1 class="text-3xl! font-bold mt-1 text-white! mb-0!">{{ props.title }}</h1>

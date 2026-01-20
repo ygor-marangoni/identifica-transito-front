@@ -62,7 +62,7 @@ const getEtiquetaImagePath = (cor: string | null) => {
                             <i class="pi pi-car"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-900">{{ vehicle.brand }} {{ vehicle.model }}</h3>
+                            <h3 class="font-semibold text-gray-900 text-2xl! mb-0!">{{ vehicle.brand }} {{ vehicle.model }}</h3>
                             <p class="text-sm text-gray-500">{{ vehicle.plate }} • {{ vehicle.year }}</p>
                         </div>
                     </div>
