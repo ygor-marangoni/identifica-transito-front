@@ -24,7 +24,8 @@
     const recentOrders = [
         { id: '#PED-1234', title: 'Etiqueta Laranja - 2 unidades', status: 'entregue' },
         { id: '#PED-1235', title: 'Etiqueta Amarela - 1 unidade', status: 'em-rota' },
-        { id: '#PED-1236', title: 'Etiqueta Azul - 3 unidades', status: 'em-andamento' }
+        { id: '#PED-1236', title: 'Etiqueta Azul - 3 unidades', status: 'em-andamento' },
+        { id: '#PED-1237', title: 'Etiqueta Verde - 1 unidade', status: 'cancelado' }
     ];
 </script>
 
@@ -53,7 +54,7 @@
         <!-- Acesso Rápido -->
         <section class="space-y-4">
             <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-semibold text-gray-900">Acesso Rápido</h2>
+                <h2 class="text-2xl! font-semibold text-gray-900">Acesso Rápido</h2>
                 <NuxtLink to="/support" class="text-sm text-it-primary hover:underline">Precisa de ajuda?</NuxtLink>
             </div>
 
@@ -71,7 +72,7 @@
             <ProjectHighlights class="xl:col-span-2" />
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Últimos Pedidos</h3>
+                    <h3 class="text-lg! font-semibold text-gray-900">Últimos Pedidos</h3>
                     <NuxtLink to="/orders" class="text-xs text-it-primary font-medium hover:underline">Ver todos</NuxtLink>
                 </div>
                 <div class="space-y-4">
@@ -93,11 +94,11 @@
                     <i class="pi pi-plus"></i>
                 </div>
                 <div>
-                    <h3 class="text-xl font-semibold text-gray-900">Cadastre seu Primeiro Veículo</h3>
+                    <h3 class="text-xl! font-semibold text-gray-900">Cadastre seu Primeiro Veículo</h3>
                     <p class="text-sm text-gray-500">Prepare-se para gerar sua etiqueta de identificação personalizada.</p>
                 </div>
             </div>
-            <NuxtLink to="/vehicles/new" class="px-5 py-3 rounded-lg bg-it-primary text-white font-semibold hover:bg-it-secondary transition">Cadastrar Veículo</NuxtLink>
+            <NuxtLink to="/vehicles/new" class="px-5 py-3 rounded-lg bg-it-primary text-white font-semibold hover:bg-it-secondary transition text-center">Cadastrar Veículo</NuxtLink>
         </section>
     </div>
 </template>

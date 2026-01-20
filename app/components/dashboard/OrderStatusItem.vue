@@ -2,7 +2,7 @@
 const props = defineProps({
     orderId: { type: String, required: true },
     title: { type: String, required: true },
-    status: { type: String, required: true, validator: (value) => ['em-andamento', 'em-rota', 'entregue'].includes(value) }
+    status: { type: String, required: true, validator: (value) => ['em-andamento', 'em-rota', 'entregue', 'cancelado'].includes(value) }
 });
 
 const statusConfig = {
@@ -23,6 +23,12 @@ const statusConfig = {
         color: 'bg-green-500',
         textColor: 'text-green-700',
         bgLight: 'bg-green-50'
+    },
+    'cancelado': {
+        label: 'Cancelado',
+        color: 'bg-red-500',
+        textColor: 'text-red-700',
+        bgLight: 'bg-red-50'
     }
 };
 
@@ -41,7 +47,7 @@ const currentStatus = statusConfig[props.status];
             </span>
         </div>
         <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-            <div :class="currentStatus.color" class="h-full transition-all" :style="{ width: props.status === 'entregue' ? '100%' : props.status === 'em-rota' ? '66%' : '33%' }"></div>
+            <div :class="currentStatus.color" class="h-full transition-all" :style="{ width: props.status === 'entregue' || props.status === 'cancelado' ? '100%' : props.status === 'em-rota' ? '66%' : '33%' }"></div>
         </div>
     </div>
 </template>

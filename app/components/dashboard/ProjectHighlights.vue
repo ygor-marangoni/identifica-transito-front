@@ -48,7 +48,7 @@
         </div>
 
         <!-- Carrossel de Benefícios -->
-        <div class="lg:w-2/3 flex items-center flex-col gap-4">
+        <div class="lg:w-2/3 flex items-center flex-col gap-4 w-full lg:pr-5">
             <Carousel 
                 :value="benefits" 
                 :numVisible="1" 
@@ -67,7 +67,7 @@
                                 <div class="shrink-0 w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
                                     <span class="text-lg font-bold text-yellow-700">{{ slotProps.data.number }}</span>
                                 </div>
-                                <h4 class="text-lg font-semibold text-gray-900 pt-0 mt-0!">{{ slotProps.data.title }}</h4>
+                                <h4 class="text-lg font-semibold text-gray-900 pt-0 mt-0! text-center">{{ slotProps.data.title }}</h4>
                             </div>
 
                             <!-- Descrição -->
