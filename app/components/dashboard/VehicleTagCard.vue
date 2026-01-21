@@ -80,8 +80,8 @@ const handleViewDetails = (id: number) => {
             <!-- Etiqueta -->
             <div class="flex items-center justify-center py-3">
                 <img
-                    :src="getEtiquetaImage(veiculo.perfilUso)"
-                    :alt="`Etiqueta para ${veiculo.perfilUso}`"
+                    :src="getEtiquetaImage(veiculo.useProfile)"
+                    :alt="`Etiqueta para ${veiculo.useProfile}`"
                     class="w-16 h-16 object-contain"
                 />
             </div>

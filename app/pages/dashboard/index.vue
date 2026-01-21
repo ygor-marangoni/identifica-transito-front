@@ -1,4 +1,5 @@
 <script setup>
+    // throw createError({ statusCode: 500, statusMessage: 'Testando erro 500' })
     import HeroSection from '~/components/dashboard/HeroSection.vue';
     import QuickLink from '~/components/dashboard/QuickLink.vue';
     import OrderStatusItem from '~/components/dashboard/OrderStatusItem.vue';

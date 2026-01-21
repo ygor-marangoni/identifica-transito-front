@@ -35,7 +35,7 @@ const handleDelete = (vehicle: Vehicle) => {
 
 // Mapeamento de cores de etiqueta para caminhos de arquivo
 const getEtiquetaImagePath = (cor: string | null) => {
-    if (!cor) return null;
+    if (!cor) return undefined;
     const colorMap: { [key: string]: string } = {
         'amarela': '/images/dashboard/etiquetas/amarelo.svg',
         'azul': '/images/dashboard/etiquetas/azul.svg',
@@ -43,7 +43,7 @@ const getEtiquetaImagePath = (cor: string | null) => {
         'vermelho': '/images/dashboard/etiquetas/vermelho.svg',
         'laranja': '/images/dashboard/etiquetas/laranja.svg'
     };
-    return colorMap[cor.toLowerCase()] || null;
+    return colorMap[cor.toLowerCase()] || undefined;
 };
 </script>
 
