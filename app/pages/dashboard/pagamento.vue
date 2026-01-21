@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import Button from '~/components/forms/Button.vue';
 import InputText from '~/components/forms/InputText.vue';
 import SelectInput from '~/components/forms/SelectInput.vue';
+import CreditCardPreview from '~/components/dashboard/CreditCardPreview.vue';
 import Stepper from 'primevue/stepper';
 import StepItem from 'primevue/stepitem';
 import Step from 'primevue/step';
@@ -20,8 +21,6 @@ useHead({
     ]
 });
 
-const activeStep = ref<'1' | '2' | '3'>('1');
-
 // Dados simulados dos kits selecionados
 const kits = ref([
     { id: 'tid-6456-575', placa: '6456add4', unidades: 2, valor: 1.0 },
@@ -37,6 +36,14 @@ const paymentMethod = ref<'credito' | 'pix' | 'boleto'>('credito');
 
 // Opção de entrega
 const entrega = ref<'casa' | 'ponto'>('casa');
+
+// Dados de cartão de crédito
+const cartao = ref({
+    numero: '',
+    nome: '',
+    validade: '',
+    cvc: ''
+});
 
 // Dados de endereço
 const endereco = ref({
@@ -147,12 +154,13 @@ const handleCepChange = (value: string) => {
                 </div>
             </div>
 
-            <Stepper v-model="activeStep" class="w-full">
+            <Stepper value="1" class="w-full">
                 <!-- Step 1: Entrega/Retirada -->
                 <StepItem value="1">
                     <Step>Entrega / Retirada</Step>
-                    <StepPanel v-slot="{ activateCallback }">
-                        <div class="space-y-6">
+                    <StepPanel :value="1">
+                        <template #default="{ activateCallback }">
+                            <div class="space-y-6">
                             <h3 class="text-lg! font-semibold text-gray-900">Opção de Entrega/Retirada</h3>
                             <div class="flex flex-wrap gap-3">
                                 <button
@@ -281,16 +289,18 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-end pt-6">
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('2')" />
+                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                         </div>
+                        </template>
                     </StepPanel>
                 </StepItem>
 
                 <!-- Step 2: Resumo -->
-                <StepItem value="2">
+                <StepItem :value="2">
                     <Step>Resumo</Step>
-                    <StepPanel v-slot="{ activateCallback }">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <StepPanel :value="2">
+                        <template #default="{ activateCallback }">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                                 <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo dos Kits de Etiquetas</h3>
                                 <div class="space-y-3">
@@ -330,17 +340,19 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('3')" />
+                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(1)" />
+                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
                         </div>
+                        </template>
                     </StepPanel>
                 </StepItem>
 
                 <!-- Step 3: Pagamento -->
-                <StepItem value="3">
+                <StepItem :value="3">
                     <Step>Pagamento</Step>
-                    <StepPanel v-slot="{ activateCallback }">
-                        <div class="space-y-6">
+                    <StepPanel :value="3">
+                        <template #default="{ activateCallback }">
+                            <div class="space-y-6">
                             <h3 class="text-lg! font-semibold text-gray-900">Forma de Pagamento</h3>
                             <div class="flex flex-wrap gap-3">
                                 <button
@@ -378,26 +390,55 @@ const handleCepChange = (value: string) => {
                                 </button>
                             </div>
 
-                            <div v-if="paymentMethod === 'credito'" class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                <p class="text-sm font-semibold text-gray-800">Campos de cartão (simulação):</p>
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-sm font-medium text-gray-700">Número do Cartão</label>
-                                    <input class="input" placeholder="0000 0000 0000 0000" />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-sm font-medium text-gray-700">Nome no Cartão</label>
-                                    <input class="input" placeholder="Nome como no cartão" />
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-sm font-medium text-gray-700">Validade (MM/AA)</label>
-                                        <input class="input" placeholder="MM/AA" />
+                            <div v-if="paymentMethod === 'credito'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Coluna Esquerda: Campos -->
+                                <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                    <p class="text-sm font-semibold text-gray-800">Campos de cartão (simulação):</p>
+                                    <div class="grid grid-cols-1 gap-4">
+                                        <InputText
+                                            v-model="cartao.numero"
+                                            label="Número do Cartão"
+                                            placeholder="0000 0000 0000 0000"
+                                            mask="9999 9999 9999 9999"
+                                            icon="pi pi-credit-card"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
+                                            v-model="cartao.nome"
+                                            label="Nome no Cartão"
+                                            placeholder="Nome como no cartão"
+                                            icon="pi pi-user"
+                                            inputClass="w-full"
+                                        />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputText
+                                                v-model="cartao.validade"
+                                                label="Validade (MM/AA)"
+                                                placeholder="MM/AA"
+                                                mask="99/99"
+                                                icon="pi pi-calendar"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="cartao.cvc"
+                                                label="CVC"
+                                                placeholder="123"
+                                                mask="999"
+                                                icon="pi pi-lock"
+                                                inputClass="w-full"
+                                            />
+                                        </div>
                                     </div>
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-sm font-medium text-gray-700">CVC</label>
-                                        <input class="input" placeholder="123" />
-                                    </div>
-                                    
+                                </div>
+
+                                <!-- Coluna Direita: Preview do Cartão (apenas desktop) -->
+                                <div class="hidden lg:flex items-center justify-center">
+                                    <CreditCardPreview
+                                        :numero="cartao.numero"
+                                        :nome="cartao.nome"
+                                        :validade="cartao.validade"
+                                        :cvc="cartao.cvc"
+                                    />
                                 </div>
                             </div>
 
@@ -412,9 +453,10 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('2')" />
+                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                             <Button label="Finalizar Pedido" icon="pi pi-check" size="sm">Realizar pagamento</Button>
                         </div>
+                        </template>
                     </StepPanel>
                 </StepItem>
             </Stepper>
