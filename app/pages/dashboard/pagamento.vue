@@ -37,6 +37,21 @@ const paymentMethod = ref<'credito' | 'pix' | 'boleto'>('credito');
 // Opção de entrega
 const entrega = ref<'casa' | 'ponto'>('casa');
 
+// Dados de coleta em ponto
+const pontoColeta = ref('');
+const pontosColetaOptions = ref([
+    { label: 'Posto Mauricio Souza', value: 'posto-mauricio', endereco: 'Av. Paulista, 1000 - São Paulo, SP' },
+    { label: 'Academia Azurro', value: 'academia-azurro', endereco: 'R. Wisard, 455 - Vila Madalena, SP' },
+    { label: 'Centro de Distribuição', value: 'centro-dist', endereco: 'Av. Radial Leste, 2000 - São Paulo, SP' },
+    { label: 'Ponto Zona Oeste', value: 'zona-oeste-pt', endereco: 'Av. Imirim, 1500 - Zona Oeste, SP' },
+    { label: 'Loja Zona Sul', value: 'zona-sul-loja', endereco: 'Av. Getúlio Vargas, 3000 - Zona Sul, SP' }
+]);
+
+const enderecoSelecionado = computed(() => {
+    const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
+    return ponto?.endereco || '';
+});
+
 // Dados de cartão de crédito
 const cartao = ref({
     numero: '',
@@ -191,87 +206,120 @@ const handleCepChange = (value: string) => {
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                                 <!-- Coluna Esquerda: Formulário (60%) -->
                                 <div class="lg:col-span-3 space-y-4">
-                                    <div v-if="cepError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                        {{ cepError }}
+                                    <!-- RECEBER EM CASA - Endereço -->
+                                    <div v-if="entrega === 'casa'">
+                                        <div v-if="cepError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-4">
+                                            {{ cepError }}
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-10 gap-4">
+                                            <InputText
+                                                v-model="endereco.cep"
+                                                label="CEP"
+                                                placeholder="00000-000"
+                                                mask="99999-999"
+                                                icon="pi pi-map-marker"
+                                                @change="(e) => handleCepChange((e.target as HTMLInputElement).value)"
+                                                :disabled="loadingCep"
+                                                wrapper-class="lg:col-span-3"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="endereco.rua"
+                                                label="Logradouro"
+                                                placeholder="Av. Paulista"
+                                                icon="pi pi-road"
+                                                :readonly="true"
+                                                wrapper-class="md:col-span-2 lg:col-span-7"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="endereco.numero"
+                                                label="Número"
+                                                placeholder="1000"
+                                                type="number"
+                                                icon="pi pi-hashtag"
+                                                wrapper-class="lg:col-span-5"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="endereco.complemento"
+                                                label="Complemento"
+                                                placeholder="Apto 101"
+                                                icon="pi pi-building"
+                                                wrapper-class="lg:col-span-5"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="endereco.bairro"
+                                                label="Bairro"
+                                                placeholder="Bela Vista"
+                                                icon="pi pi-map"
+                                                :readonly="true"
+                                                wrapper-class="lg:col-span-5"
+                                                inputClass="w-full"
+                                            />
+                                            <InputText
+                                                v-model="endereco.cidade"
+                                                label="Cidade"
+                                                placeholder="São Paulo"
+                                                icon="pi pi-building"
+                                                :readonly="true"
+                                                wrapper-class="lg:col-span-5"
+                                                inputClass="w-full"
+                                            />
+                                            <SelectInput
+                                                v-model="endereco.estado"
+                                                label="Estado"
+                                                :options="estados"
+                                                placeholder="Selecione o estado"
+                                                icon="pi pi-map-marker"
+                                                :readonly="true"
+                                                wrapper-class="lg:col-span-5"
+                                                inputClass="w-full"
+                                            />
+                                            
+                                            <!-- Card de Frete -->
+                                            <div class="lg:col-span-5 flex flex-col justify-end">
+                                                <label class="block text-sm font-semibold text-gray-900 mb-2">Frete</label>
+                                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-4 h-[60px] flex items-center justify-between">
+                                                    <div class="flex items-center gap-2 text-gray-700">
+                                                        <i class="pi pi-truck text-it-primary"></i>
+                                                        <span class="text-sm font-medium">Custo de Entrega</span>
+                                                    </div>
+                                                    <span class="text-lg font-bold text-it-primary">R$ {{ frete.toFixed(2) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-10 gap-4">
-                                        <InputText
-                                            v-model="endereco.cep"
-                                            label="CEP"
-                                            placeholder="00000-000"
-                                            mask="99999-999"
-                                            icon="pi pi-map-marker"
-                                            @change="(e) => handleCepChange((e.target as HTMLInputElement).value)"
-                                            :disabled="loadingCep"
-                                            wrapper-class="lg:col-span-3"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="endereco.rua"
-                                            label="Logradouro"
-                                            placeholder="Av. Paulista"
-                                            icon="pi pi-road"
-                                            :readonly="true"
-                                            wrapper-class="md:col-span-2 lg:col-span-7"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="endereco.numero"
-                                            label="Número"
-                                            placeholder="1000"
-                                            type="number"
-                                            icon="pi pi-hashtag"
-                                            wrapper-class="lg:col-span-5"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="endereco.complemento"
-                                            label="Complemento"
-                                            placeholder="Apto 101"
-                                            icon="pi pi-building"
-                                            wrapper-class="lg:col-span-5"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="endereco.bairro"
-                                            label="Bairro"
-                                            placeholder="Bela Vista"
-                                            icon="pi pi-map"
-                                            :readonly="true"
-                                            wrapper-class="lg:col-span-5"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="endereco.cidade"
-                                            label="Cidade"
-                                            placeholder="São Paulo"
-                                            icon="pi pi-building"
-                                            :readonly="true"
-                                            wrapper-class="lg:col-span-5"
-                                            inputClass="w-full"
-                                        />
-                                        <SelectInput
-                                            v-model="endereco.estado"
-                                            label="Estado"
-                                            :options="estados"
-                                            placeholder="Selecione o estado"
-                                            icon="pi pi-map-marker"
-                                            :readonly="true"
-                                            wrapper-class="lg:col-span-5"
-                                            inputClass="w-full"
-                                        />
+                                    <!-- RETIRAR EM PONTO DE COLETA -->
+                                    <div v-else-if="entrega === 'ponto'" class="space-y-4 p-8 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <div>
+                                            <h3 class="text-lg! font-semibold text-gray-900 mb-4">Pontos de Coleta</h3>
+                                        </div>
                                         
-                                        <!-- Card de Frete -->
-                                        <div class="lg:col-span-5 flex flex-col justify-end">
-                                            <label class="block text-sm font-semibold text-gray-900 mb-2">Frete</label>
-                                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-4 h-[60px] flex items-center justify-between">
-                                                <div class="flex items-center gap-2 text-gray-700">
-                                                    <i class="pi pi-truck text-it-primary"></i>
-                                                    <span class="text-sm font-medium">Custo de Entrega</span>
-                                                </div>
-                                                <span class="text-lg font-bold text-it-primary">R$ {{ frete.toFixed(2) }}</span>
-                                            </div>
+                                        <SelectInput
+                                            v-model="pontoColeta"
+                                            label="Selecione um Ponto de Coleta"
+                                            :options="pontosColetaOptions"
+                                            placeholder="Escolha um local"
+                                            icon="pi pi-map-marker"
+                                            wrapper-class="w-full"
+                                            inputClass="w-full"
+                                        />
+
+                                        <div v-if="enderecoSelecionado" class="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mt-4">
+                                            <p class="text-sm text-gray-700">
+                                                <span class="font-semibold">Endereço:</span> {{ enderecoSelecionado }}
+                                            </p>
+                                        </div>
+                                        <p v-else class="text-sm text-gray-600 mt-3">Selecione um ponto para ver o endereço.</p>
+
+                                        <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-4">
+                                            <p class="text-sm text-gray-700">
+                                                <span class="font-semibold">Instruções:</span> Leve um documento de identificação e o número da etiqueta para retirada.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -340,7 +388,7 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(1)" />
+                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
                             <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
                         </div>
                         </template>
@@ -396,18 +444,18 @@ const handleCepChange = (value: string) => {
                                     <p class="text-sm font-semibold text-gray-800">Campos de cartão (simulação):</p>
                                     <div class="grid grid-cols-1 gap-4">
                                         <InputText
+                                            v-model="cartao.nome"
+                                            label="Nome no Cartão"
+                                            placeholder="Nome como no cartão"
+                                            icon="pi pi-user"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
                                             v-model="cartao.numero"
                                             label="Número do Cartão"
                                             placeholder="0000 0000 0000 0000"
                                             mask="9999 9999 9999 9999"
                                             icon="pi pi-credit-card"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="cartao.nome"
-                                            label="Nome no Cartão"
-                                            placeholder="Nome como no cartão"
-                                            icon="pi pi-user"
                                             inputClass="w-full"
                                         />
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

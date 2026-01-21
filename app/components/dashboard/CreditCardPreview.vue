@@ -15,10 +15,10 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <div class="w-96 h-56 bg-red-100 rounded-xl relative text-white shadow-2xl transition-transform transform hover:scale-105">
+    <div class="w-[80%] xl:w-[65%] h-76 bg-red-100 rounded-xl relative text-white shadow-2xl transition-transform transform hover:scale-105">
         <img class="relative object-cover w-full h-full rounded-xl" src="https://i.imgur.com/kGkSg1v.png" alt="Cartão de Crédito">
         
-        <div class="w-full px-8 absolute top-8">
+        <div class="w-full px-8 absolute top-18">
             <div class="flex justify-between">
                 <div>
                     <p class="font-light text-xs">
@@ -53,7 +53,7 @@ const props = withDefaults(defineProps<Props>(), {
                             CVV
                         </p>
                         <p class="font-bold tracking-more-wider text-sm">
-                            {{ cvc ? '•••' : '•••' }}
+                            {{ cvc || '•••' }}
                         </p>
                     </div>
                 </div>
