@@ -148,6 +148,10 @@ const handleRegisterVehicle = () => {
             detail: 'Seu veículo foi cadastrado com sucesso, compre agora sua etiqueta.',
             life: 3000
         });
+        
+        // Gerar ID simulado do veículo
+        const vehicleId = 'veh_' + Math.random().toString(36).substr(2, 9);
+        
         // Limpar formulário
         formData.value = {
             placa: '',
@@ -156,8 +160,9 @@ const handleRegisterVehicle = () => {
             cidadeRegistro: '',
             perfilUso: ''
         };
-        // Redirecionar para dashboard/veiculos (simulado)
-        // navigateTo('/dashboard/veiculos');
+        
+        // Redirecionar para página de detalhes
+        navigateTo(`/dashboard/veiculos/detalhes/${vehicleId}`);
     }, 2000);
 };
 </script>

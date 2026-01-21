@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import ButtonLink from '~/components/ButtonLink.vue';
 import Button from '~/components/forms/Button.vue';
+import VehicleTagCard from '~/components/dashboard/VehicleTagCard.vue';
 
 definePageMeta({
     layout: 'dashboard'
@@ -116,23 +117,8 @@ const handleComprar = () => {
         return;
     }
 
-    loading.value = true;
-    console.log('Comprando etiquetas para:', 
-        veiculosDisponiveis.value.filter(v => v.selecionado).map(v => v.placa)
-    );
-
-    // Simular compra
-    setTimeout(() => {
-        loading.value = false;
-        toast.add({
-            severity: 'success',
-            summary: 'Sucesso!',
-            detail: `${totalSelecionados.value} etiqueta(s) adicionada(s) ao carrinho.`,
-            life: 3000
-        });
-        // Aqui você pode redirecionar para o carrinho/checkout
-        // navigateTo('/dashboard/carrinho');
-    }, 1500);
+    // Ir direto para a tela de pagamento
+    navigateTo('/dashboard/pagamento');
 };
 </script>
 
@@ -182,9 +168,9 @@ const handleComprar = () => {
                     <label for="selecionarTodos" class="cursor-pointer">
                         <span class="text-lg font-semibold text-it-primary">
                             {{ totalSelecionados }} 
-                            <span v-if="totalSelecionados !== 1">etiqueta(s)</span>
-                            <span v-else>etiqueta</span>
-                            selecionada(s) para compra.
+                            <span v-if="totalSelecionados > 1">etiquetas selecionadas</span>
+                            <span v-else>etiqueta selecionada</span>
+                            para compra.
                         </span>
                     </label>
                 </div>
@@ -197,93 +183,20 @@ const handleComprar = () => {
                     @click="handleComprar"
                 >
                     <i class="pi pi-shopping-cart"></i>
-                    Pagar Selecionadas (R$ {{ precoTotal.toFixed(2) }})
+                    Comprar (R$ {{ precoTotal.toFixed(2) }})
                 </Button>
             </div>
 
             <!-- Cards de Veículos -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div
+                <VehicleTagCard
                     v-for="veiculo in veiculosDisponiveis"
                     :key="veiculo.id"
-                    :class="[
-                        'rounded-2xl border-2 shadow-sm p-6 cursor-pointer transition',
-                        veiculo.selecionado
-                            ? 'border-it-primary bg-blue-50'
-                            : 'border-gray-100 bg-white hover:border-it-primary'
-                    ]"
-                    @click="toggleSelecao(veiculo.id)"
-                >
-                    <!-- Checkbox no topo -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-it-primary">
-                                <i class="pi pi-car"></i>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-900 mb-0!">{{ veiculo.brand }} {{ veiculo.model }}</p>
-                                <p class="text-sm text-gray-500">{{ veiculo.placa }}</p>
-                            </div>
-                        </div>
-                        <input
-                            type="checkbox"
-                            :checked="veiculo.selecionado"
-                            class="w-5 h-5 text-it-primary border-gray-300 rounded cursor-pointer"
-                            @click.stop="toggleSelecao(veiculo.id)"
-                        />
-                    </div>
-
-                    <!-- Detalhes do Veículo -->
-                    <div class="space-y-3 mb-4 pb-4 border-b border-gray-200">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Ano</span>
-                            <span class="font-medium text-gray-900">{{ veiculo.year }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Cor</span>
-                            <span class="font-medium text-gray-900">{{ veiculo.color }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Perfil</span>
-                            <span class="font-medium text-gray-900 capitalize">{{ veiculo.perfilUso }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Preço e Ações -->
-                    <div class="space-y-3">
-                        <!-- Etiqueta -->
-                        <div class="flex items-center justify-center py-3">
-                            <img
-                                :src="getEtiquetaImage(veiculo.perfilUso)"
-                                :alt="`Etiqueta para ${veiculo.perfilUso}`"
-                                class="w-16 h-16 object-contain"
-                            />
-                        </div>
-
-                        <div class="flex items-baseline justify-between">
-                            <span class="text-sm text-gray-600">Etiqueta</span>
-                            <span class="text-2xl font-bold text-it-primary">
-                                R$ {{ precoUnitario.toFixed(2) }}
-                            </span>
-                        </div>
-                        
-                        <div class="flex gap-2 pt-2">
-                            <button
-                                class="flex-1 px-3 py-2 flex justify-center items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 text-it-primary text-sm font-medium hover:bg-blue-100 transition"
-                                @click.stop="navigateTo(`/dashboard/etiquetas/${veiculo.id}`)"
-                            >
-                                <i class="pi pi-eye"></i>
-                                Ver Detalhes
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Indicador de Seleção -->
-                    <div v-if="veiculo.selecionado" class="mt-4 flex items-center justify-center gap-2 text-it-primary font-medium text-sm">
-                        <i class="pi pi-check-circle"></i>
-                        Selecionado
-                    </div>
-                </div>
+                    :veiculo="veiculo"
+                    :preco-unitario="precoUnitario"
+                    :get-etiqueta-image="getEtiquetaImage"
+                    @toggle-selecao="toggleSelecao"
+                />
             </div>
         </div>
     </div>

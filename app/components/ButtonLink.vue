@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{
 
 const computedClass = computed(() => {
   const classes = [
-    'rounded-lg font-semibold transition duration-200 inline-flex items-center justify-center gap-2',
+    'rounded-lg font-semibold transition duration-200 inline-flex items-center justify-center gap-2 text-center',
     props.buttonClass
   ];
 
@@ -42,7 +42,7 @@ const computedClass = computed(() => {
 
   // Size styles
   if (props.size === 'sm') {
-    classes.push('h-[40px] px-4 py-2 text-sm');
+    classes.push('h-[40px] px-4 py-2 text-sm leading-4');
   } else if (props.size === 'md') {
     classes.push('h-[50px] px-6 py-3 text-base');
   } else if (props.size === 'lg') {

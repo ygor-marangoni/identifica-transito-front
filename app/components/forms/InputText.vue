@@ -1,3 +1,85 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import InputText from 'primevue/inputtext';
+import InputMask from 'primevue/inputmask';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+
+type IconPosition = 'left' | 'right';
+
+const props = withDefaults(defineProps<{
+    modelValue?: string;
+    type?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    readonly?: boolean;
+    required?: boolean;
+    name?: string;
+    id?: string;
+    autocomplete?: string;
+    showIcon?: boolean;
+    icon?: string; // e.g. "pi pi-user"
+    iconPosition?: IconPosition;
+    inputClass?: string;
+    wrapperClass?: string;
+    label?: string;
+    labelClass?: string;
+    mask?: string;
+    slotChar?: string;
+    autoClear?: boolean;
+}>(), {
+    modelValue: '',
+    type: 'text',
+    placeholder: '',
+    disabled: false,
+    readonly: false,
+    required: false,
+    name: undefined,
+    id: undefined,
+    autocomplete: 'off',
+    showIcon: false,
+    icon: '',
+    iconPosition: 'left',
+    inputClass: '',
+    wrapperClass: '',
+    label: '',
+    labelClass: 'block text-md font-bold text-gray-600 mb-2',
+    mask: undefined,
+    slotChar: '_',
+    autoClear: true
+});
+
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string): void;
+    (e: 'input', event: Event): void;
+    (e: 'change', event: Event): void;
+    (e: 'focus', event: FocusEvent): void;
+    (e: 'blur', event: FocusEvent): void;
+}>();
+
+const valueProxy = computed({
+    get: () => props.modelValue ?? '',
+    set: (v: string) => emit('update:modelValue', v)
+});
+
+const computedInputClass = computed(() => {
+    return `h-[60px] ${props.inputClass}`.trim();
+});
+const InputComponent = computed(() => props.mask ? InputMask : InputText);
+function onInput(event: Event) {
+    emit('input', event);
+}
+function onChange(event: Event) {
+    emit('change', event);
+}
+function onFocus(event: FocusEvent) {
+    emit('focus', event);
+}
+function onBlur(event: FocusEvent) {
+    emit('blur', event);
+}
+</script>
+
 <template>
     <div :class="wrapperClass">
         <label v-if="label" :for="id" :class="labelClass">
@@ -104,88 +186,6 @@
         />
     </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import InputText from 'primevue/inputtext';
-import InputMask from 'primevue/inputmask';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-
-type IconPosition = 'left' | 'right';
-
-const props = withDefaults(defineProps<{
-    modelValue?: string;
-    type?: string;
-    placeholder?: string;
-    disabled?: boolean;
-    readonly?: boolean;
-    required?: boolean;
-    name?: string;
-    id?: string;
-    autocomplete?: string;
-    showIcon?: boolean;
-    icon?: string; // e.g. "pi pi-user"
-    iconPosition?: IconPosition;
-    inputClass?: string;
-    wrapperClass?: string;
-    label?: string;
-    labelClass?: string;
-    mask?: string;
-    slotChar?: string;
-    autoClear?: boolean;
-}>(), {
-    modelValue: '',
-    type: 'text',
-    placeholder: '',
-    disabled: false,
-    readonly: false,
-    required: false,
-    name: undefined,
-    id: undefined,
-    autocomplete: 'off',
-    showIcon: false,
-    icon: '',
-    iconPosition: 'left',
-    inputClass: '',
-    wrapperClass: '',
-    label: '',
-    labelClass: 'block text-md font-bold text-gray-600 mb-2',
-    mask: undefined,
-    slotChar: '_',
-    autoClear: true
-});
-
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: string): void;
-    (e: 'input', event: Event): void;
-    (e: 'change', event: Event): void;
-    (e: 'focus', event: FocusEvent): void;
-    (e: 'blur', event: FocusEvent): void;
-}>();
-
-const valueProxy = computed({
-    get: () => props.modelValue ?? '',
-    set: (v: string) => emit('update:modelValue', v)
-});
-
-const computedInputClass = computed(() => {
-    return `h-[60px] ${props.inputClass}`.trim();
-});
-const InputComponent = computed(() => props.mask ? InputMask : InputText);
-function onInput(event: Event) {
-    emit('input', event);
-}
-function onChange(event: Event) {
-    emit('change', event);
-}
-function onFocus(event: FocusEvent) {
-    emit('focus', event);
-}
-function onBlur(event: FocusEvent) {
-    emit('blur', event);
-}
-</script>
 
 <style scoped>
 /* Focus color styling for inputs */

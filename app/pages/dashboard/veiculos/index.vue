@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import ButtonLink from '~/components/ButtonLink.vue';
+import VehicleCard from '~/components/dashboard/VehicleCard.vue';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 definePageMeta({
     layout: 'dashboard'
@@ -18,22 +20,13 @@ useHead({
 
 // Dados de exemplo (descomente para testar com veículos)
 const vehicles = ref([
-    { id: 1, plate: 'ABC-1234', brand: 'Toyota', model: 'Corolla', year: 2022, color: 'Preto', etiqueta: 'amarela' },
-    { id: 2, plate: 'DEF-5678', brand: 'Honda', model: 'Civic', year: 2021, color: 'Branco', etiqueta: 'azul' },
-    { id: 3, plate: 'GHI-9012', brand: 'Volkswagen', model: 'Gol', year: 2020, color: 'Cinza', etiqueta: null }
+    { id: 1, plate: 'ABC-1234', brand: 'Toyota', model: 'Corolla', year: 2022, color: 'Preto', etiqueta: 'amarela', comprada: true },
+    { id: 2, plate: 'DEF-5678', brand: 'Honda', model: 'Civic', year: 2021, color: 'Branco', etiqueta: 'azul', comprada: true },
+    { id: 3, plate: 'GHI-9012', brand: 'Volkswagen', model: 'Gol', year: 2020, color: 'Cinza', etiqueta: 'amarela', comprada: false }
 ]);
 
-// Mapeamento de cores de etiqueta para caminhos de arquivo
-const getEtiquetaImagePath = (cor: string | null) => {
-    if (!cor) return null;
-    const colorMap: { [key: string]: string } = {
-        'amarela': '/images/dashboard/etiquetas/amarelo.svg',
-        'azul': '/images/dashboard/etiquetas/azul.svg',
-        'verde': '/images/dashboard/etiquetas/verde.svg',
-        'vermelho': '/images/dashboard/etiquetas/vermelho.svg',
-        'laranja': '/images/dashboard/etiquetas/laranja.svg'
-    };
-    return colorMap[cor.toLowerCase()] || null;
+const handleVehicleDeleted = (vehicleId: number) => {
+    vehicles.value = vehicles.value.filter(v => v.id !== vehicleId);
 };
 </script>
 
@@ -52,62 +45,12 @@ const getEtiquetaImagePath = (cor: string | null) => {
         <section>
             <!-- Com veículos -->
             <div v-if="vehicles.length > 0" class="space-y-4">
-                <div
+                <VehicleCard
                     v-for="vehicle in vehicles"
                     :key="vehicle.id"
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                >
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-it-primary text-xl">
-                            <i class="pi pi-car"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900 text-2xl! mb-0!">{{ vehicle.brand }} {{ vehicle.model }}</h3>
-                            <p class="text-sm text-gray-500">{{ vehicle.plate }} • {{ vehicle.year }}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-4">
-                        <!-- Com etiqueta -->
-                        <div v-if="vehicle.etiqueta" class="flex flex-col items-center gap-2">
-                            <img
-                                :src="getEtiquetaImagePath(vehicle.etiqueta)"
-                                :alt="`Etiqueta ${vehicle.etiqueta}`"
-                                class="w-12 h-12 object-contain"
-                            />
-                            <p class="text-xs text-gray-500 capitalize">{{ vehicle.etiqueta }}</p>
-                        </div>
-                        <!-- Sem etiqueta -->
-                        <div v-else class="flex flex-col items-center gap-2">
-                            <div class="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center text-red-400">
-                                <i class="pi pi-times"></i>
-                            </div>
-                            <p class="text-xs text-gray-500">Não comprada</p>
-                        </div>
-                        <div class="w-px h-12 bg-gray-200 hidden md:block"></div>
-                        <!-- Botão de compra ou ações -->
-                        <div class="flex gap-2">
-                            <template v-if="vehicle.etiqueta">
-                                <NuxtLink :to="`/dashboard/veiculos/${vehicle.id}/editar`" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:border-it-primary hover:text-it-primary transition">
-                                    Editar
-                                </NuxtLink>
-                                <button class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition">
-                                    Excluir
-                                </button>
-                            </template>
-                            <template v-else>
-                                <ButtonLink
-                                    to="/dashboard/etiquetas/comprar"
-                                    variant="primary"
-                                    size="sm"
-                                >
-                                    <i class="pi pi-shopping-cart"></i>
-                                    Comprar Etiqueta
-                                </ButtonLink>
-                            </template>
-                        </div>
-                    </div>
-                </div>
+                    :vehicle="vehicle"
+                    @vehicle-deleted="handleVehicleDeleted"
+                />
             </div>
 
             <!-- Sem veículos -->
