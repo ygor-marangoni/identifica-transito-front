@@ -54,10 +54,14 @@ button.bg-it-primary:hover {
     background-color: var(--it-secondary);
 }
 
-.text-it-primary, .color-it-primary,
-.p-step-active .p-step-title,
-.p-step-active .p-step-number {
+.text-it-primary, .color-it-primary
+{
     color: var(--it-primary);
+}
+
+.p-step-active .p-step-title,
+.p-step-active .p-step-number  {
+    color: var(--it-primary)!important;
 }
 .text-it-secondary, .color-it-secondary {
     color: var(--it-secondary);
