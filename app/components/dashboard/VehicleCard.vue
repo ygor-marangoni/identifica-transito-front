@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ButtonLink from '~/components/ButtonLink.vue';
 import { useVehicleActions } from '~/composables/useVehicleActions';
+import { useRuntimeConfig } from '#imports';
 
 interface Vehicle {
     id: number;
@@ -33,6 +34,15 @@ const handleDelete = (vehicle: Vehicle) => {
     );
 };
 
+// Ajuda a compor URLs de assets respeitando app.baseURL em produção
+const runtimeConfig = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    const base = runtimeConfig.app?.baseURL || '/';
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
+};
+
 // Mapeamento de cores de etiqueta para caminhos de arquivo
 const getEtiquetaImagePath = (cor: string | null) => {
     if (!cor) return undefined;
@@ -43,7 +53,8 @@ const getEtiquetaImagePath = (cor: string | null) => {
         'vermelho': '/images/dashboard/etiquetas/vermelho.svg',
         'laranja': '/images/dashboard/etiquetas/laranja.svg'
     };
-    return colorMap[cor.toLowerCase()] || undefined;
+    const src = colorMap[cor.toLowerCase()];
+    return src ? assetWithBase(src) : undefined;
 };
 </script>
 
