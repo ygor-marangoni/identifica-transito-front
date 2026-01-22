@@ -67,7 +67,7 @@ const handleLogout = () => {
         <!-- Footer menu -->
         <div class="border-t border-gray-200 p-4 space-y-2">
             <!-- Meu Perfil -->
-            <NuxtLink to="/profile" class="flex items-center gap-3 px-4 py-3 text-it-primary hover:bg-blue-50 rounded-lg transition-colors">
+            <NuxtLink to="/dashboard/perfil" class="flex items-center gap-3 px-4 py-3 text-it-primary hover:bg-blue-50 rounded-lg transition-colors">
                 <i class="pi pi-user text-lg"></i>
                 <span class="font-medium">Meu Perfil</span>
             </NuxtLink>

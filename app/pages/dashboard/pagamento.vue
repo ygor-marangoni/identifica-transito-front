@@ -337,7 +337,7 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-end pt-6">
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                         </div>
                         </template>
                     </StepPanel>
@@ -388,8 +388,8 @@ const handleCepChange = (value: string) => {
                             </div>
                         </div>
                         <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
+                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
+                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
                         </div>
                         </template>
                     </StepPanel>
@@ -500,9 +500,9 @@ const handleCepChange = (value: string) => {
                                 <p class="text-sm text-gray-600">Geraremos seu boleto após a confirmação.</p>
                             </div>
                         </div>
-                        <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
-                            <Button label="Finalizar Pedido" icon="pi pi-check" size="sm">Realizar pagamento</Button>
+                        <div class="flex justify-start pt-6 gap-3">
+                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                            <Button label="Realizar pagamento" icon="pi pi-check" size="sm" />
                         </div>
                         </template>
                     </StepPanel>

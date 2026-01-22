@@ -23,9 +23,9 @@ const veiculosDisponiveis = ref([
         placa: 'ABC-1234',
         brand: 'Toyota',
         model: 'Corolla',
-        year: 2022,
-        color: 'Preto',
-        perfilUso: 'idoso',
+        state: 'São Paulo',
+        city: 'São Bernardo',
+        useProfile: 'idoso',
         temEtiqueta: false,
         selecionado: false
     },
@@ -34,9 +34,9 @@ const veiculosDisponiveis = ref([
         placa: 'DEF-5678',
         brand: 'Honda',
         model: 'Civic',
-        year: 2021,
-        color: 'Branco',
-        perfilUso: 'autista',
+        state: 'São Paulo',
+        city: 'São Bernardo',
+        useProfile: 'autista',
         temEtiqueta: false,
         selecionado: false
     },
@@ -45,9 +45,9 @@ const veiculosDisponiveis = ref([
         placa: 'GHI-9012',
         brand: 'Volkswagen',
         model: 'Gol',
-        year: 2020,
-        color: 'Cinza',
-        perfilUso: 'aplicativo',
+        state: 'São Paulo',
+        city: 'São Bernardo',
+        useProfile: 'aplicativo',
         temEtiqueta: false,
         selecionado: false
     }

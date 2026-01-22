@@ -56,7 +56,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <QuickLink icon="pi pi-car" title="Meus Veículos" to="/dashboard/veiculos" subtitle="Gerencie e acompanhe" :badge="stats.vehicles" />
-                <QuickLink icon="pi pi-list" title="Minhas Etiquetas" to="/dashboard/pedidos" subtitle="Status e histórico" :badge="stats.orders" />
+                <QuickLink icon="pi pi-list" title="Minhas Etiquetas" to="/dashboard/etiquetas" subtitle="Status e histórico" :badge="stats.orders" />
                 <QuickLink icon="pi pi-user" title="Meu Perfil" to="/dashboard/perfil" subtitle="Dados e segurança" />
                 <QuickLink icon="pi pi-question-circle" title="Suporte" to="/dashboard/suporte" subtitle="Fale com a gente" />
             </div>
@@ -69,7 +69,7 @@
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg! font-semibold text-gray-900 mb-0!">Últimos Pedidos</h3>
-                    <NuxtLink to="/orders" class="text-xs text-it-primary font-medium hover:underline">Ver todos</NuxtLink>
+                    <NuxtLink to="/dashboard/pedidos" class="text-xs text-it-primary font-medium hover:underline">Ver todos</NuxtLink>
                 </div>
                 
                 <!-- Com pedidos -->

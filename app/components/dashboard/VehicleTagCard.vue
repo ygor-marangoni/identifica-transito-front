@@ -1,10 +1,11 @@
 <script setup lang="ts">
+
 interface Veiculo {
     id: number;
     placa: string;
     brand: string;
     model: string;
-    state: number;
+    state: string;
     city: string;
     useProfile: string;
     temEtiqueta: boolean;
@@ -62,15 +63,15 @@ const handleViewDetails = (id: number) => {
         <!-- Detalhes do Veículo -->
         <div class="space-y-3 mb-4 pb-4 border-b border-gray-200">
             <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Estado</span>
+                <span class="text-gray-600 font-semibold">Estado</span>
                 <span class="font-medium text-gray-900">{{ veiculo.state }}</span>
             </div>
             <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Cidade</span>
+                <span class="text-gray-600 font-semibold">Cidade</span>
                 <span class="font-medium text-gray-900">{{ veiculo.city }}</span>
             </div>
             <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Perfil</span>
+                <span class="text-gray-600 font-semibold">Perfil</span>
                 <span class="font-medium text-gray-900 capitalize">{{ veiculo.useProfile }}</span>
             </div>
         </div>

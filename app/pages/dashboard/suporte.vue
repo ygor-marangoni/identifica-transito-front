@@ -113,7 +113,7 @@ const contactChannels = [
                     <i class="pi pi-info-circle text-it-primary text-2xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Horário de Atendimento</h3>
+                    <h3 class="text-lg! font-bold text-gray-900 mb-1! -mt-2!">Horário de Atendimento</h3>
                     <p class="text-gray-700 leading-6">
                         Segunda a Sexta: <span class="font-semibold">9h00 às 18h00</span><br>
                         Sábado, Domingo e Feriados: Atendimento por e-mail

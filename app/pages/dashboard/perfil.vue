@@ -17,6 +17,15 @@ useHead({
     ]
 });
 
+// Função helper para assets com baseURL
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) {
+        return path; // Já é URL absoluta ou data URL
+    }
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 // Dados do usuário
 const userProfile = ref({
     nome: 'Wesley Souza',
@@ -155,7 +164,7 @@ const changePassword = async () => {
             <div class="mb-8 flex flex-col items-center">
                 <div class="relative mb-4">
                     <img
-                        :src="isEditing ? editingData.avatar : userProfile.avatar"
+                        :src="assetWithBase(isEditing ? editingData.avatar : userProfile.avatar)"
                         :alt="userProfile.nome"
                         class="w-32 h-32 rounded-full object-cover border-4 border-it-primary shadow-lg"
                     />
