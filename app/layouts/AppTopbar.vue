@@ -41,10 +41,16 @@ const closeProfileMenu = () => {
         </div>
 
         <div class="layout-topbar-actions">
-            <div class="layout-config-menu flex items-center">
+            <!-- <div class="layout-config-menu flex items-center">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
+            </div> -->
+
+            <!-- Data atual -->
+            <div class="layout-topbar-date hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-surface-700 rounded-lg">
+                <i class="pi pi-calendar text-it-primary"></i>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
             </div>
 
             <div class="layout-topbar-menu hidden lg:block">
@@ -52,7 +58,7 @@ const closeProfileMenu = () => {
                     <!-- Profile Button -->
                     <button 
                         type="button" 
-                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-surface-700 transition-colors"
                         @click="toggleProfileMenu"
                     >
                         <img 
@@ -65,7 +71,7 @@ const closeProfileMenu = () => {
                     <!-- Profile Dropdown Menu -->
                     <div 
                         v-if="showProfileMenu"
-                        class="absolute right-0 top-12 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
+                        class="absolute right-0 top-12 mt-2 w-64 bg-white dark:bg-surface-800 rounded-lg shadow-xl border border-gray-200 dark:border-surface-700 z-50"
                         @click.stop
                     >
                         <!-- User Info -->
@@ -77,21 +83,21 @@ const closeProfileMenu = () => {
                                     class="w-12 h-12 rounded-full object-cover"
                                 />
                                 <div>
-                                    <p class="font-semibold text-gray-900 mb-0!">{{ user.name }}</p>
-                                    <p class="text-sm text-gray-500 mb-0!">{{ user.email }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white mb-0!">{{ user.name }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0!">{{ user.email }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Separator -->
-                        <div class="border-t border-gray-200"></div>
+                        <div class="border-t border-gray-200 dark:border-surface-700"></div>
 
                         <!-- Menu Items -->
                         <div class="p-2">
                             <!-- Meu Perfil -->
                             <NuxtLink 
                                 to="/profile"
-                                class="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                class="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-700 rounded-lg transition-colors"
                                 @click="closeProfileMenu"
                             >
                                 <i class="pi pi-user text-lg text-it-primary"></i>
@@ -100,23 +106,23 @@ const closeProfileMenu = () => {
 
                             <!-- Configurações -->
                             <NuxtLink 
-                                to="/settings"
-                                class="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                to="/dashboard/configuracoes"
+                                class="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-700 rounded-lg transition-colors"
                                 @click="closeProfileMenu"
                             >
-                                <i class="pi pi-cog text-lg text-gray-600"></i>
+                                <i class="pi pi-cog text-lg text-gray-600 dark:text-gray-400"></i>
                                 <span class="font-medium">Configurações</span>
                             </NuxtLink>
                         </div>
 
                         <!-- Separator -->
-                        <div class="border-t border-gray-200"></div>
+                        <div class="border-t border-gray-200 dark:border-surface-700"></div>
 
                         <!-- Logout -->
                         <div class="p-2">
                             <button 
                                 @click="handleLogout"
-                                class="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                class="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 <i class="pi pi-sign-out text-lg"></i>
                                 <span class="font-medium">Sair</span>

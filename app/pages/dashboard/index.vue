@@ -51,7 +51,7 @@
         <section class="space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl! font-semibold text-gray-900">Acesso Rápido</h2>
-                <NuxtLink to="/support" class="text-sm text-it-primary hover:underline">Precisa de ajuda?</NuxtLink>
+                <NuxtLink to="/dashboard/suporte" class="text-sm text-it-primary hover:underline">Precisa de ajuda?</NuxtLink>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

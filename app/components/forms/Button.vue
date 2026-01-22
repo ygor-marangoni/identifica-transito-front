@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   fullWidth?: boolean;
   buttonClass?: string;
   icon?: string;
+  label?: string;
 }>(), {
   type: 'button',
   variant: 'primary',
@@ -23,6 +24,7 @@ const props = withDefaults(defineProps<{
   fullWidth: false,
   buttonClass: '',
   icon: '',
+  label: ''
 });
 
 const emit = defineEmits<{
@@ -50,7 +52,7 @@ const computedClass = computed(() => {
 
   // Size styles
   if (props.size === 'sm') {
-    classes.push('h-[40px] px-4 py-2 text-md');
+    classes.push('h-[40px]! px-4 py-2 text-md');
   } else if (props.size === 'md') {
     classes.push('h-[50px] px-6 py-3 text-base');
   } else if (props.size === 'lg') {
@@ -95,6 +97,7 @@ const handleClick = (event: MouseEvent) => {
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
     <i v-else-if="icon" :class="icon"></i>
+    <span v-if="label">{{ label }}</span>
     <slot></slot>
   </button>
 </template>
