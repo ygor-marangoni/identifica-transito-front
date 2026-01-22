@@ -20,7 +20,7 @@ const userProfile = ref({
     cpf: '123.456.789-00',
     email: 'wesley.souza@example.com',
     telefone: '(11) 99234-5678',
-    dataNascimento: '1990-05-15',
+    dataNascimento: '01/01/1990',
     avatar: '/images/dashboard/avatar.jpg'
 });
 
@@ -168,6 +168,7 @@ const changePassword = async () => {
                     placeholder="Seu nome e sobrenome"
                     icon="pi pi-user"
                     :readonly="!isEditing"
+                    :disabled="!isEditing"
                     wrapper-class="w-full"
                     inputClass="w-full"
                 />
@@ -182,6 +183,7 @@ const changePassword = async () => {
                             placeholder="000.000.000-00"
                             icon="pi pi-id-card"
                             :readonly="true"
+                            :disabled="!isEditing"
                             wrapper-class="w-full"
                             inputClass="w-full"
                         />
@@ -200,6 +202,7 @@ const changePassword = async () => {
                         icon="pi pi-envelope"
                         type="email"
                         :readonly="!isEditing"
+                        :disabled="!isEditing"
                         wrapper-class="w-full"
                         inputClass="w-full"
                     />
@@ -212,6 +215,7 @@ const changePassword = async () => {
                         icon="pi pi-phone"
                         mask="(99) 99999-9999"
                         :readonly="!isEditing"
+                        :disabled="!isEditing"
                         wrapper-class="w-full"
                         inputClass="w-full"
                     />
@@ -221,9 +225,11 @@ const changePassword = async () => {
                         v-model="editingData.dataNascimento"
                         label="Data de Nascimento"
                         placeholder="DD/MM/YYYY"
+                        mask="99/99/9999"
                         icon="pi pi-calendar"
-                        type="date"
+                        type="text"
                         :readonly="!isEditing"
+                        :disabled="!isEditing"
                         wrapper-class="w-full"
                         inputClass="w-full"
                     />
