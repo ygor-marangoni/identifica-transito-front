@@ -18,9 +18,19 @@
 
 
 <template>
-  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-5 lg:p-0">
+  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-3 lg:p-0 relative">
 
-    <div id="col-one" class="hidden lg:flex w-1/2 bg-linear-to-b from-[#081AE7] to-[#1925E2] flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-1">
+    <!-- Background video (left side) -->
+    <video
+      class="hidden lg:block absolute top-0 left-0 w-1/2 h-full object-cover opacity-20 z-0 pointer-events-none"
+      src="/files/video-login.mp4"
+      autoplay
+      muted
+      loop
+      playsinline
+    ></video>
+
+    <div id="col-one" class="hidden lg:flex w-1/2 bg-linear-to-b from-[#081AE7]/85 to-[#1925E2]/85 flex-col items-center justify-center gap-15 p-12 text-white overflow-hidden relative z-10">
       <div class="text-center relative z-1">
         <img src="/images/logo-it-white.svg" alt="Logo" class="h-52 mx-auto mb-4" />
       </div>
@@ -31,10 +41,11 @@
               {{ slotProps.data.text }}
             </p>
         </template>
-    </Carousel>
+      </Carousel>
 
       <div id="socials" class="flex flex-col items-center relative">
-        <p class="text-md font-light italic mb-4 bg-[#1925E2] px-4">Acompanhe nossas redes sociais</p>
+        <!-- bg-[#1925E2] -->
+        <p class="text-md font-light italic mb-4 px-4">Acompanhe nossas redes sociais</p>
         <div class="flex gap-4">
           <a href="#" class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10">
             <i class="pi pi-instagram"></i>
@@ -87,6 +98,7 @@
       z-index: 1;
       border-radius: 50%;
       transform: translateX(-50%);
+      opacity: 0.5;
     }
 
     &::after {
@@ -100,6 +112,7 @@
       z-index: 2;
       border-radius: 50%;
       transform: translateX(-50%);
+      opacity: 0.5;
     }
   }
 

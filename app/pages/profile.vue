@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+import { useToast } from 'primevue/usetoast';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import InputText from '~/components/forms/InputText.vue';
+import InputPassword from '~/components/forms/InputPassword.vue';
 import Button from '~/components/forms/Button.vue';
 
 definePageMeta({
@@ -27,6 +30,8 @@ const userProfile = ref({
 const isEditing = ref(false);
 const isSaving = ref(false);
 
+const toast = useToast();
+
 const editingData = ref({ ...userProfile.value });
 
 const startEditing = () => {
@@ -46,7 +51,12 @@ const saveProfile = async () => {
     userProfile.value = { ...editingData.value };
     isEditing.value = false;
     isSaving.value = false;
-    // Aqui você pode adicionar um toast de sucesso
+    toast.add({
+        severity: 'success',
+        summary: 'Perfil atualizado!',
+        detail: 'Suas informações foram salvas com sucesso.',
+        life: 3000
+    });
 };
 
 const uploadAvatar = (event: Event) => {
@@ -72,11 +82,14 @@ const securityData = ref({
 const showSecurityForm = ref(false);
 const isChangingPassword = ref(false);
 
+const passwordError = computed(() => {
+    if (!securityData.value.novaSenha || !securityData.value.confirmarSenha) return '';
+    if (securityData.value.novaSenha !== securityData.value.confirmarSenha) return 'A nova senha e a confirmação precisam ser iguais.';
+    return '';
+});
+
 const changePassword = async () => {
-    if (securityData.value.novaSenha !== securityData.value.confirmarSenha) {
-        alert('As senhas não conferem!');
-        return;
-    }
+    if (passwordError.value) return;
 
     isChangingPassword.value = true;
     // Simular chamada de API
@@ -88,7 +101,12 @@ const changePassword = async () => {
     };
     showSecurityForm.value = false;
     isChangingPassword.value = false;
-    // Adicionar toast de sucesso
+    toast.add({
+        severity: 'success',
+        summary: 'Senha alterada!',
+        detail: 'Sua senha foi atualizada com sucesso.',
+        life: 3000
+    });
 };
 </script>
 
@@ -255,35 +273,41 @@ const changePassword = async () => {
 
             <!-- Security Form -->
             <div v-if="showSecurityForm" class="bg-gray-50 dark:bg-surface-700 rounded-lg p-6 space-y-4">
-                <InputText
+                <InputPassword
                     v-model="securityData.senhaAtual"
                     label="Senha Atual"
+                    labelClass="font-bold!"
                     placeholder="Digite sua senha atual"
-                    icon="pi pi-lock"
-                    type="password"
+                    id="senha-atual"
+                    autocomplete="current-password"
                     wrapper-class="w-full"
                     inputClass="w-full"
                 />
 
-                <InputText
-                    v-model="securityData.novaSenha"
-                    label="Nova Senha"
-                    placeholder="Digite uma nova senha"
-                    icon="pi pi-lock"
-                    type="password"
-                    wrapper-class="w-full"
-                    inputClass="w-full"
-                />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InputPassword
+                        v-model="securityData.novaSenha"
+                        label="Nova Senha"
+                        labelClass="font-bold!"
+                        placeholder="Digite uma nova senha"
+                        id="nova-senha"
+                        autocomplete="new-password"
+                        wrapper-class="w-full"
+                        inputClass="w-full"
+                    />
 
-                <InputText
-                    v-model="securityData.confirmarSenha"
-                    label="Confirmar Nova Senha"
-                    placeholder="Confirme a nova senha"
-                    icon="pi pi-lock"
-                    type="password"
-                    wrapper-class="w-full"
-                    inputClass="w-full"
-                />
+                    <InputPassword
+                        v-model="securityData.confirmarSenha"
+                        label="Confirmar Nova Senha"
+                        labelClass="font-bold!"
+                        placeholder="Confirme a nova senha"
+                        id="confirmar-senha"
+                        autocomplete="new-password"
+                        wrapper-class="w-full"
+                        inputClass="w-full"
+                    />
+                </div>
+                <p v-if="passwordError" class="text-sm text-red-600 dark:text-red-400 -mt-2">{{ passwordError }}</p>
 
                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mt-4">
                     <p class="text-sm text-blue-800 dark:text-blue-200">
@@ -304,7 +328,7 @@ const changePassword = async () => {
                         label="Alterar Senha"
                         icon="pi pi-check"
                         @click="changePassword"
-                        :disabled="isChangingPassword"
+                        :disabled="isChangingPassword || !!passwordError"
                         size="sm"
                     />
                 </div>

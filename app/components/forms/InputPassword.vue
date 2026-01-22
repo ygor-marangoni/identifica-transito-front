@@ -1,6 +1,6 @@
 <template>
   <div :class="wrapperClass">
-    <label v-if="label" :for="id" :class="labelClass">
+    <label v-if="label" :for="id" :class="`block text-md font-medium text-gray-600 mb-2 ${labelClass}`">
       {{ label }}
     </label>
     <InputText
@@ -69,7 +69,7 @@ const props = withDefaults(defineProps<{
   inputClass: '',
   wrapperClass: '',
   label: '',
-  labelClass: 'block text-md font-medium text-gray-600 mb-2'
+  labelClass: ''
 });
 
 const emit = defineEmits<{
