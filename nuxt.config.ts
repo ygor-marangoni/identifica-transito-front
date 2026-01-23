@@ -7,7 +7,12 @@ export default defineNuxtConfig({
   ssr: false,
   components: true,
   app: {
-    baseURL: '/identifica-transito/'
+    baseURL: '/identifica-transito/',
+    head: {
+        link: [
+            { rel: 'icon', type: 'image/svg+xml', href: '/images/logo-it-icon.svg' },
+        ]
+    }
   },
   modules: ['@nuxt/fonts', '@nuxt/image', '@primevue/nuxt-module'],
   vite: {    plugins: [      tailwindcss(),    ],  },

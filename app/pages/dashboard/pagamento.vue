@@ -325,12 +325,17 @@ const handleCepChange = (value: string) => {
                                 </div>
 
                                 <!-- Coluna Direita: Imagem (40%) -->
-                                <div class="lg:col-span-2">
-                                    <div class="bg-gray-100 rounded-2xl overflow-hidden h-full flex items-center justify-center min-h-75">
+                                <div class="lg:col-span-2 hidden md:block">
+                                    <div class="bg-gray-100 gap-4 rounded-2xl overflow-hidden h-full flex items-center justify-center min-h-75">
                                         <img 
-                                            src="https://placehold.co/600x400/e2e8f0/64748b?text=Entrega+e+Retirada" 
+                                            src="/images/dashboard/post-01.jpg" 
                                             alt="Entrega e Retirada" 
-                                            class="w-full h-full object-cover"
+                                            class="w-[300px] "
+                                        />
+                                        <img 
+                                            src="/images/dashboard/post-02.jpg" 
+                                            alt="Entrega e Retirada" 
+                                            class="w-[300px] "
                                         />
                                     </div>
                                 </div>
