@@ -2,16 +2,23 @@
 import ButtonLink from '~/components/ButtonLink.vue';
 import { useVehicleActions } from '~/composables/useVehicleActions';
 import { useRuntimeConfig } from '#imports';
+import { getVehicleTypeLabel, getUsageProfileLabel } from '~/utils/vehicleEnums';
 
 interface Vehicle {
-    id: number;
-    plate: string;
-    brand: string;
-    model: string;
-    year: number;
-    color: string;
-    etiqueta: string;
-    comprada: boolean;
+    id: number | string;
+    plate?: string;
+    type?: number | string;
+    type_label?: string;
+    name?: string;
+    register_state?: string;
+    register_city?: string;
+    usage_profile?: number | string;
+    brand?: string;
+    model?: string;
+    year?: string | number;
+    color?: string;
+    etiqueta?: string;
+    comprada?: boolean;
 }
 
 defineProps<{
@@ -19,19 +26,16 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-    vehicleDeleted: [id: number];
+    vehicleDeleted: [id: number | string];
 }>();
 
 const { confirmDelete } = useVehicleActions();
 
 const handleDelete = (vehicle: Vehicle) => {
-    confirmDelete(
-        vehicle.id,
-        `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`,
-        () => {
-            emit('vehicleDeleted', vehicle.id);
-        }
-    );
+    const label = vehicle.plate ? `placa ${vehicle.plate}` : undefined;
+    confirmDelete(vehicle.id, label, () => {
+        emit('vehicleDeleted', vehicle.id);
+    });
 };
 
 // Ajuda a compor URLs de assets respeitando app.baseURL em produção
@@ -56,6 +60,31 @@ const getEtiquetaImagePath = (cor: string | null) => {
     const src = colorMap[cor.toLowerCase()];
     return src ? assetWithBase(src) : undefined;
 };
+
+const getVehicleTitle = (vehicle: Vehicle) => {
+    if (vehicle.name) {
+        return vehicle.name;
+    }
+    return vehicle.plate || 'Veículo';
+};
+
+const getVehicleSubtitle = (vehicle: Vehicle) => {
+    const pieces: string[] = [];
+    if (vehicle.plate) pieces.push((vehicle.plate)?.toUpperCase());
+    if (vehicle.type) {
+        const typeLabel = vehicle.type_label || getVehicleTypeLabel(vehicle.type) || String(vehicle.type);
+        pieces.push(typeLabel);
+    }
+    if (vehicle.usage_profile) {
+        const usageLabel = getUsageProfileLabel(vehicle.usage_profile) || String(vehicle.usage_profile);
+        pieces.push(usageLabel);
+    }
+    if (vehicle.register_city || vehicle.register_state) {
+        const registro = [vehicle.register_city, vehicle.register_state].filter(Boolean).join(' - ');
+        pieces.push(registro);
+    }
+    return pieces.join(' • ');
+};
 </script>
 
 <template>
@@ -65,14 +94,14 @@ const getEtiquetaImagePath = (cor: string | null) => {
                 <i class="pi pi-car"></i>
             </div>
             <div>
-                <h3 class="font-semibold text-gray-900 text-2xl! mb-0!">{{ vehicle.brand }} {{ vehicle.model }}</h3>
-                <p class="text-sm text-gray-500">{{ vehicle.plate }} • {{ vehicle.year }}</p>
+                <h3 class="font-semibold text-gray-900 text-2xl! mb-0!">{{ getVehicleTitle(vehicle) }}</h3>
+                <p class="text-sm text-gray-500 capitalize">{{ getVehicleSubtitle(vehicle) }}</p>
             </div>
         </div>
 
         <div class="flex items-center gap-4">
             <!-- Etiqueta com indicador de compra -->
-            <div class="flex flex-col items-center gap-2 relative">
+            <div v-if="vehicle.etiqueta" class="flex flex-col items-center gap-2 relative">
                 <img
                     :src="getEtiquetaImagePath(vehicle.etiqueta)"
                     :alt="`Etiqueta ${vehicle.etiqueta}`"

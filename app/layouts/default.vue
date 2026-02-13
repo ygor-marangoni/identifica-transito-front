@@ -7,4 +7,5 @@
     <div class="clean-layout">
         <NuxtPage />
     </div>
+    <Toast />
 </template>

@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import { handleLogout } from '@/utils/general';
 import AppMenuItem from './AppMenuItem.vue';
 
 const model = ref([
@@ -47,11 +49,7 @@ const model = ref([
     }
 ]);
 
-const handleLogout = () => {
-    console.log('Fazendo logout...');
-    // Adicione lógica de logout aqui
-    navigateTo('/auth/login');
-};
+const toast = useToast();
 </script>
 
 <template>
@@ -73,7 +71,7 @@ const handleLogout = () => {
             </NuxtLink>
             
             <!-- Sair -->
-            <button @click="handleLogout" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+            <button @click="() => handleLogout(toast)" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                 <i class="pi pi-sign-out text-lg"></i>
                 <span class="font-medium">Sair</span>
             </button>

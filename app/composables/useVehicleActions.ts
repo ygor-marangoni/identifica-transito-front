@@ -27,13 +27,11 @@ export const useVehicleActions = () => {
         });
     };
 
-    const deleteVehicle = (vehicleId: number | string, onSuccess?: () => void) => {
-        // Aqui você faria a chamada real da API
-        // Por enquanto, vamos simular
-        console.log('Excluindo veículo:', vehicleId);
+    const deleteVehicle = async (vehicleId: number | string, onSuccess?: () => void) => {
+        try {
+            const { $api } = useNuxtApp();
+            await $api(`/vehicles/${vehicleId}`, { method: 'DELETE' });
 
-        // Simular delay da API
-        setTimeout(() => {
             toast.add({
                 severity: 'success',
                 summary: 'Sucesso!',
@@ -41,11 +39,19 @@ export const useVehicleActions = () => {
                 life: 3000
             });
 
-            // Executar callback de sucesso (se fornecido)
             if (onSuccess) {
                 onSuccess();
             }
-        }, 1000);
+        } catch (error: any) {
+            const apiMessage = error?.data?.message || error?.data?.error;
+            const errorMsg = apiMessage || error?.message || 'Não foi possível excluir o veículo.';
+            toast.add({
+                severity: 'error',
+                summary: 'Erro ao excluir',
+                detail: errorMsg,
+                life: 5000
+            });
+        }
     };
 
     return {

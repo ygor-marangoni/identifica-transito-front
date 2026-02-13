@@ -1,23 +1,22 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useLayout } from '@/layouts/composables/layout';
 import AppConfigurator from './AppConfigurator.vue';
+import { handleLogout } from '@/utils/general';
+import { useToast } from 'primevue/usetoast';
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
 const showProfileMenu = ref(false);
 
-// Dados do usuário (você pode integrar com store/composable depois)
-const user = ref({
-    name: 'Wesley Souza',
-    email: 'wesley.souza@example.com',
-    avatar: '/images/dashboard/avatar.jpg'
-});
+const auth = useAuth();
+auth.init();
 
-const handleLogout = () => {
-    console.log('Fazendo logout...');
-    // navigateTo('/auth/login');
-};
+const toast = useToast();
+
+const userName = computed(() => auth.user.value?.name || 'Usuario');
+const userEmail = computed(() => auth.user.value?.email || '');
+const userAvatar = computed(() => auth.user.value?.photo || '/images/dashboard/avatar.jpg');
 
 const toggleProfileMenu = () => {
     showProfileMenu.value = !showProfileMenu.value;
@@ -62,8 +61,8 @@ const closeProfileMenu = () => {
                         @click="toggleProfileMenu"
                     >
                         <img 
-                            :src="user.avatar" 
-                            :alt="user.name" 
+                            :src="userAvatar" 
+                            :alt="userName" 
                             class="w-8 h-8 rounded-full object-cover"
                         />
                     </button>
@@ -78,13 +77,13 @@ const closeProfileMenu = () => {
                         <div class="p-4">
                             <div class="flex items-center gap-3">
                                 <img 
-                                    :src="user.avatar" 
-                                    :alt="user.name" 
+                                    :src="userAvatar" 
+                                    :alt="userName" 
                                     class="w-12 h-12 rounded-full object-cover"
                                 />
                                 <div>
-                                    <p class="font-semibold text-gray-900 dark:text-white mb-0!">{{ user.name }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0!">{{ user.email }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white mb-0!">{{ userName }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0!">{{ userEmail }}</p>
                                 </div>
                             </div>
                         </div>
@@ -121,7 +120,7 @@ const closeProfileMenu = () => {
                         <!-- Logout -->
                         <div class="p-2">
                             <button 
-                                @click="handleLogout"
+                                @click="() => handleLogout(toast)"
                                 class="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 <i class="pi pi-sign-out text-lg"></i>

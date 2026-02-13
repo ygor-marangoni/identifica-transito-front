@@ -13,7 +13,6 @@
     { text: 'As etiquetas facilitam a identificação visual dos veículos, promovendo maior segurança e eficiência no trânsito.' },
     { text: 'Com a Identifica Trânsito, esperamos contribuir para um sistema de transporte mais organizado e seguro para todos. Faça parte dessa transformação!' }
   ];
-
 </script>
 
 

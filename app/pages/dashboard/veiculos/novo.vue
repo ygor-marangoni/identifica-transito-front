@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import InputText from '~/components/forms/InputText.vue';
 import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import { useToast } from 'primevue/usetoast';
+import { VEHICLE_TYPE_OPTIONS, USAGE_PROFILE_OPTIONS } from '~/utils/vehicleEnums';
 
 definePageMeta({
     layout: 'dashboard'
@@ -17,12 +18,16 @@ useHead({
     ]
 });
 
+const route = useRoute();
+const isEditing = computed(() => Boolean(route.query.editar));
+const editingId = computed(() => (route.query.editar as string) || '');
+
 const formData = ref({
     placa: '',
-    tipoVeiculo: '',
+    tipoVeiculo: null as number | null,
     estadoRegistro: '',
     cidadeRegistro: '',
-    perfilUso: ''
+    perfilUso: null as number | null
 });
 
 const loading = ref(false);
@@ -31,10 +36,12 @@ const municipios = ref<Array<{ label: string; value: string }>>([]);
 const municipiosLoading = ref(false);
 
 // Buscar municípios da API IBGE
-const fetchMunicipios = async (uf: string) => {
+const fetchMunicipios = async (uf: string, preserveSelection = false) => {
     if (!uf) {
         municipios.value = [];
-        formData.value.cidadeRegistro = '';
+        if (!preserveSelection) {
+            formData.value.cidadeRegistro = '';
+        }
         return;
     }
 
@@ -52,7 +59,9 @@ const fetchMunicipios = async (uf: string) => {
         })).sort((a: any, b: any) => a.label.localeCompare(b.label));
         
         // Limpar seleção anterior de cidade
-        formData.value.cidadeRegistro = '';
+        if (!preserveSelection) {
+            formData.value.cidadeRegistro = '';
+        }
     } catch (error) {
         console.error('Erro ao buscar municípios:', error);
         toast.add({
@@ -75,13 +84,7 @@ watch(() => formData.value.estadoRegistro, (newUF) => {
 });
 
 // Opções para dropdowns
-const tiposVeiculo = [
-    { label: 'Automóvel', value: 'automovel', icon: 'pi pi-car' },
-    { label: 'Motocicleta', value: 'motocicleta', icon: 'pi pi-motorcycle' },
-    { label: 'Caminhão', value: 'caminhao', icon: 'pi pi-truck' },
-    { label: 'Ônibus', value: 'onibus', icon: 'pi pi-bus' },
-    { label: 'Outro', value: 'outro', icon: 'pi pi-ellipsis-h' }
-];
+const tiposVeiculo = VEHICLE_TYPE_OPTIONS;
 
 const estadosRegistro = [
     { label: 'Acre', value: 'AC' },
@@ -113,19 +116,46 @@ const estadosRegistro = [
     { label: 'Tocantins', value: 'TO' }
 ];
 
-const perfisUso = [
-    { id: 'idoso', label: 'Pessoa idosa', icon: 'pi pi-user' },
-    { id: 'autista', label: 'Autista', icon: 'pi pi-user' },
-    { id: 'deficiencias_ocultas', label: 'Deficiências Ocultas', icon: 'pi pi-eye-slash' },
-    { id: 'gestante', label: 'Gestante', icon: 'pi pi-heart' },
-    { id: 'recem_nascido', label: 'Recém-nascido', icon: 'pi pi-heart' },
-    { id: 'cnh_definitiva', label: 'CNH definitiva', icon: 'pi pi-id-card' },
-    { id: 'cnh_temporaria', label: 'CNH temporária', icon: 'pi pi-id-card' },
-    { id: 'empresa', label: 'Empresa', icon: 'pi pi-briefcase' },
-    { id: 'aplicativo', label: 'Aplicativo (Uber/99)', icon: 'pi pi-mobile' }
-];
+const perfisUso = USAGE_PROFILE_OPTIONS;
 
-const handleRegisterVehicle = () => {
+const fetchVehicleForEdit = async () => {
+    if (!isEditing.value || !editingId.value) return;
+
+    loading.value = true;
+    try {
+        const { $api } = useNuxtApp();
+        const response = await $api(`/vehicles/${editingId.value}`) as any;
+        const vehicle = response?.data || response;
+
+        const typeValue = Number(vehicle?.type);
+        const usageValue = Number(vehicle?.usage_profile);
+
+        formData.value = {
+            placa: vehicle?.plate || '',
+            tipoVeiculo: Number.isNaN(typeValue) ? null : typeValue,
+            estadoRegistro: vehicle?.register_state || '',
+            cidadeRegistro: vehicle?.register_city || '',
+            perfilUso: Number.isNaN(usageValue) ? null : usageValue
+        };
+
+        if (formData.value.estadoRegistro) {
+            await fetchMunicipios(formData.value.estadoRegistro, true);
+        }
+    } catch (error: any) {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        const errorMsg = apiMessage || error?.message || 'Não foi possível carregar o veículo.';
+        toast.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: errorMsg,
+            life: 5000
+        });
+    } finally {
+        loading.value = false;
+    }
+};
+
+const handleRegisterVehicle = async () => {
     if (!formData.value.placa || !formData.value.tipoVeiculo || !formData.value.estadoRegistro || !formData.value.cidadeRegistro || !formData.value.perfilUso) {
         toast.add({
             severity: 'error',
@@ -137,42 +167,69 @@ const handleRegisterVehicle = () => {
     }
 
     loading.value = true;
-    console.log('Cadastrando veículo:', formData.value);
 
-    // Simular cadastro
-    setTimeout(() => {
-        loading.value = false;
+    try {
+        const { $api } = useNuxtApp();
+        const payload = {
+            plate: formData.value.placa,
+            type: Number(formData.value.tipoVeiculo),
+            register_state: formData.value.estadoRegistro,
+            register_city: formData.value.cidadeRegistro,
+            usage_profile: Number(formData.value.perfilUso)
+        };
+
+        const response = isEditing.value
+            ? await $api(`/vehicles/${editingId.value}`, { method: 'PUT', body: payload })
+            : await $api('/vehicles', { method: 'POST', body: payload });
+
+        const vehicle = (response as any)?.data || response;
+
         toast.add({
             severity: 'success',
-            summary: 'Veículo cadastrado!',
-            detail: 'Seu veículo foi cadastrado com sucesso, compre agora sua etiqueta.',
+            summary: isEditing.value ? 'Veículo atualizado!' : 'Veículo cadastrado!',
+            detail: isEditing.value
+                ? 'Seu veículo foi atualizado com sucesso.'
+                : 'Seu veículo foi cadastrado com sucesso, compre agora sua etiqueta.',
             life: 3000
         });
-        
-        // Gerar ID simulado do veículo
-        const vehicleId = 'veh_' + Math.random().toString(36).substr(2, 9);
-        
-        // Limpar formulário
-        formData.value = {
-            placa: '',
-            tipoVeiculo: '',
-            estadoRegistro: '',
-            cidadeRegistro: '',
-            perfilUso: ''
-        };
-        
-        // Redirecionar para página de detalhes
-        navigateTo(`/dashboard/veiculos/detalhes/${vehicleId}`);
-    }, 2000);
+
+        if (!isEditing.value) {
+            formData.value = {
+                placa: '',
+                tipoVeiculo: null,
+                estadoRegistro: '',
+                cidadeRegistro: '',
+                perfilUso: null
+            };
+        }
+
+        const vehicleId = vehicle?.id || editingId.value;
+        if (vehicleId) {
+            navigateTo(`/dashboard/veiculos/detalhes/${vehicleId}`);
+        }
+    } catch (error: any) {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        const errorMsg = apiMessage || error?.message || 'Não foi possível salvar o veículo.';
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao salvar',
+            detail: errorMsg,
+            life: 5000
+        });
+    } finally {
+        loading.value = false;
+    }
 };
+
+onMounted(fetchVehicleForEdit);
 </script>
 
 <template>
     <div class="space-y-10">
         <!-- Hero -->
         <HeroSection
-            title="Novo Veículo"
-            subtitle="Cadastre seu veículo para gerar a etiqueta Identifica Trânsito."
+            :title="isEditing ? 'Editar Veículo' : 'Novo Veículo'"
+            :subtitle="isEditing ? 'Atualize os dados do seu veículo.' : 'Cadastre seu veículo para gerar a etiqueta Identifica Trânsito.'"
             :showButton="true"
             buttonLabel="Voltar para Meus Veículos"
             buttonLink="/dashboard/veiculos"
@@ -180,8 +237,13 @@ const handleRegisterVehicle = () => {
         />
         <div class="max-w-3xl mx-auto">
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-                <h1 class="text-3xl! font-bold text-it-primary mb-2">Cadastrar Novo Veículo</h1>
-                <p class="text-gray-600 mb-8!">Preencha as informações do seu veículo para gerar a etiqueta de identificação Identifica Trânsito.</p>
+                <h1 class="text-3xl! font-bold text-it-primary mb-2">{{ isEditing ? 'Editar Veículo' : 'Cadastrar Novo Veículo' }}</h1>
+                <p class="text-gray-600 mb-8!">
+                    {{ isEditing
+                        ? 'Atualize as informações do seu veículo.'
+                        : 'Preencha as informações do seu veículo para gerar a etiqueta de identificação Identifica Trânsito.'
+                    }}
+                </p>
 
                 <form @submit.prevent="handleRegisterVehicle" class="space-y-8">
                     <!-- Seção 1: Dados do Veículo -->
@@ -263,13 +325,13 @@ const handleRegisterVehicle = () => {
                             <div v-for="perfil in perfisUso" :key="perfil.id" class="flex items-center gap-3">
                                 <input
                                     type="radio"
-                                    :id="perfil.id"
+                                    :id="String(perfil.id)"
                                     :value="perfil.id"
-                                    v-model="formData.perfilUso"
+                                    v-model.number="formData.perfilUso"
                                     required
                                     class="mt-1 w-5 h-5 text-it-primary border-gray-300 focus:ring-it-primary cursor-pointer"
                                 />
-                                <label :for="perfil.id" class="text-md font-medium text-gray-900 cursor-pointer">
+                                <label :for="String(perfil.id)" class="text-md font-medium text-gray-900 cursor-pointer">
                                     {{ perfil.label }}
                                 </label>
                             </div>
@@ -282,7 +344,7 @@ const handleRegisterVehicle = () => {
                     <!-- Botão Submit -->
                     <Button type="submit" fullWidth :loading="loading" size="lg">
                         <i v-if="!loading" class="pi pi-check"></i>
-                        Cadastrar veículo
+                        {{ isEditing ? 'Salvar alterações' : 'Cadastrar veículo' }}
                     </Button>
                 </form>
             </div>

@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import ButtonLink from '~/components/ButtonLink.vue';
 import VehicleCard from '~/components/dashboard/VehicleCard.vue';
 import ConfirmDialog from 'primevue/confirmdialog';
+import { useToast } from 'primevue/usetoast';
+import Skeleton from 'primevue/skeleton';
 
 definePageMeta({
     layout: 'dashboard'
@@ -15,19 +18,36 @@ useHead({
     ]
 });
 
-// Lista de veículos (inicialmente vazia para demonstrar empty state)
-// const vehicles = ref([]);
+const vehicles = ref<Array<Record<string, any>>>([]);
+const loading = ref(false);
+const toast = useToast();
 
-// Dados de exemplo (descomente para testar com veículos)
-const vehicles = ref([
-    { id: 1, plate: 'ABC-1234', brand: 'Toyota', model: 'Corolla', year: 2022, color: 'Preto', etiqueta: 'amarela', comprada: true },
-    { id: 2, plate: 'DEF-5678', brand: 'Honda', model: 'Civic', year: 2021, color: 'Branco', etiqueta: 'azul', comprada: true },
-    { id: 3, plate: 'GHI-9012', brand: 'Volkswagen', model: 'Gol', year: 2020, color: 'Cinza', etiqueta: 'amarela', comprada: false }
-]);
+const fetchVehicles = async () => {
+    loading.value = true;
+    try {
+        const { $api } = useNuxtApp();
+        const response = await $api('/vehicles');
+        const data = response?.data || response;
+        vehicles.value = Array.isArray(data) ? data : data?.data || [];
+    } catch (error: any) {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        const errorMsg = apiMessage || error?.message || 'Não foi possível carregar os veículos.';
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao carregar',
+            detail: errorMsg,
+            life: 5000
+        });
+    } finally {
+        loading.value = false;
+    }
+};
 
-const handleVehicleDeleted = (vehicleId: number) => {
+const handleVehicleDeleted = (vehicleId: number | string) => {
     vehicles.value = vehicles.value.filter(v => v.id !== vehicleId);
 };
+
+onMounted(fetchVehicles);
 </script>
 
 <template>
@@ -43,6 +63,12 @@ const handleVehicleDeleted = (vehicleId: number) => {
 
         <!-- Lista de Veículos ou Empty State -->
         <section>
+
+            <!-- Loading -->
+            <div v-if="loading" class="space-y-4">
+                <Skeleton v-for="n in 3" :key="n" width="100%" height="5rem" class="w-full h-50 rounded-lg" />
+            </div>
+
             <!-- Com veículos -->
             <div v-if="vehicles.length > 0" class="space-y-4">
                 <VehicleCard
@@ -54,7 +80,7 @@ const handleVehicleDeleted = (vehicleId: number) => {
             </div>
 
             <!-- Sem veículos -->
-            <div v-else class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center">
+            <div v-if="!loading && vehicles.length === 0" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center">
                 <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-it-primary text-4xl mb-4">
                     <i class="pi pi-car"></i>
                 </div>

@@ -1,6 +1,6 @@
 <template>
   <div :class="wrapperClass">
-    <label v-if="label" :for="id" :class="`block text-md font-medium text-gray-600 mb-2 ${labelClass}`">
+    <label v-if="label" :for="id" :class="`block text-md font-bold text-gray-600 mb-2 ${labelClass}`">
       {{ label }}
     </label>
     <InputText
@@ -14,6 +14,7 @@
       :id="id"
       :autocomplete="autocomplete"
       :inputClass="inputClass"
+      :minlength="8"
       @input="onInput"
       @change="onChange"
       @focus="onFocus"
@@ -36,6 +37,8 @@
         </button>
       </template>
     </InputText>
+    <!-- slot -->
+    <slot></slot>
   </div>
 </template>
 
@@ -57,6 +60,7 @@ const props = withDefaults(defineProps<{
   wrapperClass?: string;
   label?: string;
   labelClass?: string;
+  minlength?: number;
 }>(), {
   modelValue: '',
   placeholder: '••••••••••••••••',
@@ -69,7 +73,8 @@ const props = withDefaults(defineProps<{
   inputClass: '',
   wrapperClass: '',
   label: '',
-  labelClass: ''
+  labelClass: '',
+  minlength: 8
 });
 
 const emit = defineEmits<{

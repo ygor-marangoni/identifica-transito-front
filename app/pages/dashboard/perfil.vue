@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import InputText from '~/components/forms/InputText.vue';
 import InputPassword from '~/components/forms/InputPassword.vue';
+import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
 import Button from '~/components/forms/Button.vue';
+import AvatarCropModal from '~/components/dashboard/AvatarCropModal.vue';
+import {formatBirthDate} from '~/utils/date';
 
 definePageMeta({
     layout: 'dashboard'
@@ -26,13 +29,16 @@ const assetWithBase = (path: string) => {
     return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
 };
 
+const auth = useAuth();
+auth.init();
+
 // Dados do usuário
 const userProfile = ref({
-    nome: 'Wesley Souza',
-    cpf: '123.456.789-00',
-    email: 'wesley.souza@example.com',
-    telefone: '(11) 99234-5678',
-    dataNascimento: '01/01/1990',
+    nome: '',
+    cpf: '',
+    email: '',
+    telefone: '',
+    dataNascimento: '',
     avatar: '/images/dashboard/avatar.jpg'
 });
 
@@ -42,6 +48,25 @@ const isSaving = ref(false);
 const toast = useToast();
 
 const editingData = ref({ ...userProfile.value });
+const selectedFile = ref<File | null>(null);
+const showCropModal = ref(false);
+const imageToCrop = ref('');
+
+watchEffect(() => {
+    if (isEditing.value) return;
+    const user = auth.user.value;
+    if (!user) return;
+
+    userProfile.value = {
+        nome: (user.name as string) || '',
+        cpf: (user.cpf as string) || '',
+        email: (user.email as string) || '',
+        telefone: (user.phone as string) || '',
+        dataNascimento: (user.birth_date as string) || '',
+        avatar: (user.photo as string) || '/images/dashboard/avatar.jpg'
+    };
+    editingData.value = { ...userProfile.value };
+});
 
 const startEditing = () => {
     isEditing.value = true;
@@ -51,34 +76,128 @@ const startEditing = () => {
 const cancelEditing = () => {
     isEditing.value = false;
     editingData.value = { ...userProfile.value };
+    selectedFile.value = null;
 };
 
 const saveProfile = async () => {
     isSaving.value = true;
-    // Simular chamada de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    userProfile.value = { ...editingData.value };
-    isEditing.value = false;
-    isSaving.value = false;
-    toast.add({
-        severity: 'success',
-        summary: 'Perfil atualizado!',
-        detail: 'Suas informações foram salvas com sucesso.',
-        life: 3000
-    });
+
+    try {
+        const { $api } = useNuxtApp();
+        const userId = auth.user.value?.id;
+
+        if (!userId) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        // Preparar FormData para enviar arquivo e dados
+        const formData = new FormData();
+        formData.append('_method', 'PUT'); // Method spoofing para Laravel
+        formData.append('name', editingData.value.nome);
+        formData.append('email', editingData.value.email);
+        formData.append('phone', editingData.value.telefone.replace(/\D/g, ''));
+        formData.append('birth_date', formatBirthDate(editingData.value.dataNascimento));
+        
+        // Adicionar foto se foi selecionada
+        if (selectedFile.value) {
+            formData.append('photo', selectedFile.value);
+        }
+
+        // POST com _method=PUT para funcionar com FormData no Laravel
+        const response = await $api(`/users/${userId}`, {
+            method: 'POST',
+            body: formData
+        }) as any;
+
+        // Atualizar dados locais
+        const updatedUser = response?.data || response;
+        auth.setSession(auth.getToken() || '', updatedUser);
+        
+        userProfile.value = { ...editingData.value };
+        isEditing.value = false;
+        selectedFile.value = null;
+
+        toast.add({
+            severity: 'success',
+            summary: 'Perfil atualizado!',
+            detail: 'Suas informações foram salvas com sucesso.',
+            life: 5000
+        });
+    } catch (error: any) {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        const errorMsg = apiMessage || error?.message || 'Não foi possível atualizar o perfil.';
+        
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao atualizar perfil',
+            detail: errorMsg,
+            life: 5000
+        });
+    } finally {
+        isSaving.value = false;
+    }
 };
 
 const uploadAvatar = (event: Event) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+            toast.add({
+                severity: 'error',
+                summary: 'Arquivo inválido',
+                detail: 'Por favor, selecione uma imagem válida.',
+                life: 5000
+            });
+            input.value = '';
+            return;
+        }
+
+        // Validar tamanho (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.add({
+                severity: 'error',
+                summary: 'Arquivo muito grande',
+                detail: 'A imagem deve ter no máximo 5MB.',
+                life: 5000
+            });
+            input.value = '';
+            return;
+        }
+
+        // Carregar imagem para o crop
         const reader = new FileReader();
         reader.onload = (e) => {
-            userProfile.value.avatar = e.target?.result as string;
-            editingData.value.avatar = e.target?.result as string;
+            imageToCrop.value = e.target?.result as string;
+            showCropModal.value = true;
         };
         reader.readAsDataURL(file);
+        
+        // Limpar input para permitir selecionar a mesma imagem novamente
+        input.value = '';
     }
+};
+
+const handleCropConfirm = (blob: Blob) => {
+    // Converter blob em File
+    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+    selectedFile.value = file;
+    
+    // Criar preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        editingData.value.avatar = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    
+    // Fechar modal
+    showCropModal.value = false;
+};
+
+const handleCropCancel = () => {
+    showCropModal.value = false;
+    imageToCrop.value = '';
 };
 
 // Segurança
@@ -91,6 +210,15 @@ const securityData = ref({
 const showSecurityForm = ref(false);
 const isChangingPassword = ref(false);
 
+const cancelPasswordChange = () => {
+    securityData.value = {
+        senhaAtual: '',
+        novaSenha: '',
+        confirmarSenha: ''
+    };
+    showSecurityForm.value = false;
+};
+
 const passwordError = computed(() => {
     if (!securityData.value.novaSenha || !securityData.value.confirmarSenha) return '';
     if (securityData.value.novaSenha !== securityData.value.confirmarSenha) return 'A nova senha e a confirmação precisam ser iguais.';
@@ -98,24 +226,82 @@ const passwordError = computed(() => {
 });
 
 const changePassword = async () => {
-    if (passwordError.value) return;
+    // Validações
+    if (passwordError.value) {
+        toast.add({
+            severity: 'error',
+            summary: 'Erro na validação',
+            detail: passwordError.value,
+            life: 5000
+        });
+        return;
+    }
+
+    if (!securityData.value.senhaAtual) {
+        toast.add({
+            severity: 'error',
+            summary: 'Senha atual obrigatória',
+            detail: 'Por favor, insira sua senha atual.',
+            life: 5000
+        });
+        return;
+    }
+
+    if (securityData.value.novaSenha.length < 8) {
+        toast.add({
+            severity: 'error',
+            summary: 'Senha muito curta',
+            detail: 'A nova senha deve ter no mínimo 8 caracteres.',
+            life: 5000
+        });
+        return;
+    }
 
     isChangingPassword.value = true;
-    // Simular chamada de API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    securityData.value = {
-        senhaAtual: '',
-        novaSenha: '',
-        confirmarSenha: ''
-    };
-    showSecurityForm.value = false;
-    isChangingPassword.value = false;
-    toast.add({
-        severity: 'success',
-        summary: 'Senha alterada!',
-        detail: 'Sua senha foi atualizada com sucesso.',
-        life: 3000
-    });
+
+    try {
+        const { $api } = useNuxtApp();
+        const userId = auth.user.value?.id;
+
+        if (!userId) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        await $api(`/users/${userId}/password`, {
+            method: 'PUT',
+            body: {
+                current_password: securityData.value.senhaAtual,
+                new_password: securityData.value.novaSenha
+            }
+        });
+
+        // Limpar formulário e fechar
+        securityData.value = {
+            senhaAtual: '',
+            novaSenha: '',
+            confirmarSenha: ''
+        };
+        showSecurityForm.value = false;
+
+        toast.add({
+            severity: 'success',
+            summary: 'Senha alterada!',
+            detail: 'Sua senha foi atualizada com sucesso.',
+            life: 5000
+        });
+    } catch (error: any) {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        const errorMsg = apiMessage || error?.message || 'Não foi possível alterar a senha.';
+        
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao alterar senha',
+            detail: errorMsg,
+            life: 5000
+        });
+    } finally {
+        isChangingPassword.value = false;
+    }
 };
 </script>
 
@@ -151,7 +337,7 @@ const changePassword = async () => {
                         />
                         <Button
                             label="Salvar"
-                            icon="pi pi-check"
+                            :icon="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
                             @click="saveProfile"
                             :disabled="isSaving"
                             size="sm"
@@ -294,29 +480,58 @@ const changePassword = async () => {
                 />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputPassword
-                        v-model="securityData.novaSenha"
-                        label="Nova Senha"
-                        labelClass="font-bold!"
-                        placeholder="Digite uma nova senha"
-                        id="nova-senha"
-                        autocomplete="new-password"
-                        wrapper-class="w-full"
-                        inputClass="w-full"
-                    />
+                    <div>
+                        <InputPassword
+                            v-model="securityData.novaSenha"
+                            label="Nova Senha"
+                            labelClass="font-bold!"
+                            placeholder="Digite uma nova senha"
+                            id="nova-senha"
+                            autocomplete="new-password"
+                            wrapper-class="w-full"
+                            inputClass="w-full"
+                        />
+                        <PasswordStrengthIndicator :password="securityData.novaSenha" />
+                    </div>
 
-                    <InputPassword
-                        v-model="securityData.confirmarSenha"
-                        label="Confirmar Nova Senha"
-                        labelClass="font-bold!"
-                        placeholder="Confirme a nova senha"
-                        id="confirmar-senha"
-                        autocomplete="new-password"
-                        wrapper-class="w-full"
-                        inputClass="w-full"
-                    />
+                    <div>
+                        <InputPassword
+                            v-model="securityData.confirmarSenha"
+                            label="Confirmar Nova Senha"
+                            labelClass="font-bold!"
+                            placeholder="Confirme a nova senha"
+                            id="confirmar-senha"
+                            autocomplete="new-password"
+                            wrapper-class="w-full"
+                            inputClass="w-full"
+                        />
+                        <div v-if="securityData.confirmarSenha" class="mt-2">
+                            <div class="flex items-center gap-2">
+                                <svg 
+                                    v-if="!passwordError && securityData.novaSenha" 
+                                    class="w-5 h-5 text-green-600" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <svg 
+                                    v-else-if="passwordError" 
+                                    class="w-5 h-5 text-red-600" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <p :class="!passwordError && securityData.novaSenha ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
+                                    {{ !passwordError && securityData.novaSenha ? 'As senhas são iguais' : 'As senhas não correspondem' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p v-if="passwordError" class="text-sm text-red-600 dark:text-red-400 -mt-2">{{ passwordError }}</p>
 
                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mt-4">
                     <p class="text-sm text-blue-800 dark:text-blue-200">
@@ -329,15 +544,17 @@ const changePassword = async () => {
                     <Button
                         label="Cancelar"
                         icon="pi pi-times"
-                        @click="showSecurityForm = false"
+                        @click="cancelPasswordChange"
                         size="sm"
                         variant="danger"
+                        :disabled="isChangingPassword"
                     />
                     <Button
                         label="Alterar Senha"
                         icon="pi pi-check"
                         @click="changePassword"
-                        :disabled="isChangingPassword || !!passwordError"
+                        :disabled="isChangingPassword || !!passwordError || !securityData.senhaAtual || securityData.novaSenha.length < 8"
+                        :loading="isChangingPassword"
                         size="sm"
                     />
                 </div>
@@ -351,5 +568,13 @@ const changePassword = async () => {
                 </p>
             </div>
         </section>
+
+        <!-- Modal de Crop de Avatar -->
+        <AvatarCropModal 
+            :show="showCropModal"
+            :imageUrl="imageToCrop"
+            @close="handleCropCancel"
+            @confirm="handleCropConfirm"
+        />
     </div>
 </template>

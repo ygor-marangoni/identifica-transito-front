@@ -4,6 +4,9 @@
   import InputText from '~/components/forms/InputText.vue';
   import InputPassword from '~/components/forms/InputPassword.vue';
   import Button from '~/components/forms/Button.vue';
+  import { useToast } from 'primevue/usetoast';
+
+  const toast = useToast();
 
   // Configurar título da página
   useHead({
@@ -13,22 +16,48 @@
     ]
   });
 
-  const email = ref('wesley@example.com');
-  const password = ref('abc123456');
+  definePageMeta({
+    middleware: ['logged']
+  });
+
+  const email = ref('');
+  const password = ref('');
   const loading = ref(false);
+  const errorMessage = ref('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     loading.value = true;
-    console.log('Logging in with', { email: email.value, password: password.value });
+    errorMessage.value = '';
 
-    setTimeout(() => {
+    try {
+      const { $api } = useNuxtApp();
+      const response = await $api('/login', {
+        method: 'POST',
+        body: {
+          email: email.value,
+          password: password.value
+        }
+      });
+
+      const token = response?.token || response?.data?.token || response?.access_token;
+      const user = response?.data || response?.user || response?.data?.user || null;
+
+      if (!token) {
+        throw new Error('Token ausente na resposta.');
+      }
+
+      const auth = useAuth();
+      auth.setSession(token, user);
+
+      await navigateTo('/dashboard');
+    } catch (error) {
+      const apiMessage = error?.data?.message || error?.data?.error;
+      errorMessage.value = apiMessage || error?.message || 'Nao foi possivel fazer login. Tente novamente.';
+      toast.add({ severity: 'error', summary: 'Erro de Login', detail: errorMessage.value, life: 5000 });
+    } finally {
       loading.value = false;
-      // Redirecionar para o dashboard ou outra página
-      navigateTo('/dashboard');
-    }, 2000);
+    }
   };
-
-  
 </script>
 
 
@@ -38,6 +67,7 @@
     <p class="text-it-gray text-md text-center lg:text-left mb-8!">Acesse sua conta para gerenciar seus veículos e etiquetas.</p>
 
     <form @submit.prevent="handleLogin" class="space-y-6">
+      <!-- <p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p> -->
       <!-- Email -->
       <InputText
         v-model="email"

@@ -27,6 +27,7 @@ const props = withDefaults(defineProps<{
     mask?: string;
     slotChar?: string;
     autoClear?: boolean;
+    minlength?: number;
 }>(), {
     modelValue: '',
     type: 'text',
@@ -46,7 +47,8 @@ const props = withDefaults(defineProps<{
     labelClass: 'block text-md font-bold text-gray-600 mb-2',
     mask: undefined,
     slotChar: '_',
-    autoClear: true
+    autoClear: true,
+    minlength: undefined
 });
 
 const emit = defineEmits<{
@@ -104,6 +106,7 @@ function onBlur(event: FocusEvent) {
                     :slotChar="slotChar"
                     :autoClear="autoClear"
                     :class="computedInputClass"
+                    :minlength="minlength"
                     @input="onInput"
                     @change="onChange"
                     @focus="onFocus"
@@ -152,6 +155,7 @@ function onBlur(event: FocusEvent) {
                 :slotChar="slotChar"
                 :autoClear="autoClear"
                 :class="computedInputClass"
+                :minlength="minlength"
                 @input="onInput"
                 @change="onChange"
                 @focus="onFocus"
@@ -179,6 +183,7 @@ function onBlur(event: FocusEvent) {
             :slotChar="slotChar"
             :autoClear="autoClear"
             :class="computedInputClass"
+            :minlength="minlength"
             @input="onInput"
             @change="onChange"
             @focus="onFocus"

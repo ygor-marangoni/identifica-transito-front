@@ -1,9 +1,11 @@
 <script setup>
-  import { ref } from 'vue';
+  import { computed, ref } from 'vue';
   import LayoutAuth from '~/components/auth/LayoutAuth.vue';
   import InputText from '~/components/forms/InputText.vue';
   import InputPassword from '~/components/forms/InputPassword.vue';
+  import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
   import Button from '~/components/forms/Button.vue';
+  import { formatBirthDate } from '~/utils/date';
 
   // Configurar título da página
   useHead({
@@ -13,32 +15,75 @@
     ]
   });
 
+  definePageMeta({
+    middleware: ['logged']
+  });
+
   const formData = ref({
-    fullName: 'Wesley Souza',
-    email: 'wesleysouza.dev@gmail.com',
-    cpf: '411.222.333-44',
-    birthDate: '01/10/1991',
-    phone: '(11) 99233-6903',
-    password: 'abc123',
+    fullName: '',
+    email: '',
+    cpf: '',
+    birthDate: '',
+    phone: '',
+    password: '',
     acceptTerms: false
   });
 
   const loading = ref(false);
+  const errorMessage = ref('');
+  const successMessage = ref('');
+  const formRef = ref(null);
 
-  const handleRegister = () => {
-    if (!formData.value.acceptTerms) {
-      alert('Você precisa aceitar os termos para continuar.');
+  const toast = useToast();
+  const handleRegister = async () => {
+    const formEl = formRef.value;
+    if (formEl && !formEl.reportValidity()) {
+      return;
+    }
+
+    if ((formData.value.password || '').length < 8) {
+      toast.add({
+        severity: 'error',
+        summary: 'Erro ao criar conta',
+        detail: 'A senha deve ter no minimo 8 caracteres.',
+        life: 5000
+      });
       return;
     }
 
     loading.value = true;
-    console.log('Registrando usuário:', formData.value);
+    errorMessage.value = '';
+    successMessage.value = '';
 
-    // Simular registro
-    setTimeout(() => {
+    try {
+      const { $api } = useNuxtApp();
+      await $api('/users', {
+        method: 'POST',
+        body: {
+          name: formData.value.fullName,
+          email: formData.value.email,
+          cpf: formData.value.cpf.replace(/\D/g, ''),
+          birth_date: formatBirthDate(formData.value.birthDate),
+          phone: formData.value.phone.replace(/\D/g, ''),
+          password: formData.value.password
+        }
+      });
+
+      successMessage.value = 'Conta criada com sucesso. Voce pode entrar agora.';
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: successMessage.value, life: 5000 });
+      await navigateTo('/auth/login');
+    } catch (error) {
+      if (error?.data?.errors) {
+        const errorsArray = Object.values(error.data.errors).flat();
+        errorMessage.value = errorsArray.join('\n');
+      } else {
+        const apiMessage = error?.data?.message || error?.data?.error;
+        errorMessage.value = apiMessage || error?.message || 'Nao foi possivel criar sua conta.';
+      }
+      toast.add({ severity: 'error', summary: 'Erro ao criar conta', detail: errorMessage.value, life: 5000 });
+    } finally {
       loading.value = false;
-      // Redirecionar para login ou dashboard
-    }, 2000);
+    }
   };
 </script>
 
@@ -47,7 +92,7 @@
     <h1 class="text-[24px]! font-bold text-it-primary mb-2!">Crie sua Conta</h1>
     <p class="text-it-gray text-sm mb-8!">Preencha todos os dados abaixo para se registrar na plataforma</p>
 
-    <form @submit.prevent="handleRegister" class="space-y-4">
+    <form ref="formRef" @submit.prevent="handleRegister" class="space-y-4">
       <!-- Grid de 2 colunas no desktop -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Nome Completo -->
@@ -127,8 +172,10 @@
           label="Senha"
           placeholder="••••••••••••••••"
           required
+          minlength="8"
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         />
+        <PasswordStrengthIndicator :password="formData.password" />
       </div>
 
       <!-- Aceite de Termos -->

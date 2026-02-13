@@ -3,7 +3,14 @@
   import LayoutAuth from '~/components/auth/LayoutAuth.vue';
   import InputText from '~/components/forms/InputText.vue';
   import Button from '~/components/forms/Button.vue';
+  import { useToast } from 'primevue/usetoast';
 
+  const toast = useToast();
+
+  definePageMeta({
+    middleware: ['logged']
+  });
+  
   // Configurar título da página
   useHead({
     title: 'Esqueceu sua senha - Identifica Trânsito',
@@ -12,19 +19,32 @@
     ]
   });
 
-  const email = ref('wesley@example.com');
+  const email = ref('');
   const loading = ref(false);
   const emailSent = ref(false);
+  const errorMessage = ref('');
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     loading.value = true;
-    console.log('Enviando email de recuperação para:', email.value);
+    errorMessage.value = '';
 
-    // Simular envio de email
-    setTimeout(() => {
-      loading.value = false;
+    try {
+      const { $api } = useNuxtApp();
+      await $api('/forgot-password', {
+        method: 'POST',
+        body: {
+          email: email.value
+        }
+      });
       emailSent.value = true;
-    }, 2000);
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Email de recuperação enviado com sucesso!', life: 5000 });
+    } catch (error) {
+      const apiMessage = error?.data?.message || error?.data?.error;
+      errorMessage.value = apiMessage || error?.message || 'Nao foi possivel enviar o email.';
+      toast.add({ severity: 'error', summary: 'Erro ao recuperar senha', detail: errorMessage.value, life: 5000 });
+    } finally {
+      loading.value = false;
+    }
   };
 </script>
 

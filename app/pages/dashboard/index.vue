@@ -1,4 +1,5 @@
 <script setup>
+    import { computed } from 'vue';
     // throw createError({ statusCode: 500, statusMessage: 'Testando erro 500' })
     import HeroSection from '~/components/dashboard/HeroSection.vue';
     import QuickLink from '~/components/dashboard/QuickLink.vue';
@@ -34,6 +35,10 @@
         vehicles: { label: 'Veículos ativos', count: '03' },
         orders: { label: 'Pedidos em andamento', count: '02' }
     };
+
+    const auth = useAuth();
+    auth.init();
+    const userName = computed(() => auth.user.value?.name || '');
 </script>
 
 <template>
@@ -41,7 +46,7 @@
         <!-- Hero / Boas-vindas -->
         <HeroSection
             greeting="Bem-vindo(a) de volta"
-            title="Olá, Wesley!"
+            :title="userName ? `Olá, ${userName}!` : 'Olá!'"
             subtitle="Acesse rapidamente seus veículos, pedidos e suporte."
             :showStats="true"
             :stats="heroStats"
