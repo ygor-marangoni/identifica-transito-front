@@ -7,8 +7,13 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import { useToast } from 'primevue/usetoast';
 import Skeleton from 'primevue/skeleton';
 
+interface Vehicle {
+    id: number | string;
+    [key: string]: any;
+}
+
 definePageMeta({
-    layout: 'dashboard'
+    layout: 'dashboard',
 });
 
 useHead({
@@ -18,7 +23,7 @@ useHead({
     ]
 });
 
-const vehicles = ref<Array<Record<string, any>>>([]);
+const vehicles = ref<Vehicle[]>([]);
 const loading = ref(false);
 const toast = useToast();
 

@@ -75,3 +75,45 @@ export const getUsageProfileLabel = (value?: number | string | null) => {
   if (!num) return '';
   return USAGE_PROFILE_LABELS[num] || '';
 };
+
+// Mapeamento de estado por extenso para UF (sigla)
+export const STATE_NAME_TO_UF: Record<string, string> = {
+  'Acre': 'AC',
+  'Alagoas': 'AL',
+  'Amapá': 'AP',
+  'Amazonas': 'AM',
+  'Bahia': 'BA',
+  'Ceará': 'CE',
+  'Distrito Federal': 'DF',
+  'Espírito Santo': 'ES',
+  'Goiás': 'GO',
+  'Maranhão': 'MA',
+  'Mato Grosso': 'MT',
+  'Mato Grosso do Sul': 'MS',
+  'Minas Gerais': 'MG',
+  'Pará': 'PA',
+  'Paraíba': 'PB',
+  'Paraná': 'PR',
+  'Pernambuco': 'PE',
+  'Piauí': 'PI',
+  'Rio de Janeiro': 'RJ',
+  'Rio Grande do Norte': 'RN',
+  'Rio Grande do Sul': 'RS',
+  'Rondônia': 'RO',
+  'Roraima': 'RR',
+  'Santa Catarina': 'SC',
+  'São Paulo': 'SP',
+  'Sergipe': 'SE',
+  'Tocantins': 'TO'
+};
+
+// Função para converter estado por extenso para UF
+export const getStateUF = (stateName?: string | null): string => {
+  if (!stateName) return '';
+  // Se já é uma sigla (2 caracteres), retorna como está
+  if (stateName.length === 2 && stateName === stateName.toUpperCase()) {
+    return stateName;
+  }
+  // Caso contrário, busca no mapeamento
+  return STATE_NAME_TO_UF[stateName] || '';
+};

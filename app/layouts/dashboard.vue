@@ -3,5 +3,7 @@
 </script>
 
 <template>
-    <AppLayout />
+    <AppLayout>
+        <slot />
+    </AppLayout>
 </template>

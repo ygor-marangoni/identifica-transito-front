@@ -6,12 +6,14 @@ export const useAuth = () => {
   const initialized = useState<boolean>('auth_initialized', () => false);
 
   const init = () => {
-    if (initialized.value) return;
-    if (process.client) {
-      token.value = localStorage.getItem('auth_token');
-      const rawUser = localStorage.getItem('auth_user');
-      user.value = rawUser ? JSON.parse(rawUser) : null;
-    }
+    if (!import.meta.client) return;
+
+    const storedToken = localStorage.getItem('auth_token');
+    const rawUser = localStorage.getItem('auth_user');
+    const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+
+    token.value = storedToken;
+    user.value = parsedUser;
     initialized.value = true;
   };
 
@@ -19,7 +21,7 @@ export const useAuth = () => {
     token.value = newToken;
     user.value = newUser ?? null;
 
-    if (process.client) {
+    if (import.meta.client) {
       localStorage.setItem('auth_token', newToken);
       if (newUser) {
         localStorage.setItem('auth_user', JSON.stringify(newUser));
@@ -33,7 +35,7 @@ export const useAuth = () => {
     token.value = null;
     user.value = null;
 
-    if (process.client) {
+    if (import.meta.client) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
     }

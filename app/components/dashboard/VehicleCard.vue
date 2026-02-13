@@ -125,7 +125,7 @@ const getVehicleSubtitle = (vehicle: Vehicle) => {
             <!-- Botão de compra ou ações -->
             <div class="flex gap-2">
                 <NuxtLink
-                    :to="`/dashboard/veiculos/novo?editar=${vehicle.id}`"
+                    :to="`/dashboard/veiculos/editar/${vehicle.id}`"
                     class="px-3 py-2 flex items-center gap-2 justify-center rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:border-it-primary hover:text-it-primary transition hover:bg-gray-50"
                 >
                     <i class="pi pi-pencil"></i>

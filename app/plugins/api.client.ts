@@ -20,6 +20,7 @@ export default defineNuxtPlugin(() => {
     },
     onResponseError({ response }) {
       if (response.status === 401) {
+        console.warn('[api] 401 for:', response.url);
         auth.clearSession();
       }
     }

@@ -13,6 +13,7 @@ useHead({
     ]
 });
 
+const route = useRoute();
 // Notificações
 const notifications = ref({
     email: true,

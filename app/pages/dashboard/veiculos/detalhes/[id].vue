@@ -98,7 +98,7 @@ const handleExcluirVeiculo = () => {
 };
 
 const handleEditar = () => {
-    navigateTo(`/dashboard/veiculos/novo?editar=${vehicleData.value.id}`);
+    navigateTo(`/dashboard/veiculos/editar/${vehicleData.value.id}`);
 };
 
 const handleComprarEtiqueta = () => {

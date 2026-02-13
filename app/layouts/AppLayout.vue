@@ -17,6 +17,7 @@ const containerClass = computed(() => {
         'layout-static-inactive': layoutState.staticMenuInactive
     };
 });
+
 </script>
 
 <template>
@@ -25,7 +26,7 @@ const containerClass = computed(() => {
         <AppSidebar />
         <div class="layout-main-container">
             <div class="layout-main">
-                <router-view />
+                <slot />
             </div>
             <AppFooter />
         </div>
