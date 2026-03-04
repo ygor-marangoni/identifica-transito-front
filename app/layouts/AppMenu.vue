@@ -25,9 +25,14 @@ const model = ref([
                 to: '/dashboard/veiculos'
             },
             {
-                label: 'Minhas Etiquetas',
+                label: 'Compre Etiquetas',
                 icon: 'pi pi-fw pi-shopping-cart',
                 to: '/dashboard/etiquetas'
+            },
+            {
+                label: 'Meus Pedidos',
+                icon: 'pi pi-fw pi-list',
+                to: '/dashboard/pedidos'
             },
             {
                 label: 'Sobre o Projeto',

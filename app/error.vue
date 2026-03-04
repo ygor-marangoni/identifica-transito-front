@@ -110,15 +110,25 @@ useHead({
                         />
                         
                         <Button
-                            v-if="!is404"
+                            v-if="!is404 && errorCode !== 401"
                             label="Tentar Novamente"
                             icon="pi pi-refresh"
                             @click="goBack"
                             buttonClass="bg-white! border-2 border-it-primary text-it-primary hover:bg-blue-50! px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                         />
                         
+                        <NuxtLink
+                            v-if="errorCode === 401"
+                            to="/auth/login"
+                            class="bg-it-primary! text-white hover:bg-blue-600! px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                        >
+                            <i class="pi pi-sign-in"></i>
+                            <span>Fazer Login</span>
+                        </NuxtLink>
+                        
                         <Button
-                            label="Ir para o Dashboard"
+                            v-else
+                            label="Ir para o Início"
                             icon="pi pi-home"
                             @click="handleClearError"
                             buttonClass="bg-it-primary! text-white hover:bg-blue-600! px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg"

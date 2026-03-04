@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import Button from '~/components/forms/Button.vue';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
 definePageMeta({
     layout: 'dashboard'
@@ -17,87 +19,234 @@ useHead({
     ]
 });
 
+interface Shipment {
+    id?: number;
+    status?: number | string | null;
+    tracking_code: string;
+    carrier: string;
+    status_label: string;
+    estimated_delivery_at: string | null;
+    delivered_at: string | null;
+    last_event: string | null;
+}
+
+interface ShipmentStatusTotal {
+    key: number;
+    name: string;
+    value: number;
+}
+
+interface Order {
+    id: number;
+    vehicle_id: number;
+    tag_name: string;
+    tag_slug: string;
+    price: string;
+    price_total: string;
+    shipping_price: string;
+    delivery: Record<string, any> | null;
+    pickup_point: {
+        id: number;
+        name: string;
+        cnpj: string;
+        phone: string;
+        responsible?: string | null;
+        responsable?: string | null;
+        address?: string | null;
+        map_link?: string | null;
+    } | null;
+    payment_method: string;
+    mp_payment_id: string;
+    mp_payment_status: string;
+    mp_payment_status_label: string;
+    status: number | string;
+    vehicle: {
+        id: number;
+        name: string;
+        plate_number: string;
+        color: string;
+        year: string;
+        tag_slug?: string | null;
+    } | null;
+    shipment: Shipment | null;
+    created_at: string;
+}
+
+const shipmentStatusAliasMap: Record<string, string> = {
+    '0': '0',
+    aguardando: '0',
+    awaiting: '0',
+    pending: '0',
+    '1': '1',
+    postado: '1',
+    posted: '1',
+    shipped: '1',
+    '2': '2',
+    'em trânsito': '2',
+    'em transito': '2',
+    in_transit: '2',
+    '3': '3',
+    'saiu para entrega': '3',
+    out_for_delivery: '3',
+    '4': '4',
+    entregue: '4',
+    delivered: '4',
+    '5': '5',
+    'tentativa falhou': '5',
+    failed_attempt: '5',
+    failed: '5',
+    '6': '6',
+    devolvido: '6',
+    returned: '6'
+};
+
+const normalizeShipmentStatus = (status: number | string | null | undefined) => {
+    const statusKey = String(status ?? '').toLowerCase();
+    return shipmentStatusAliasMap[statusKey] ?? statusKey;
+};
+
+const getOrderShipmentStatus = (order: Order) => {
+    const shipmentStatus = normalizeShipmentStatus(order.shipment?.status ?? order.shipment?.status_label);
+
+    if (order.pickup_point && shipmentStatus === '1') return 'pickup_available';
+    if (order.pickup_point && shipmentStatus === '4') return 'pickup_completed';
+
+    if (shipmentStatus) return shipmentStatus;
+    if (order.pickup_point) return 'pickup';
+    return '0';
+};
+
 // Filtros e estado
 const selectedStatus = ref('todos');
 const searchQuery = ref('');
+const confirm = useConfirm();
+const toast = useToast();
 
-// Dados dos pedidos (simular API)
-const allOrders = ref([
-    {
-        id: '#PED-1234',
-        date: '15/01/2026',
-        items: [
-            { name: 'Etiqueta Laranja', quantity: 2, price: 49.90 }
-        ],
-        total: 99.80,
-        status: 'entregue',
-        trackingCode: 'BR123456789',
-        deliveryDate: '20/01/2026',
-        paymentMethod: 'Cartão de Crédito'
-    },
-    {
-        id: '#PED-1235',
-        date: '18/01/2026',
-        items: [
-            { name: 'Etiqueta Amarela', quantity: 1, price: 49.90 }
-        ],
-        total: 49.90,
-        status: 'em-rota',
-        trackingCode: 'BR987654321',
-        estimatedDelivery: '23/01/2026',
-        paymentMethod: 'PIX'
-    },
-    {
-        id: '#PED-1236',
-        date: '20/01/2026',
-        items: [
-            { name: 'Etiqueta Azul', quantity: 3, price: 49.90 }
-        ],
-        total: 149.70,
-        status: 'em-andamento',
-        estimatedDelivery: '25/01/2026',
-        paymentMethod: 'Boleto'
-    },
-    {
-        id: '#PED-1237',
-        date: '12/01/2026',
-        items: [
-            { name: 'Etiqueta Verde', quantity: 1, price: 49.90 }
-        ],
-        total: 49.90,
-        status: 'cancelado',
-        cancelReason: 'Cancelado pelo cliente',
-        cancelDate: '13/01/2026',
-        paymentMethod: 'Cartão de Crédito'
-    },
-    {
-        id: '#PED-1238',
-        date: '10/01/2026',
-        items: [
-            { name: 'Etiqueta Vermelha', quantity: 2, price: 49.90 },
-            { name: 'Etiqueta Azul', quantity: 1, price: 49.90 }
-        ],
-        total: 149.70,
-        status: 'entregue',
-        trackingCode: 'BR555444333',
-        deliveryDate: '14/01/2026',
-        paymentMethod: 'PIX'
+// Dados dos pedidos via API
+const allOrders = ref<Order[]>([]);
+const loadingOrders = ref(false);
+const shipmentTotals = ref<Record<string, number>>({});
+const pagination = ref({
+    currentPage: 1,
+    lastPage: 1,
+    total: 0
+});
+
+const fetchShipmentTotals = async () => {
+    try {
+        const { $api } = useNuxtApp();
+        const response = await $api('/shipments/totals-by-status') as any;
+        const data = response?.data || response;
+        const list = Array.isArray(data) ? data : data?.data || [];
+
+        shipmentTotals.value = (list as ShipmentStatusTotal[]).reduce((acc, item) => {
+            acc[String(item.key)] = Number(item.value || 0);
+            return acc;
+        }, {} as Record<string, number>);
+    } catch (error) {
+        console.error('Erro ao carregar totais por status de envio:', error);
+        shipmentTotals.value = {};
     }
-]);
+};
+
+const getShipmentTotal = (keys: Array<number | string>) => {
+    return keys.reduce((total, key) => total + (shipmentTotals.value[String(key)] || 0), 0);
+};
+
+const totalShipmentCount = computed(() => {
+    return Object.values(shipmentTotals.value).reduce((sum, value) => sum + value, 0);
+});
+
+const selectedStatusToQuery: Record<string, string | null> = {
+    todos: null,
+    pending: '0',
+    processing: '1',
+    shipped: '2,3',
+    delivered: '4',
+    cancelled: '5,6'
+};
+
+const fetchOrders = async (page = 1) => {
+    loadingOrders.value = true;
+    try {
+        const { $api } = useNuxtApp();
+        const query = new URLSearchParams();
+        query.set('page', String(page));
+
+        const searchValue = searchQuery.value.trim();
+        if (searchValue) {
+            query.set('q', searchValue);
+        }
+
+        const statusValue = selectedStatusToQuery[selectedStatus.value] ?? null;
+        if (statusValue) {
+            query.set('status', statusValue);
+        }
+
+        const response = await $api(`/orders?${query.toString()}`) as any;
+
+        const payload = response?.data?.data ? response.data : response;
+        const data = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
+        allOrders.value = data;
+
+        const meta = payload?.meta ?? payload;
+        pagination.value.currentPage = Number(meta?.current_page ?? 1);
+        pagination.value.lastPage = Number(meta?.last_page ?? 1);
+        pagination.value.total = Number(meta?.total ?? data.length ?? 0);
+    } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+    } finally {
+        loadingOrders.value = false;
+    }
+};
+
+const goToPage = (page: number) => {
+    if (page < 1 || page > pagination.value.lastPage || page === pagination.value.currentPage || loadingOrders.value) {
+        return;
+    }
+
+    fetchOrders(page);
+};
+
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchQuery, () => {
+    if (searchDebounce) {
+        clearTimeout(searchDebounce);
+    }
+
+    searchDebounce = setTimeout(() => {
+        fetchOrders(1);
+    }, 400);
+});
+
+watch(selectedStatus, () => {
+    fetchOrders(1);
+});
+
 
 // Configuração de status
-const statusConfig = {
-    'em-andamento': {
-        label: 'Em andamento',
+const statusConfig: Record<string, { label: string; color: string; textColor: string; bgLight: string; darkBgLight: string; darkTextColor: string; icon: string }> = {
+    '0': {
+        label: 'Aguardando',
+        color: 'bg-yellow-500',
+        textColor: 'text-yellow-700',
+        bgLight: 'bg-yellow-50',
+        darkBgLight: 'dark:bg-yellow-900/20',
+        darkTextColor: 'dark:text-yellow-300',
+        icon: 'pi pi-clock'
+    },
+    '1': {
+        label: 'Postado',
         color: 'bg-blue-500',
         textColor: 'text-blue-700',
         bgLight: 'bg-blue-50',
         darkBgLight: 'dark:bg-blue-900/20',
         darkTextColor: 'dark:text-blue-300',
-        icon: 'pi pi-clock'
+        icon: 'pi pi-box'
     },
-    'em-rota': {
-        label: 'Em rota de entrega',
+    '2': {
+        label: 'Em trânsito',
         color: 'bg-orange-500',
         textColor: 'text-orange-700',
         bgLight: 'bg-orange-50',
@@ -105,7 +254,16 @@ const statusConfig = {
         darkTextColor: 'dark:text-orange-300',
         icon: 'pi pi-truck'
     },
-    'entregue': {
+    '3': {
+        label: 'Saiu para entrega',
+        color: 'bg-indigo-500',
+        textColor: 'text-indigo-700',
+        bgLight: 'bg-indigo-50',
+        darkBgLight: 'dark:bg-indigo-900/20',
+        darkTextColor: 'dark:text-indigo-300',
+        icon: 'pi pi-send'
+    },
+    '4': {
         label: 'Entregue',
         color: 'bg-green-500',
         textColor: 'text-green-700',
@@ -114,60 +272,260 @@ const statusConfig = {
         darkTextColor: 'dark:text-green-300',
         icon: 'pi pi-check-circle'
     },
-    'cancelado': {
-        label: 'Cancelado',
+    '5': {
+        label: 'Tentativa falhou',
         color: 'bg-red-500',
         textColor: 'text-red-700',
         bgLight: 'bg-red-50',
         darkBgLight: 'dark:bg-red-900/20',
         darkTextColor: 'dark:text-red-300',
         icon: 'pi pi-times-circle'
+    },
+    '6': {
+        label: 'Devolvido',
+        color: 'bg-rose-500',
+        textColor: 'text-rose-700',
+        bgLight: 'bg-rose-50',
+        darkBgLight: 'dark:bg-rose-900/20',
+        darkTextColor: 'dark:text-rose-300',
+        icon: 'pi pi-replay'
+    },
+    pickup: {
+        label: 'Retirada no ponto',
+        color: 'bg-purple-500',
+        textColor: 'text-purple-700',
+        bgLight: 'bg-purple-50',
+        darkBgLight: 'dark:bg-purple-900/20',
+        darkTextColor: 'dark:text-purple-300',
+        icon: 'pi pi-map-marker'
+    },
+    pickup_available: {
+        label: 'Retirada Disponível',
+        color: 'bg-purple-500',
+        textColor: 'text-purple-700',
+        bgLight: 'bg-purple-50',
+        darkBgLight: 'dark:bg-purple-900/20',
+        darkTextColor: 'dark:text-purple-300',
+        icon: 'pi pi-map-marker'
+    },
+    pickup_completed: {
+        label: 'Retirado',
+        color: 'bg-green-500',
+        textColor: 'text-green-700',
+        bgLight: 'bg-green-50',
+        darkBgLight: 'dark:bg-green-900/20',
+        darkTextColor: 'dark:text-green-300',
+        icon: 'pi pi-check-circle'
     }
 };
 
+const defaultStatusConfig = {
+    label: 'Desconhecido',
+    color: 'bg-gray-400',
+    textColor: 'text-gray-700',
+    bgLight: 'bg-gray-50',
+    darkBgLight: 'dark:bg-gray-900/20',
+    darkTextColor: 'dark:text-gray-300',
+    icon: 'pi pi-circle'
+};
+
+const getStatusConfig = (order: Order) => statusConfig[getOrderShipmentStatus(order)] ?? defaultStatusConfig;
+
+const paymentStatusConfig: Record<string, { bgLight: string; textColor: string; darkBgLight: string; darkTextColor: string }> = {
+    approved: {
+        bgLight: 'bg-emerald-50',
+        textColor: 'text-emerald-700',
+        darkBgLight: 'dark:bg-emerald-900/20',
+        darkTextColor: 'dark:text-emerald-300'
+    },
+    pending: {
+        bgLight: 'bg-amber-50',
+        textColor: 'text-amber-700',
+        darkBgLight: 'dark:bg-amber-900/20',
+        darkTextColor: 'dark:text-amber-300'
+    },
+    cancelled: {
+        bgLight: 'bg-rose-50',
+        textColor: 'text-rose-700',
+        darkBgLight: 'dark:bg-rose-900/20',
+        darkTextColor: 'dark:text-rose-300'
+    },
+    rejected: {
+        bgLight: 'bg-red-50',
+        textColor: 'text-red-700',
+        darkBgLight: 'dark:bg-red-900/20',
+        darkTextColor: 'dark:text-red-300'
+    },
+    in_process: {
+        bgLight: 'bg-sky-50',
+        textColor: 'text-sky-700',
+        darkBgLight: 'dark:bg-sky-900/20',
+        darkTextColor: 'dark:text-sky-300'
+    },
+    refunded: {
+        bgLight: 'bg-violet-50',
+        textColor: 'text-violet-700',
+        darkBgLight: 'dark:bg-violet-900/20',
+        darkTextColor: 'dark:text-violet-300'
+    },
+    in_mediation: {
+        bgLight: 'bg-orange-50',
+        textColor: 'text-orange-700',
+        darkBgLight: 'dark:bg-orange-900/20',
+        darkTextColor: 'dark:text-orange-300'
+    },
+    charged_back: {
+        bgLight: 'bg-fuchsia-50',
+        textColor: 'text-fuchsia-700',
+        darkBgLight: 'dark:bg-fuchsia-900/20',
+        darkTextColor: 'dark:text-fuchsia-300'
+    }
+};
+
+const defaultPaymentStatusConfig = {
+    bgLight: 'bg-gray-100',
+    textColor: 'text-gray-600',
+    darkBgLight: 'dark:bg-surface-700',
+    darkTextColor: 'dark:text-gray-300'
+};
+
+const getPaymentStatusConfig = (status: string) => paymentStatusConfig[status] ?? defaultPaymentStatusConfig;
+const getOrderPaymentStatus = (order: Order) => String(order.mp_payment_status || '').toLowerCase();
+const isPaymentCancelled = (order: Order) => {
+    const paymentStatus = getOrderPaymentStatus(order);
+    const paymentStatusLabel = String(order.mp_payment_status_label || '').toLowerCase();
+
+    return ['cancelled', 'canceled', 'cancelado'].includes(paymentStatus)
+        || paymentStatusLabel.includes('cancel');
+};
+
+// Progresso por status
+const statusProgress: Record<string, number> = {
+    '0': 10,
+    '1': 30,
+    '2': 55,
+    '3': 80,
+    '4': 100,
+    '5': 100,
+    '6': 100,
+    pickup: 100,
+    pickup_available: 50,
+    pickup_completed: 100
+};
+
+const getStatusProgress = (order: Order) => statusProgress[getOrderShipmentStatus(order)] ?? 10;
+
+const isDeliveredStatus = (order: Order) => ['4', 'pickup_completed'].includes(getOrderShipmentStatus(order));
+const isAwaitingShipmentStatus = (order: Order) => getOrderShipmentStatus(order) === '0';
+
 // Filtros de status
-const statusFilters = [
-    { value: 'todos', label: 'Todos', count: computed(() => allOrders.value.length) },
-    { value: 'em-andamento', label: 'Em andamento', count: computed(() => allOrders.value.filter(o => o.status === 'em-andamento').length) },
-    { value: 'em-rota', label: 'Em rota', count: computed(() => allOrders.value.filter(o => o.status === 'em-rota').length) },
-    { value: 'entregue', label: 'Entregue', count: computed(() => allOrders.value.filter(o => o.status === 'entregue').length) },
-    { value: 'cancelado', label: 'Cancelado', count: computed(() => allOrders.value.filter(o => o.status === 'cancelado').length) }
-];
+const statusFilters = computed(() => [
+    { value: 'todos', label: 'Todos', count: totalShipmentCount.value },
+    { value: 'pending', label: 'Aguardando', count: getShipmentTotal([0]) },
+    { value: 'processing', label: 'Postado', count: getShipmentTotal([1]) },
+    { value: 'shipped', label: 'Em trânsito', count: getShipmentTotal([2, 3]) },
+    { value: 'delivered', label: 'Entregue', count: getShipmentTotal([4]) },
+    { value: 'cancelled', label: 'Falhou/Devolvido', count: getShipmentTotal([5, 6]) }
+]);
 
 // Pedidos filtrados
 const filteredOrders = computed(() => {
-    let filtered = allOrders.value;
-
-    // Filtrar por status
-    if (selectedStatus.value !== 'todos') {
-        filtered = filtered.filter(order => order.status === selectedStatus.value);
-    }
-
-    // Filtrar por busca
-    if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(order =>
-            order.id.toLowerCase().includes(query) ||
-            order.items.some(item => item.name.toLowerCase().includes(query))
-        );
-    }
-
-    return filtered;
+    return allOrders.value;
 });
 
-// Estatísticas
-const stats = computed(() => ({
-    total: allOrders.value.length,
-    active: allOrders.value.filter(o => o.status === 'em-andamento' || o.status === 'em-rota').length,
-    completed: allOrders.value.filter(o => o.status === 'entregue').length
-}));
+// Estatísticas via API
+const stats = ref({ total: 0, in_progress: 0, completed: 0, failed: 0 });
+const loadingStats = ref(false);
 
-// Função para formatar valor
-const formatCurrency = (value: number) => {
+const fetchResume = async () => {
+    loadingStats.value = true;
+    try {
+        const { $api } = useNuxtApp();
+        const response = await $api('/orders/resume') as typeof stats.value;
+        stats.value = response;
+    } catch (error) {
+        console.error('Erro ao carregar resumo de pedidos:', error);
+    } finally {
+        loadingStats.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchResume();
+    fetchShipmentTotals();
+    fetchOrders();
+});
+
+const formatCurrency = (value: string | number) => {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
-    }).format(value);
+    }).format(Number(value));
+};
+
+const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+};
+
+const openTracking = (code: string) => {
+    window.open(`https://rastreamento.correios.com.br/app/index.php?codigo=${code}`, '_blank');
+};
+
+const deliveringShipmentIds = ref<number[]>([]);
+
+const refreshMainData = async () => {
+    await Promise.all([
+        fetchResume(),
+        fetchShipmentTotals(),
+        fetchOrders(pagination.value.currentPage)
+    ]);
+};
+
+const confirmReceiveProduct = (shipmentId?: number) => {
+    if (!shipmentId) return;
+
+    confirm.require({
+        message: 'Confirma que você recebeu este produto?',
+        header: 'Confirmar Recebimento',
+        icon: 'pi pi-check-circle',
+        rejectLabel: 'Não',
+        acceptLabel: 'Sim, recebi',
+        rejectClass: 'p-button-danger',
+        acceptClass: 'p-button-success',
+        accept: async () => {
+            if (deliveringShipmentIds.value.includes(shipmentId)) return;
+
+            deliveringShipmentIds.value.push(shipmentId);
+            try {
+                const { $api } = useNuxtApp();
+                await $api(`/shipments/${shipmentId}/deliver`, { method: 'PATCH' });
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'Recebimento confirmado',
+                    detail: 'Produto marcado como recebido com sucesso.',
+                    life: 3500
+                });
+
+                await refreshMainData();
+            } catch (error: any) {
+                const apiMessage = error?.data?.message || error?.data?.error;
+                toast.add({
+                    severity: 'error',
+                    summary: 'Erro ao confirmar recebimento',
+                    detail: apiMessage || 'Não foi possível confirmar o recebimento do produto.',
+                    life: 5000
+                });
+            } finally {
+                deliveringShipmentIds.value = deliveringShipmentIds.value.filter((id) => id !== shipmentId);
+            }
+        }
+    });
+};
+
+const getTagImage = (tagSlug?: string | null) => {
+    return tagSlug ? `/images/dashboard/etiquetas/${tagSlug}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
 };
 </script>
 
@@ -185,42 +543,72 @@ const formatCurrency = (value: number) => {
         />
 
         <!-- Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Total de Pedidos</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.total }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                        <i class="pi pi-shopping-cart text-xl text-blue-600 dark:text-blue-400"></i>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <template v-if="loadingStats">
+                <div
+                    v-for="n in 4"
+                    :key="`stats-skeleton-${n}`"
+                    class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="space-y-2 flex-1">
+                            <Skeleton width="7rem" height="1rem" />
+                            <Skeleton width="4rem" height="2rem" />
+                        </div>
+                        <Skeleton width="3rem" height="3rem" class="rounded-xl" />
                     </div>
                 </div>
-            </div>
+            </template>
 
-            <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Em Andamento</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.active }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
-                        <i class="pi pi-clock text-xl text-orange-600 dark:text-orange-400"></i>
+            <template v-else>
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Total de Pedidos</p>
+                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.total }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                            <i class="pi pi-shopping-cart text-xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Concluídos</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.completed }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
-                        <i class="pi pi-check-circle text-xl text-green-600 dark:text-green-400"></i>
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Pgto. em Andamento</p>
+                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.in_progress }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                            <i class="pi pi-clock text-xl text-orange-600 dark:text-orange-400"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Pgto. Concluídos</p>
+                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.completed }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                            <i class="pi pi-check-circle text-xl text-green-600 dark:text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Pgto. Cancelados</p>
+                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.failed }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                            <i class="pi pi-times-circle text-xl text-red-600 dark:text-red-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
 
         <!-- Filtros e Busca -->
@@ -248,17 +636,24 @@ const formatCurrency = (value: number) => {
             <!-- Busca -->
             <IconField iconPosition="left" class="w-full md:w-80">
                 <InputIcon class="pi pi-search" />
-                <InputText 
+                <InputText
                     v-model="searchQuery"
-                    type="text" 
-                    placeholder="Buscar por ID ou produto..." 
+                    type="text"
+                    placeholder="Buscar por ID ou Placa..."
                     class="w-full"
                 />
             </IconField>
         </div>
 
+        <!-- Loading -->
+        <div v-if="loadingOrders" class="space-y-4">
+            <div v-for="n in 3" :key="n" class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 shadow-sm p-6">
+                <Skeleton width="100%" height="120px" class="rounded-lg" />
+            </div>
+        </div>
+
         <!-- Lista de Pedidos -->
-        <div v-if="filteredOrders.length > 0" class="space-y-4">
+        <div v-else-if="filteredOrders.length > 0" class="space-y-4">
             <div
                 v-for="order in filteredOrders"
                 :key="order.id"
@@ -268,30 +663,48 @@ const formatCurrency = (value: number) => {
                 <div class="p-6 border-b border-gray-100 dark:border-surface-700">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-start gap-4">
-                            <div :class="[statusConfig[order.status].bgLight, statusConfig[order.status].darkBgLight, 'w-12 h-12 rounded-xl flex items-center justify-center']">
-                                <i :class="[statusConfig[order.status].icon, statusConfig[order.status].textColor, statusConfig[order.status].darkTextColor, 'text-xl']"></i>
+                            <div :class="[getStatusConfig(order).bgLight, getStatusConfig(order).darkBgLight, 'w-12 h-12 rounded-xl flex items-center justify-center']">
+                                <i :class="[getStatusConfig(order).icon, getStatusConfig(order).textColor, getStatusConfig(order).darkTextColor, 'text-xl']"></i>
                             </div>
                             <div>
-                                <div class="flex items-center gap-3 mb-1">
-                                    <h3 class="text-lg! mb-1! font-bold text-gray-900 dark:text-white">{{ order.id }}</h3>
-                                    <span
-                                        :class="[
-                                            statusConfig[order.status].textColor,
-                                            statusConfig[order.status].darkTextColor,
-                                            statusConfig[order.status].bgLight,
-                                            statusConfig[order.status].darkBgLight,
-                                            'px-3 py-1 rounded-full text-xs font-medium'
-                                        ]"
-                                    >
-                                        {{ statusConfig[order.status].label }}
-                                    </span>
+                                <div class="flex lg:items-center flex-col lg:flex-row gap-3 mb-1">
+                                    <h3 class="text-lg! mb-1! font-bold text-gray-900 dark:text-white">#PED-{{ order.mp_payment_id }} - {{ order.vehicle?.name || 'Veículo não informado' }}</h3>
+                                    <div class="flex gap-3">
+                                        <span
+                                            v-if="!isPaymentCancelled(order)"
+                                            :class="[
+                                                getStatusConfig(order).textColor,
+                                                getStatusConfig(order).darkTextColor,
+                                                getStatusConfig(order).bgLight,
+                                                getStatusConfig(order).darkBgLight,
+                                                'px-3 py-1 rounded-full text-xs font-medium'
+                                            ]"
+                                            v-tooltip.top="'Entrega/Retirada'"
+                                        >
+                                            {{ getStatusConfig(order).label }}
+                                        </span>
+                                        <!-- Badge pagamento -->
+                                        <span
+                                            v-if="order.mp_payment_status_label"
+                                            :class="[
+                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).bgLight,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).textColor,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).darkBgLight,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).darkTextColor,
+                                                'px-3 py-1 rounded-full text-xs font-medium'
+                                            ]"
+                                            v-tooltip.top="'Pagamento'"
+                                        >
+                                            {{ order.mp_payment_status_label }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Pedido realizado em {{ order.date }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Pedido realizado em {{ formatDate(order.created_at) }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(order.total) }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ order.paymentMethod }}</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(order.price_total) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 capitalize">{{ order.payment_method?.toUpperCase() }}</p>
                         </div>
                     </div>
                 </div>
@@ -302,106 +715,166 @@ const formatCurrency = (value: number) => {
                         <!-- Itens do pedido -->
                         <div class="lg:col-span-2 space-y-3">
                             <h4 class="text-sm! font-semibold text-gray-700 dark:text-gray-300 mb-3">Itens do Pedido</h4>
-                            <div
-                                v-for="(item, index) in order.items"
-                                :key="index"
-                                class="flex items-center justify-between p-3 bg-gray-50 dark:bg-surface-700 rounded-lg"
-                            >
+                            <div class="flex lg:items-center justify-between flex-col lg:flex-row p-3 bg-gray-50 dark:bg-surface-700 rounded-lg">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-lg bg-it-primary/10 flex items-center justify-center">
                                         <i class="pi pi-tag text-it-primary"></i>
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ item.name }}</p>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">Quantidade: {{ item.quantity }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">Kit de Etiquetas</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            Veículo #{{ order.vehicle?.id || order.vehicle_id }} - {{ order.vehicle?.name || 'Nome não informado' }} ({{ order.vehicle?.plate_number || 'Placa não informada' }})
+                                        </p>
                                     </div>
                                 </div>
-                                <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(item.price * item.quantity) }}</p>
+                                <div class="text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <img
+                                            :src="getTagImage(order?.tag_slug)"
+                                            :alt="`Selo ${order?.tag_slug || ''}`"
+                                            class="w-7 h-7 object-contain"
+                                        />
+                                        <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(order.price) }}</p>
+                                    </div>
+                                    <p v-if="parseFloat(order.shipping_price) > 0" class="text-xs text-gray-500 dark:text-gray-400">+ {{ formatCurrency(order.shipping_price) }} frete</p>
+                                </div>
+                            </div>
+
+                            <!-- Pickup Point -->
+                            <div v-if="order.pickup_point" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                                    <i class="pi pi-map-marker text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Ponto de retirada</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ order.pickup_point.name }}</p>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Informações de entrega/rastreamento -->
-                        <div class="space-y-4">
-                            <h4 class="text-sm! font-semibold text-gray-700 dark:text-gray-300">Informações de Entrega</h4>
-                            
+                        <div v-if="order.delivery || order.pickup_point" class="space-y-4">
+                            <h4 v-if="order?.shipment?.tracking_code || order.pickup_point" class="text-sm! font-semibold text-gray-700 dark:text-gray-300">Informações de Entrega</h4>
+
+                            <div v-if="order.pickup_point" class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-900 rounded-lg">
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <i class="pi pi-map-marker text-purple-600 dark:text-purple-400 mt-0.5"></i>
+                                            <p v-if="order.pickup_point.address" class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                                                {{ order.pickup_point.address }}
+                                            </p>
+                                        </div>
+                                        <a
+                                            v-if="order.pickup_point.map_link"
+                                            :href="order.pickup_point.map_link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="inline-flex items-center gap-2 mt-2 text-xs font-medium text-purple-700 dark:text-purple-300 hover:underline"
+                                        >
+                                            <i class="pi pi-map"></i>
+                                            Ver no mapa
+                                        </a>
+                                        <p v-if="order.pickup_point.responsible || order.pickup_point.responsable" class="text-xs text-purple-700 dark:text-purple-300 mt-1 flex gap-2">
+                                            <i class="pi pi-user"></i>
+                                            <strong>Responsável:</strong> {{ order.pickup_point.responsible || order.pickup_point.responsable }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Código de rastreamento -->
-                            <div v-if="order.trackingCode" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+                            <div v-if="order.shipment?.tracking_code" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
                                 <div class="flex items-start gap-2">
                                     <i class="pi pi-map-marker text-blue-600 dark:text-blue-400 mt-0.5"></i>
                                     <div class="flex-1">
                                         <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Código de Rastreamento</p>
-                                        <p class="font-mono text-sm text-blue-900 dark:text-blue-300 font-semibold">{{ order.trackingCode }}</p>
+                                        <p class="font-mono text-sm text-blue-900 dark:text-blue-300 font-semibold">{{ order.shipment.tracking_code }}</p>
+                                        <p v-if="order.shipment.carrier" class="text-xs text-blue-600 dark:text-blue-400 mt-1">{{ order.shipment.carrier }}</p>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Último evento -->
+                            <!-- <div v-if="order.shipment?.last_event" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Último evento</p>
+                                <p class="text-sm text-gray-900 dark:text-white">{{ order.shipment.last_event }}</p>
+                            </div> -->
+
                             <!-- Data de entrega -->
-                            <div v-if="order.deliveryDate" class="flex items-center gap-2 text-sm">
+                            <div v-if="order.shipment?.delivered_at" class="flex items-center gap-2 text-sm">
                                 <i class="pi pi-calendar text-green-600 dark:text-green-400"></i>
                                 <div>
                                     <p class="text-gray-600 dark:text-gray-400">Entregue em</p>
-                                    <p class="font-semibold text-gray-900 dark:text-white">{{ order.deliveryDate }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(order.shipment.delivered_at) }}</p>
                                 </div>
                             </div>
 
                             <!-- Previsão de entrega -->
-                            <div v-if="order.estimatedDelivery && !order.deliveryDate" class="flex items-center gap-2 text-sm">
+                            <div v-else-if="order.shipment?.estimated_delivery_at" class="flex items-center gap-2 text-sm">
                                 <i class="pi pi-calendar text-orange-600 dark:text-orange-400"></i>
                                 <div>
                                     <p class="text-gray-600 dark:text-gray-400">Previsão de entrega</p>
-                                    <p class="font-semibold text-gray-900 dark:text-white">{{ order.estimatedDelivery }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(order.shipment.estimated_delivery_at) }}</p>
                                 </div>
                             </div>
 
-                            <!-- Informação de cancelamento -->
-                            <div v-if="order.cancelReason" class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg">
-                                <div class="flex items-start gap-2">
-                                    <i class="pi pi-info-circle text-red-600 dark:text-red-400 mt-0.5"></i>
-                                    <div>
-                                        <p class="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Motivo do Cancelamento</p>
-                                        <p class="text-sm text-red-900 dark:text-red-300">{{ order.cancelReason }}</p>
-                                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ order.cancelDate }}</p>
-                                    </div>
-                                </div>
+                            <!-- Sem envio / retirada -->
+                            <div v-else-if="!order.shipment && !order.pickup_point" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg text-sm text-gray-500 dark:text-gray-400">
+                                <i class="pi pi-info-circle mr-2"></i>
+                                Informações de envio indisponíveis.
                             </div>
 
                             <!-- Botão de rastreamento -->
                             <Button
-                                v-if="order.trackingCode && order.status !== 'entregue'"
+                                v-if="order.shipment?.tracking_code && !isDeliveredStatus(order)"
                                 label="Rastrear Pedido"
                                 icon="pi pi-external-link"
                                 size="sm"
                                 class="w-full"
-                                @click="window.open(`https://rastreamento.correios.com.br/app/index.php?codigo=${order.trackingCode}`, '_blank')"
+                                @click="openTracking(order.shipment.tracking_code)"
                             />
+
+                            <button
+                                v-if="order.shipment?.id && !order.pickup_point && !isDeliveredStatus(order) && !isAwaitingShipmentStatus(order)"
+                                type="button"
+                                class="w-full mt-2 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                :disabled="deliveringShipmentIds.includes(order.shipment.id)"
+                                @click="confirmReceiveProduct(order.shipment.id)"
+                            >
+                                <i class="pi pi-check mr-2"></i>
+                                Recebi meu Produto
+                            </button>
                         </div>
                     </div>
 
                     <!-- Barra de progresso -->
-                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-surface-700">
+                    <div v-if="!isPaymentCancelled(order)" class="mt-6 pt-6 border-t border-gray-100 dark:border-surface-700">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status do Pedido</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ order.status === 'entregue' ? '100%' : order.status === 'em-rota' ? '66%' : order.status === 'em-andamento' ? '33%' : '0%' }}
-                            </span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ getStatusProgress(order) }}%</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 dark:bg-surface-700 overflow-hidden">
                             <div
-                                :class="statusConfig[order.status].color"
+                                :class="getStatusConfig(order).color"
                                 class="h-full transition-all duration-500"
-                                :style="{ 
-                                    width: order.status === 'entregue' || order.status === 'cancelado' ? '100%' : 
-                                           order.status === 'em-rota' ? '66%' : '33%' 
-                                }"
+                                :style="{ width: `${getStatusProgress(order)}%` }"
                             ></div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <PaginationControls
+                :current-page="pagination.currentPage"
+                :last-page="pagination.lastPage"
+                :loading="loadingOrders"
+                @page-change="goToPage"
+            />
         </div>
 
         <!-- Estado vazio -->
-        <div v-else class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 shadow-sm p-12">
+        <div v-else-if="!loadingOrders" class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 shadow-sm p-12">
             <div class="flex flex-col items-center justify-center text-center space-y-4">
                 <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-surface-700 flex items-center justify-center">
                     <i class="pi pi-inbox text-4xl text-gray-400 dark:text-gray-500"></i>

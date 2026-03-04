@@ -12,3 +12,21 @@ export const handleLogout = async (toast: { add: (arg0: { severity: string; summ
         });
     }
 }
+
+export const redirectStatus = (statusCode: number) => {
+    // match switch
+    switch (statusCode) {
+        case 401:
+            return navigateTo('/auth/login');
+        case 403:
+            return navigateTo('/forbidden');
+        case 404:
+            return navigateTo('/not-found');
+        case 500:
+            return navigateTo('/server-error');
+        default:
+            break;
+    }
+
+    return navigateTo('/not-found');
+}

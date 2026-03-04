@@ -19,9 +19,30 @@ export default defineNuxtPlugin(() => {
       }
     },
     onResponseError({ response }) {
+      console.log('API response error:', response.status);
       if (response.status === 401) {
-        console.warn('[api] 401 for:', response.url);
         auth.clearSession();
+        throw createError({
+          statusCode: 401,
+          statusMessage: 'Não autorizado',
+          fatal: true
+        });
+      }
+      
+      if (response.status === 403) {
+        throw createError({
+          statusCode: 403,
+          statusMessage: 'Acesso negado',
+          fatal: true
+        });
+      }
+      
+      if (response.status === 500) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: 'Erro interno do servidor',
+          fatal: true
+        });
       }
     }
   });

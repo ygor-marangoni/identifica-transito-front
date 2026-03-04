@@ -22,6 +22,7 @@ const municipiosLoading = ref(false);
 
 // Variável para controlar requisições em voo
 let fetchAbortController: AbortController | null = null;
+let suppressMunicipiosWatch = false;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +97,7 @@ const fetchMunicipios = async (uf: string, preserveSelection = false) => {
 watch(
   () => formData.value.estadoRegistro,
   (newUF) => {
+    if (suppressMunicipiosWatch) return;
     if (newUF) fetchMunicipios(newUF);
   }
 );
@@ -132,6 +134,7 @@ const fetchVehicleData = async (id: string) => {
     const stateUF = getStateUF(vehicle?.register_state);
     const cityToSet = vehicle?.register_city || '';
 
+    suppressMunicipiosWatch = true;
     formData.value = {
       placa: vehicle?.plate || '',
       tipoVeiculo: Number(vehicle?.type) || null,
@@ -164,6 +167,7 @@ const fetchVehicleData = async (id: string) => {
     });
   } finally {
     loading.value = false;
+    suppressMunicipiosWatch = false;
   }
 };
 
@@ -263,8 +267,7 @@ const handleSubmit = async () => {
         />
         <div class="max-w-3xl mx-auto">
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 relative">
-                <Skeleton v-if="loading" width="100%" height="60px" class="mb-4" />
-                <div v-else>
+                <div>
                     <h1 class="text-3xl! font-bold text-it-primary mb-2">{{ pageTitle }}</h1>
                     <p class="text-gray-600 mb-8!">
                         Atualize as informações do seu veículo.

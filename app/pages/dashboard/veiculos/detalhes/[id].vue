@@ -9,6 +9,7 @@ import { useVehicleActions } from '~/composables/useVehicleActions';
 import { useToast } from 'primevue/usetoast';
 import { getUsageProfileLabel, getVehicleTypeLabel } from '~/utils/vehicleEnums';
 import Skeleton from 'primevue/skeleton';
+import { redirectStatus } from '~/utils/general';
 
 definePageMeta({
     layout: 'dashboard'
@@ -40,6 +41,7 @@ const vehicleData = ref({
 });
 
 const loading = ref(false);
+const rawVehicle = ref<Record<string, any> | null>(null);
 
 const mapVehicleData = (vehicle: Record<string, any>) => {
     const registro = [vehicle.register_city, vehicle.register_state].filter(Boolean).join(' - ');
@@ -51,7 +53,7 @@ const mapVehicleData = (vehicle: Record<string, any>) => {
         perfilUso: getUsageProfileLabel(vehicle.usage_profile) || String(vehicle.usage_profile || ''),
         dataCadastro: vehicle.created_at || '',
         etiqueta: vehicle.etiqueta || {
-            codigo: 'COD123',
+            codigo: 'PIT' + vehicle.id, 
             tipo: vehicle.type_label?.toUpperCase() || 'Indisponível',
             imagem: '/images/dashboard/etiquetas/azul.svg'
         }
@@ -72,8 +74,10 @@ const fetchVehicleDetails = async (id?: string | string[]) => {
         const { $api } = useNuxtApp();
         const response = await $api(`/vehicles/${vehicleId}`) as any;
         const vehicle = response?.data || response;
+        rawVehicle.value = vehicle;
         vehicleData.value = mapVehicleData(vehicle);
     } catch (error: any) {
+        redirectStatus(error?.statusCode);
         const apiMessage = error?.data?.message || error?.data?.error;
         const errorMsg = apiMessage || error?.message || 'Não foi possível carregar o veículo.';
         toast.add({
@@ -102,6 +106,9 @@ const handleEditar = () => {
 };
 
 const handleComprarEtiqueta = () => {
+    if (!rawVehicle.value) return;
+    const selectedVehicles = useState('selectedVehicles');
+    selectedVehicles.value = [rawVehicle.value];
     navigateTo('/dashboard/pagamento');
 };
 
@@ -142,7 +149,7 @@ onBeforeRouteUpdate((to) => {
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm text-gray-600 mb-1">Placa</p>
                                 <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900 wrap-break-word">{{ vehicleData.placa }}</p>
+                                <p v-else class="font-semibold text-gray-900 wrap-break-word uppercase">{{ vehicleData.placa }}</p>
                             </div>
                         </div>
 
@@ -231,7 +238,7 @@ onBeforeRouteUpdate((to) => {
                         <div class="text-center mb-8 w-full">
                             <p class="text-sm text-gray-600 mb-1">Veículo: 
                                 <Skeleton v-if="loading" width="80px" height="16px" class="mx-auto mb-1" />
-                                <span v-else>{{ vehicleData.placa }}</span>
+                                <span v-else class="uppercase">{{ vehicleData.placa }}</span>
                             </p>
                             <p class="text-sm font-semibold text-gray-900 mb-4">
                                 Código do Kit: <span class="text-it-primary">{{ vehicleData.etiqueta.codigo }}</span>

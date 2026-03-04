@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useLayout } from '@/layouts/composables/layout';
 import AppConfigurator from './AppConfigurator.vue';
 import { handleLogout } from '@/utils/general';
@@ -16,7 +16,16 @@ const toast = useToast();
 
 const userName = computed(() => auth.user.value?.name || 'Usuario');
 const userEmail = computed(() => auth.user.value?.email || '');
-const userAvatar = computed(() => auth.user.value?.photo || '/images/dashboard/avatar.jpg');
+const lastAvatar = ref('');
+const userAvatar = computed(() => auth.user.value?.photo || lastAvatar.value || '/images/dashboard/avatar.jpg');
+
+watch(
+    () => auth.user.value?.photo,
+    (photo) => {
+        if (photo) lastAvatar.value = photo;
+    },
+    { immediate: true }
+);
 
 const toggleProfileMenu = () => {
     showProfileMenu.value = !showProfileMenu.value;

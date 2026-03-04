@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import Button from '~/components/forms/Button.vue';
 import InputText from '~/components/forms/InputText.vue';
@@ -21,109 +21,150 @@ useHead({
     ]
 });
 
-// Dados simulados dos kits selecionados
-const kits = ref([
-    { id: 'tid-6456-575', placa: '6456add4', unidades: 2, valor: 1.0 },
-    { id: 'tid-1234-490', placa: 'abc12345', unidades: 2, valor: 1.0 }
-]);
+interface Vehicle {
+    id: number;
+    plate: string;
+    name: string;
+    tag_price: string;
+    tag_color: string;
+    usage_profile_label: string;
+}
 
-const subtotalKits = computed(() => kits.value.reduce((sum, kit) => sum + kit.valor, 0));
-const frete = ref(0.1);
+interface PixResponse {
+    message: string;
+    payment_id: number;
+    status: string;
+    status_detail: string;
+    status_label: string;
+    qr_code: string;
+    qr_code_base64: string;
+    ticket_url: string;
+    purchases: any[];
+}
+
+interface PointOfSaleApiItem {
+    id: number;
+    name: string;
+    address: string | null;
+    map_link: string | null;
+    responsible: string | null;
+    phone?: string | null;
+}
+
+interface PickupPointOption {
+    label: string;
+    value: number;
+    endereco: string;
+    mapLink: string;
+    responsible: string;
+    phone?: string | null;
+}
+
+const toast = useToast();
+
+// Veículos selecionados vindos da página de etiquetas
+const selectedVehicles = useState<Vehicle[]>('selectedVehicles', () => []);
+
+onMounted(() => {
+    if (selectedVehicles.value.length === 0) {
+        navigateTo('/dashboard/etiquetas');
+    }
+
+    fetchPickupPoints();
+});
+
+const frete = ref(0.00);
+const subtotalKits = computed(() =>
+    selectedVehicles.value.reduce((sum, v) => sum + parseFloat(v.tag_price), 0)
+);
 const total = computed(() => subtotalKits.value + frete.value);
 
 // Opções de pagamento
-const paymentMethod = ref<'credito' | 'pix' | 'boleto'>('credito');
+const paymentMethod = ref<'credito' | 'pix' | 'boleto'>('pix');
 
 // Opção de entrega
 const entrega = ref<'casa' | 'ponto'>('casa');
 
 // Dados de coleta em ponto
-const pontoColeta = ref('');
-const pontosColetaOptions = ref([
-    { label: 'Posto Mauricio Souza', value: 'posto-mauricio', endereco: 'Av. Paulista, 1000 - São Paulo, SP' },
-    { label: 'Academia Azurro', value: 'academia-azurro', endereco: 'R. Wisard, 455 - Vila Madalena, SP' },
-    { label: 'Centro de Distribuição', value: 'centro-dist', endereco: 'Av. Radial Leste, 2000 - São Paulo, SP' },
-    { label: 'Ponto Zona Oeste', value: 'zona-oeste-pt', endereco: 'Av. Imirim, 1500 - Zona Oeste, SP' },
-    { label: 'Loja Zona Sul', value: 'zona-sul-loja', endereco: 'Av. Getúlio Vargas, 3000 - Zona Sul, SP' }
-]);
+const pontoColeta = ref<number | null>(null);
+const pontosColetaOptions = ref<PickupPointOption[]>([]);
+
+const fetchPickupPoints = async () => {
+    try {
+        const { $api } = useNuxtApp();
+        const response = await $api('/points-of-sale?perpage=999') as any;
+        const data = response?.data || response;
+        const list = Array.isArray(data) ? data : data?.data || [];
+
+        pontosColetaOptions.value = (list as PointOfSaleApiItem[]).map((point) => ({
+            label: point.name,
+            value: point.id,
+            endereco: point.address || '',
+            mapLink: point.map_link || '',
+            responsible: point.responsible || '',
+            phone: point.phone || null,
+        }));
+    } catch (error) {
+        console.error('Erro ao carregar pontos de retirada:', error);
+        pontosColetaOptions.value = [];
+    }
+};
 
 const enderecoSelecionado = computed(() => {
     const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
     return ponto?.endereco || '';
 });
 
-// Dados de cartão de crédito
-const cartao = ref({
-    numero: '',
-    nome: '',
-    validade: '',
-    cvc: ''
+const mapLinkSelecionado = computed(() => {
+    const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
+    return ponto?.mapLink || '';
 });
+
+const responsavelSelecionado = computed(() => {
+    const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
+    return ponto?.responsible || '';
+});
+
+const phoneSelecionado = computed(() => {
+    const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
+    return ponto?.phone || null;
+});
+
+// Dados de cartão de crédito
+const cartao = ref({ numero: '', nome: '', validade: '', cvc: '' });
 
 // Dados de endereço
-const endereco = ref({
-    cep: '',
-    rua: '',
-    numero: '',
-    complemento: '',
-    bairro: '',
-    cidade: '',
-    estado: ''
-});
+const endereco = ref({ cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' });
 
 const estados = [
-    { label: 'AC - Acre', value: 'AC' },
-    { label: 'AL - Alagoas', value: 'AL' },
-    { label: 'AP - Amapá', value: 'AP' },
-    { label: 'AM - Amazonas', value: 'AM' },
-    { label: 'BA - Bahia', value: 'BA' },
-    { label: 'CE - Ceará', value: 'CE' },
-    { label: 'DF - Distrito Federal', value: 'DF' },
-    { label: 'ES - Espírito Santo', value: 'ES' },
-    { label: 'GO - Goiás', value: 'GO' },
-    { label: 'MA - Maranhão', value: 'MA' },
-    { label: 'MT - Mato Grosso', value: 'MT' },
-    { label: 'MS - Mato Grosso do Sul', value: 'MS' },
-    { label: 'MG - Minas Gerais', value: 'MG' },
-    { label: 'PA - Pará', value: 'PA' },
-    { label: 'PB - Paraíba', value: 'PB' },
-    { label: 'PR - Paraná', value: 'PR' },
-    { label: 'PE - Pernambuco', value: 'PE' },
-    { label: 'PI - Piauí', value: 'PI' },
-    { label: 'RJ - Rio de Janeiro', value: 'RJ' },
-    { label: 'RN - Rio Grande do Norte', value: 'RN' },
-    { label: 'RS - Rio Grande do Sul', value: 'RS' },
-    { label: 'RO - Rondônia', value: 'RO' },
-    { label: 'RR - Roraima', value: 'RR' },
-    { label: 'SC - Santa Catarina', value: 'SC' },
-    { label: 'SP - São Paulo', value: 'SP' },
-    { label: 'SE - Sergipe', value: 'SE' },
-    { label: 'TO - Tocantins', value: 'TO' }
+    { label: 'AC - Acre', value: 'AC' }, { label: 'AL - Alagoas', value: 'AL' },
+    { label: 'AP - Amapá', value: 'AP' }, { label: 'AM - Amazonas', value: 'AM' },
+    { label: 'BA - Bahia', value: 'BA' }, { label: 'CE - Ceará', value: 'CE' },
+    { label: 'DF - Distrito Federal', value: 'DF' }, { label: 'ES - Espírito Santo', value: 'ES' },
+    { label: 'GO - Goiás', value: 'GO' }, { label: 'MA - Maranhão', value: 'MA' },
+    { label: 'MT - Mato Grosso', value: 'MT' }, { label: 'MS - Mato Grosso do Sul', value: 'MS' },
+    { label: 'MG - Minas Gerais', value: 'MG' }, { label: 'PA - Pará', value: 'PA' },
+    { label: 'PB - Paraíba', value: 'PB' }, { label: 'PR - Paraná', value: 'PR' },
+    { label: 'PE - Pernambuco', value: 'PE' }, { label: 'PI - Piauí', value: 'PI' },
+    { label: 'RJ - Rio de Janeiro', value: 'RJ' }, { label: 'RN - Rio Grande do Norte', value: 'RN' },
+    { label: 'RS - Rio Grande do Sul', value: 'RS' }, { label: 'RO - Rondônia', value: 'RO' },
+    { label: 'RR - Roraima', value: 'RR' }, { label: 'SC - Santa Catarina', value: 'SC' },
+    { label: 'SP - São Paulo', value: 'SP' }, { label: 'SE - Sergipe', value: 'SE' },
+    { label: 'TO - Tocantins', value: 'TO' },
 ];
 
 const loadingCep = ref(false);
 const cepError = ref('');
 
 const buscarCEP = async (cep: string) => {
-    // Remove caracteres não numéricos
     const cepLimpo = cep.replace(/\D/g, '');
-    
-    if (cepLimpo.length !== 8) {
-        return;
-    }
-
+    if (cepLimpo.length !== 8) return;
     loadingCep.value = true;
     cepError.value = '';
-
     try {
         const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
         const data = await response.json();
-
-        if (data.erro) {
-            cepError.value = 'CEP não encontrado';
-            return;
-        }
-
+        if (data.erro) { cepError.value = 'CEP não encontrado'; return; }
         endereco.value.rua = data.logradouro;
         endereco.value.bairro = data.bairro;
         endereco.value.cidade = data.localidade;
@@ -140,6 +181,178 @@ const handleCepChange = (value: string) => {
     endereco.value.cep = value;
     buscarCEP(value);
 };
+
+const isDeliveryValid = computed(() => {
+    if (entrega.value === 'casa') {
+        const { cep, rua, numero, bairro, cidade, estado } = endereco.value;
+        return !![cep, rua, numero, bairro, cidade, estado].every(v => v?.trim());
+    }
+    return !!pontoColeta.value;
+});
+
+// --- PIX ---
+const pixData = ref<PixResponse | null>(null);
+const loadingPayment = ref(false);
+const paymentSuccess = ref(false);
+
+// Statuses do Mercado Pago
+// pending / in_process / authorized → continua aguardando
+// approved                          → sucesso
+// rejected / cancelled / refunded / charged_back / in_mediation → falha
+const PENDING_STATUSES = ['pending', 'in_process', 'authorized'];
+const SUCCESS_STATUSES = ['approved'];
+
+const timerSeconds = ref(600);
+const timerDisplay = computed(() => {
+    const m = Math.floor(timerSeconds.value / 60);
+    const s = timerSeconds.value % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+});
+
+let timerInterval: ReturnType<typeof setInterval> | null = null;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+const stopPolling = () => {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+};
+
+const checkPaymentStatus = async () => {
+    if (!pixData.value?.payment_id) return;
+    try {
+        const { $api } = useNuxtApp();
+        const status = await $api(`/tag-purchases/${pixData.value.payment_id}/status`) as {
+            payment_id: number;
+            status: string;
+            status_detail: string;
+            status_label: string;
+        };
+
+        if (SUCCESS_STATUSES.includes(status.status)) {
+            stopPolling();
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            paymentSuccess.value = true;
+        } else if (status.status === 'expired') {
+            stopPolling();
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            timerSeconds.value = 600;
+            pixData.value = null;
+            toast.add({
+                severity: 'warn',
+                summary: 'PIX expirado',
+                detail: 'O tempo para pagamento expirou. Gere um novo QR Code para tentar novamente.',
+                life: 6000,
+            });
+        } else if (status.status === 'failed') {
+            stopPolling();
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            timerSeconds.value = 600;
+            pixData.value = null;
+            toast.add({
+                severity: 'error',
+                summary: 'Falha no pagamento',
+                detail: 'Ocorreu uma falha ao processar o pagamento. Tente gerar um novo QR Code.',
+                life: 6000,
+            });
+        } else if (!PENDING_STATUSES.includes(status.status)) {
+            // rejected / cancelled / refunded / charged_back / in_mediation
+            stopPolling();
+            toast.add({
+                severity: 'error',
+                summary: 'Pagamento recusado',
+                detail: `Status: ${status.status_label}. Tente novamente ou escolha outra forma de pagamento.`,
+                life: 8000,
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao verificar status do pagamento:', error);
+    }
+};
+
+const startPolling = () => {
+    stopPolling();
+    pollInterval = setInterval(checkPaymentStatus, 15000);
+};
+
+const startTimer = () => {
+    if (timerInterval) clearInterval(timerInterval);
+    timerSeconds.value = 600;
+    timerInterval = setInterval(() => {
+        timerSeconds.value--;
+        if (timerSeconds.value <= 0) {
+            clearInterval(timerInterval!);
+            timerInterval = null;
+            stopPolling();
+            pixData.value = null;
+        }
+    }, 1000);
+};
+
+onUnmounted(() => {
+    if (timerInterval) clearInterval(timerInterval);
+    stopPolling();
+});
+
+const copied = ref(false);
+const copyPixCode = async () => {
+    if (!pixData.value?.qr_code) return;
+    await navigator.clipboard.writeText(pixData.value.qr_code);
+    copied.value = true;
+    setTimeout(() => { copied.value = false; }, 2000);
+};
+
+const buildDeliveryPayload = () => {
+    if (entrega.value === 'casa') {
+        return {
+            is_delivery: true,
+            delivery_address: {
+                zip_code: endereco.value.cep,
+                street: endereco.value.rua,
+                number: endereco.value.numero,
+                complement: endereco.value.complemento,
+                neighborhood: endereco.value.bairro,
+                city: endereco.value.cidade,
+                state: endereco.value.estado,
+            },
+        };
+    }
+
+    const ponto = pontosColetaOptions.value.find(p => p.value === pontoColeta.value);
+    return {
+        is_delivery: false,
+        pickup_point: {
+            id: ponto?.value ?? null,
+            label: ponto?.label ?? null,
+        },
+    };
+};
+
+const handlePagar = async () => {
+    if (paymentMethod.value === 'pix') {
+        pixData.value = null;
+        loadingPayment.value = true;
+        try {
+            const { $api } = useNuxtApp();
+            const response = await $api('/tag-purchases', {
+                method: 'POST',
+                body: {
+                    payment_method: 'pix',
+                    coupon_discount: null,
+                    shipping_price: frete.value,
+                    vehicles: selectedVehicles.value.map(v => ({ id: v.id })),
+                    ...buildDeliveryPayload(),
+                },
+            });
+            pixData.value = response as PixResponse;
+            startTimer();
+            startPolling();
+        } catch (error: any) {
+            const errorMsg = error?.data?.message || error?.message || 'Erro ao processar pagamento.';
+            toast.add({ severity: 'error', summary: 'Erro no pagamento', detail: errorMsg, life: 5000 });
+        } finally {
+            loadingPayment.value = false;
+        }
+    }
+};
 </script>
 
 <template>
@@ -153,7 +366,19 @@ const handleCepChange = (value: string) => {
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <!-- Sucesso -->
+        <div v-if="paymentSuccess" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
+            <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 text-5xl">
+                <i class="pi pi-check-circle"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Pagamento realizado com sucesso!</h2>
+            <p class="text-gray-500 max-w-sm leading-6">Seu pagamento foi confirmado. Em breve você receberá as etiquetas no endereço cadastrado.</p>
+            <NuxtLink to="/dashboard/pedidos" class="mt-2 px-6 py-2.5 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                Acompanhar meus pedidos
+            </NuxtLink>
+        </div>
+
+        <div v-else class="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <!-- Badge de Valor Total -->
             <div class="absolute -top-4 right-6 bg-emerald-500 text-white rounded-full shadow-lg px-5 py-2.5 z-10">
                 <div class="flex items-center gap-3">
@@ -163,7 +388,7 @@ const handleCepChange = (value: string) => {
                     </div>
                     <div class="w-px h-8 bg-white/30"></div>
                     <div class="flex flex-col text-xs">
-                        <span class="opacity-80">{{ kits.length }} kit{{ kits.length > 1 ? 's' : '' }}</span>
+                        <span class="opacity-80">{{ selectedVehicles.length }} veículo{{ selectedVehicles.length > 1 ? 's' : '' }}</span>
                         <span class="opacity-80">+ frete R$ {{ frete.toFixed(2) }}</span>
                     </div>
                 </div>
@@ -202,16 +427,12 @@ const handleCepChange = (value: string) => {
                                 </button>
                             </div>
 
-                            <!-- Container com Formulário e Imagem -->
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                                <!-- Coluna Esquerda: Formulário (60%) -->
                                 <div class="lg:col-span-3 space-y-4">
-                                    <!-- RECEBER EM CASA - Endereço -->
                                     <div v-if="entrega === 'casa'">
                                         <div v-if="cepError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-4">
                                             {{ cepError }}
                                         </div>
-
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-10 gap-4">
                                             <InputText
                                                 v-model="endereco.cep"
@@ -224,62 +445,12 @@ const handleCepChange = (value: string) => {
                                                 wrapper-class="lg:col-span-3"
                                                 inputClass="w-full"
                                             />
-                                            <InputText
-                                                v-model="endereco.rua"
-                                                label="Logradouro"
-                                                placeholder="Av. Paulista"
-                                                icon="pi pi-road"
-                                                :readonly="true"
-                                                wrapper-class="md:col-span-2 lg:col-span-7"
-                                                inputClass="w-full"
-                                            />
-                                            <InputText
-                                                v-model="endereco.numero"
-                                                label="Número"
-                                                placeholder="1000"
-                                                type="number"
-                                                icon="pi pi-hashtag"
-                                                wrapper-class="lg:col-span-5"
-                                                inputClass="w-full"
-                                            />
-                                            <InputText
-                                                v-model="endereco.complemento"
-                                                label="Complemento"
-                                                placeholder="Apto 101"
-                                                icon="pi pi-building"
-                                                wrapper-class="lg:col-span-5"
-                                                inputClass="w-full"
-                                            />
-                                            <InputText
-                                                v-model="endereco.bairro"
-                                                label="Bairro"
-                                                placeholder="Bela Vista"
-                                                icon="pi pi-map"
-                                                :readonly="true"
-                                                wrapper-class="lg:col-span-5"
-                                                inputClass="w-full"
-                                            />
-                                            <InputText
-                                                v-model="endereco.cidade"
-                                                label="Cidade"
-                                                placeholder="São Paulo"
-                                                icon="pi pi-building"
-                                                :readonly="true"
-                                                wrapper-class="lg:col-span-5"
-                                                inputClass="w-full"
-                                            />
-                                            <SelectInput
-                                                v-model="endereco.estado"
-                                                label="Estado"
-                                                :options="estados"
-                                                placeholder="Selecione o estado"
-                                                icon="pi pi-map-marker"
-                                                :readonly="true"
-                                                wrapper-class="lg:col-span-5"
-                                                inputClass="w-full"
-                                            />
-                                            
-                                            <!-- Card de Frete -->
+                                            <InputText v-model="endereco.rua" label="Logradouro" placeholder="Av. Paulista" icon="pi pi-road" :readonly="true" wrapper-class="md:col-span-2 lg:col-span-7" inputClass="w-full" />
+                                            <InputText v-model="endereco.numero" label="Número" placeholder="1000" type="number" icon="pi pi-hashtag" wrapper-class="lg:col-span-5" inputClass="w-full" />
+                                            <InputText v-model="endereco.complemento" label="Complemento" placeholder="Apto 101" icon="pi pi-building" wrapper-class="lg:col-span-5" inputClass="w-full" />
+                                            <InputText v-model="endereco.bairro" label="Bairro" placeholder="Bela Vista" icon="pi pi-map" :readonly="true" wrapper-class="lg:col-span-5" inputClass="w-full" />
+                                            <InputText v-model="endereco.cidade" label="Cidade" placeholder="São Paulo" icon="pi pi-building" :readonly="true" wrapper-class="lg:col-span-5" inputClass="w-full" />
+                                            <SelectInput v-model="endereco.estado" label="Estado" :options="estados" placeholder="Selecione o estado" icon="pi pi-map-marker" :readonly="true" wrapper-class="lg:col-span-5" inputClass="w-full" />
                                             <div class="lg:col-span-5 flex flex-col justify-end">
                                                 <label class="block text-sm font-semibold text-gray-900 mb-2">Frete</label>
                                                 <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-4 h-[60px] flex items-center justify-between">
@@ -293,57 +464,43 @@ const handleCepChange = (value: string) => {
                                         </div>
                                     </div>
 
-                                    <!-- RETIRAR EM PONTO DE COLETA -->
                                     <div v-else-if="entrega === 'ponto'" class="space-y-4 p-8 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <div>
-                                            <h3 class="text-lg! font-semibold text-gray-900 mb-4">Pontos de Coleta</h3>
-                                        </div>
-                                        
-                                        <SelectInput
-                                            v-model="pontoColeta"
-                                            label="Selecione um Ponto de Coleta"
-                                            :options="pontosColetaOptions"
-                                            placeholder="Escolha um local"
-                                            icon="pi pi-map-marker"
-                                            wrapper-class="w-full"
-                                            inputClass="w-full"
-                                        />
-
+                                        <h3 class="text-lg! font-semibold text-gray-900 mb-4">Pontos de Coleta</h3>
+                                        <SelectInput v-model="pontoColeta" label="Selecione um Ponto de Coleta" :options="pontosColetaOptions" placeholder="Escolha um local" icon="pi pi-map-marker" wrapper-class="w-full" inputClass="w-full" />
                                         <div v-if="enderecoSelecionado" class="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mt-4">
-                                            <p class="text-sm text-gray-700">
-                                                <span class="font-semibold">Endereço:</span> {{ enderecoSelecionado }}
-                                            </p>
+                                            <p v-if="responsavelSelecionado" class="text-sm text-gray-700"><span class="font-semibold">Responsável:</span> {{ responsavelSelecionado }}</p>
+                                            <p v-if="phoneSelecionado" class="text-sm text-gray-700"><span class="font-semibold">Telefone:</span> {{ phoneSelecionado }}</p>
+                                            <p class="text-sm text-gray-700"><span class="font-semibold">Endereço:</span> {{ enderecoSelecionado }}</p>
+                                            <a
+                                                v-if="mapLinkSelecionado"
+                                                :href="mapLinkSelecionado"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-2 mt-2 text-xs font-medium text-it-primary hover:underline"
+                                            >
+                                                <i class="pi pi-map"></i>
+                                                Ver no mapa
+                                            </a>
+
                                         </div>
                                         <p v-else class="text-sm text-gray-600 mt-3">Selecione um ponto para ver o endereço.</p>
-
                                         <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-4">
-                                            <p class="text-sm text-gray-700">
-                                                <span class="font-semibold">Instruções:</span> Leve um documento de identificação e o número da etiqueta para retirada.
-                                            </p>
+                                            <p class="text-sm text-gray-700"><span class="font-semibold">Instruções:</span> Leve um documento de identificação e o número da etiqueta para retirada.</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Coluna Direita: Imagem (40%) -->
                                 <div class="lg:col-span-2 hidden md:block">
                                     <div class="bg-gray-100 gap-4 rounded-2xl overflow-hidden h-full flex items-center justify-center min-h-75">
-                                        <img 
-                                            src="/images/dashboard/post-01.jpg" 
-                                            alt="Entrega e Retirada" 
-                                            class="w-[300px] "
-                                        />
-                                        <img 
-                                            src="/images/dashboard/post-02.jpg" 
-                                            alt="Entrega e Retirada" 
-                                            class="w-[300px] "
-                                        />
+                                        <img src="/images/dashboard/post-01.jpg" alt="Entrega e Retirada" class="w-75" />
+                                        <img src="/images/dashboard/post-02.jpg" alt="Entrega e Retirada" class="w-75" />
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex justify-end pt-6">
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
-                        </div>
+                            </div>
+                            <div class="flex justify-end pt-6">
+                                <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                            </div>
                         </template>
                     </StepPanel>
                 </StepItem>
@@ -354,48 +511,50 @@ const handleCepChange = (value: string) => {
                     <StepPanel :value="2">
                         <template #default="{ activateCallback }">
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                                <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo dos Kits de Etiquetas</h3>
-                                <div class="space-y-3">
-                                    <div
-                                        v-for="kit in kits"
-                                        :key="kit.id"
-                                        class="flex items-start justify-between text-sm text-gray-700"
-                                    >
-                                        <div class="space-y-1">
-                                            <p class="font-bold">Kit Etiquetas: {{ kit.id.toUpperCase() }}</p>
-                                            <p class="text-gray-500">Veículo: {{ kit.placa }} • {{ kit.unidades }} unidade(s)</p>
+                                <!-- Kits -->
+                                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                                    <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo dos Kits de Etiquetas</h3>
+                                    <div class="space-y-3">
+                                        <div
+                                            v-for="vehicle in selectedVehicles"
+                                            :key="vehicle.id"
+                                            class="flex items-start justify-between text-sm text-gray-700"
+                                        >
+                                            <div class="space-y-1">
+                                                <p class="font-bold">{{ vehicle.name }}</p>
+                                                <p class="text-gray-500">Placa: {{ vehicle.plate?.toUpperCase() }} • {{ vehicle.usage_profile_label }}</p>
+                                            </div>
+                                            <span class="font-semibold whitespace-nowrap ml-4">R$ {{ parseFloat(vehicle.tag_price).toFixed(2) }}</span>
                                         </div>
-                                        <span class="font-semibold">R$ {{ kit.valor.toFixed(2) }}</span>
+                                    </div>
+                                    <div class="border-t border-gray-200 mt-4 pt-3 text-sm font-semibold text-gray-900">
+                                        Subtotal ({{ selectedVehicles.length }} veículo{{ selectedVehicles.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
                                     </div>
                                 </div>
-                                <div class="border-t border-gray-200 mt-4 pt-3 text-sm font-semibold text-gray-900">
-                                    Subtotal ({{ kits.length }} kit{{ kits.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
-                                </div>
-                            </div>
 
-                            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                                <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo Financeiro</h3>
-                                <div class="space-y-3 text-sm text-gray-700">
-                                    <div class="flex justify-between">
-                                        <span>Subtotal Kits ({{ kits.length }}x)</span>
-                                        <span class="font-semibold">R$ {{ subtotalKits.toFixed(2) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Frete</span>
-                                        <span class="font-semibold">R$ {{ frete.toFixed(2) }}</span>
-                                    </div>
-                                    <div class="border-t border-gray-200 pt-3 flex justify-between text-base font-bold text-gray-900">
-                                        <span>Total</span>
-                                        <span>R$ {{ total.toFixed(2) }}</span>
+                                <!-- Financeiro -->
+                                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                                    <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo Financeiro</h3>
+                                    <div class="space-y-3 text-sm text-gray-700">
+                                        <div class="flex justify-between">
+                                            <span>Subtotal ({{ selectedVehicles.length }}x)</span>
+                                            <span class="font-semibold">R$ {{ subtotalKits.toFixed(2) }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>Frete</span>
+                                            <span class="font-semibold">R$ {{ frete.toFixed(2) }}</span>
+                                        </div>
+                                        <div class="border-t border-gray-200 pt-3 flex justify-between text-base font-bold text-gray-900">
+                                            <span>Total</span>
+                                            <span>R$ {{ total.toFixed(2) }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex justify-between pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
-                            <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
-                        </div>
+                            <div class="flex justify-between pt-6 gap-3">
+                                <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
+                                <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
+                            </div>
                         </template>
                     </StepPanel>
                 </StepItem>
@@ -414,7 +573,7 @@ const handleCepChange = (value: string) => {
                                         'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         paymentMethod === 'credito' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
-                                    @click="paymentMethod = 'credito'"
+                                    @click="paymentMethod = 'credito'; pixData = null"
                                 >
                                     <i class="pi pi-credit-card"></i>
                                     Cartão de Crédito
@@ -436,79 +595,121 @@ const handleCepChange = (value: string) => {
                                         'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         paymentMethod === 'boleto' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
-                                    @click="paymentMethod = 'boleto'"
+                                    @click="paymentMethod = 'boleto'; pixData = null"
                                 >
                                     <i class="pi pi-bars"></i>
                                     Boleto
                                 </button>
                             </div>
 
+                            <!-- Cartão de Crédito -->
                             <div v-if="paymentMethod === 'credito'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <!-- Coluna Esquerda: Campos -->
                                 <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                    <p class="text-sm font-semibold text-gray-800">Campos de cartão (simulação):</p>
+                                    <p class="text-sm font-semibold text-gray-800">Dados do cartão:</p>
                                     <div class="grid grid-cols-1 gap-4">
-                                        <InputText
-                                            v-model="cartao.nome"
-                                            label="Nome no Cartão"
-                                            placeholder="Nome como no cartão"
-                                            icon="pi pi-user"
-                                            inputClass="w-full"
-                                        />
-                                        <InputText
-                                            v-model="cartao.numero"
-                                            label="Número do Cartão"
-                                            placeholder="0000 0000 0000 0000"
-                                            mask="9999 9999 9999 9999"
-                                            icon="pi pi-credit-card"
-                                            inputClass="w-full"
-                                        />
+                                        <InputText v-model="cartao.nome" label="Nome no Cartão" placeholder="Nome como no cartão" icon="pi pi-user" inputClass="w-full" />
+                                        <InputText v-model="cartao.numero" label="Número do Cartão" placeholder="0000 0000 0000 0000" mask="9999 9999 9999 9999" icon="pi pi-credit-card" inputClass="w-full" />
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <InputText
-                                                v-model="cartao.validade"
-                                                label="Validade (MM/AA)"
-                                                placeholder="MM/AA"
-                                                mask="99/99"
-                                                icon="pi pi-calendar"
-                                                inputClass="w-full"
-                                            />
-                                            <InputText
-                                                v-model="cartao.cvc"
-                                                label="CVC"
-                                                placeholder="123"
-                                                mask="999"
-                                                icon="pi pi-lock"
-                                                inputClass="w-full"
-                                            />
+                                            <InputText v-model="cartao.validade" label="Validade (MM/AA)" placeholder="MM/AA" mask="99/99" icon="pi pi-calendar" inputClass="w-full" />
+                                            <InputText v-model="cartao.cvc" label="CVC" placeholder="123" mask="999" icon="pi pi-lock" inputClass="w-full" />
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Coluna Direita: Preview do Cartão (apenas desktop) -->
                                 <div class="hidden lg:flex items-center justify-center">
-                                    <CreditCardPreview
-                                        :numero="cartao.numero"
-                                        :nome="cartao.nome"
-                                        :validade="cartao.validade"
-                                        :cvc="cartao.cvc"
-                                    />
+                                    <CreditCardPreview :numero="cartao.numero" :nome="cartao.nome" :validade="cartao.validade" :cvc="cartao.cvc" />
                                 </div>
                             </div>
 
-                            <div v-else-if="paymentMethod === 'pix'" class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                <p class="text-sm font-semibold text-gray-800">Pague via PIX:</p>
-                                <p class="text-sm text-gray-600">Geraremos um QR Code para pagamento imediato.</p>
+                            <!-- PIX -->
+                            <div v-else-if="paymentMethod === 'pix'" class="space-y-4">
+                                <!-- Aguardando gerar QR Code -->
+                                <div v-if="!pixData" class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                    <p class="text-sm font-semibold text-gray-800">Pague via PIX:</p>
+                                    <p class="text-sm text-gray-600">Clique em "Realizar pagamento" para gerar o QR Code.</p>
+                                </div>
+
+                                <!-- QR Code gerado -->
+                                <div v-else class="space-y-4">
+                                    <!-- Temporizador -->
+                                    <div
+                                        class="flex items-center justify-center gap-3 p-3 rounded-xl border"
+                                        :class="timerSeconds < 60 ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'"
+                                    >
+                                        <i class="pi pi-clock text-lg" :class="timerSeconds < 60 ? 'text-red-500' : 'text-it-primary'"></i>
+                                        <span
+                                            class="font-bold text-2xl tabular-nums"
+                                            :class="timerSeconds < 60 ? 'text-red-500' : 'text-it-primary'"
+                                        >{{ timerDisplay }}</span>
+                                        <span class="text-sm text-gray-600">para realizar o pagamento</span>
+                                    </div>
+
+                                    <!-- QR Code + Copia e Cola -->
+                                    <div class="flex flex-col lg:flex-row gap-6 items-start bg-gray-50 border border-gray-200 rounded-xl p-5">
+                                        <!-- QR Code -->
+                                        <div class="shrink-0 mx-auto lg:mx-0">
+                                            <img
+                                                :src="`data:image/png;base64,${pixData.qr_code_base64}`"
+                                                alt="QR Code PIX"
+                                                class="w-48 h-48 rounded-xl border border-gray-200 bg-white"
+                                            />
+                                        </div>
+
+                                        <!-- Código -->
+                                        <div class="flex-1 space-y-4">
+                                            <div>
+                                                <p class="text-sm font-semibold text-gray-800 mb-1">Código PIX (Copia e Cola)</p>
+                                                <p class="text-xs text-gray-500">Abra seu banco, acesse a área PIX, escolha "Pagar com código" e cole o código abaixo.</p>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <input
+                                                    :value="pixData.qr_code"
+                                                    readonly
+                                                    class="flex-1 min-w-0 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2.5 font-mono text-gray-700 truncate focus:outline-none"
+                                                />
+                                                <button
+                                                    @click="copyPixCode"
+                                                    :class="[
+                                                        'px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition whitespace-nowrap',
+                                                        copied ? 'bg-emerald-500 text-white' : 'bg-it-primary text-white hover:bg-blue-700'
+                                                    ]"
+                                                >
+                                                    <i :class="copied ? 'pi pi-check' : 'pi pi-copy'"></i>
+                                                    {{ copied ? 'Copiado!' : 'Copiar código' }}
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 flex items-center gap-1.5">
+                                                <i class="pi pi-info-circle text-it-primary"></i>
+                                                Pagamento identificado automaticamente após confirmação.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
+                            <!-- Boleto -->
                             <div v-else class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
                                 <p class="text-sm font-semibold text-gray-800">Boleto bancário:</p>
                                 <p class="text-sm text-gray-600">Geraremos seu boleto após a confirmação.</p>
                             </div>
-                        </div>
-                        <div class="flex justify-start pt-6 gap-3">
-                            <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
-                            <Button label="Realizar pagamento" icon="pi pi-check" size="sm" />
-                        </div>
+                            </div>
+
+                            <div class="flex justify-start pt-6 gap-3">
+                                <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                                <span
+                                    v-if="paymentMethod !== 'pix' || !pixData"
+                                    v-tooltip.top="!isDeliveryValid ? 'Preencha a forma de entrega ou retirada no passo 1 para continuar.' : undefined"
+                                    class="inline-flex"
+                                >
+                                    <Button
+                                        label="Realizar pagamento"
+                                        icon="pi pi-check"
+                                        size="sm"
+                                        :loading="loadingPayment"
+                                        :disabled="!isDeliveryValid"
+                                        @click="handlePagar"
+                                    />
+                                </span>
+                            </div>
                         </template>
                     </StepPanel>
                 </StepItem>

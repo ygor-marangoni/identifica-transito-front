@@ -4,6 +4,10 @@ export default defineNuxtRouteMiddleware(() => {
     if (auth.isAuthenticated.value) {
         return navigateTo('/dashboard');
     }
+
+    if (import.meta.client) {
+        auth.clearSession();
+    }
 });
 
   

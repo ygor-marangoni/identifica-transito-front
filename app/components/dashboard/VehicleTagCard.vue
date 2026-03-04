@@ -1,29 +1,37 @@
 <script setup lang="ts">
 
-interface Veiculo {
+interface Vehicle {
     id: number;
-    placa: string;
-    brand: string;
-    model: string;
-    state: string;
-    city: string;
-    useProfile: string;
-    temEtiqueta: boolean;
-    selecionado: boolean;
+    user_id: number;
+    plate: string;
+    name: string;
+    year: string;
+    color: string;
+    type: number;
+    type_label: string;
+    register_state: string;
+    register_city: string;
+    usage_profile: number;
+    usage_profile_label: string;
+    tag_color: string;
+    tag_price: string;
+    tag_purchases: any[];
+    created_at: string;
+    updated_at: string;
+    selected?: boolean;
 }
 
 const props = defineProps<{
-    veiculo: Veiculo;
-    precoUnitario: number;
-    getEtiquetaImage: (perfilUso: string) => string;
+    vehicle: Vehicle;
+    getTagImage: (tagColor: string) => string;
 }>();
 
 const emit = defineEmits<{
-    toggleSelecao: [id: number];
+    toggleSelection: [id: number];
 }>();
 
-const handleToggleSelecao = (id: number) => {
-    emit('toggleSelecao', id);
+const handleToggleSelection = (id: number) => {
+    emit('toggleSelection', id);
 };
 
 const handleViewDetails = (id: number) => {
@@ -35,11 +43,11 @@ const handleViewDetails = (id: number) => {
     <div
         :class="[
             'rounded-2xl border-2 shadow-sm p-6 cursor-pointer transition',
-            veiculo.selecionado
+            vehicle.selected
                 ? 'border-it-primary bg-blue-50'
                 : 'border-gray-100 bg-white hover:border-it-primary'
         ]"
-        @click="handleToggleSelecao(veiculo.id)"
+        @click="handleToggleSelection(vehicle.id)"
     >
         <!-- Checkbox no topo -->
         <div class="flex items-center justify-between mb-4">
@@ -48,15 +56,15 @@ const handleViewDetails = (id: number) => {
                     <i class="pi pi-car"></i>
                 </div>
                 <div>
-                    <p class="font-semibold text-gray-900 mb-0!">{{ veiculo.brand }} {{ veiculo.model }}</p>
-                    <p class="text-sm text-gray-500">{{ veiculo.placa }}</p>
+                    <p class="font-semibold text-gray-900 mb-0!">{{ vehicle.name }}</p>
+                    <p class="text-sm text-gray-500">{{ vehicle.plate }}</p>
                 </div>
             </div>
             <input
                 type="checkbox"
-                :checked="veiculo.selecionado"
+                :checked="vehicle.selected"
                 class="w-5 h-5 text-it-primary border-gray-300 rounded cursor-pointer"
-                @click.stop="handleToggleSelecao(veiculo.id)"
+                @click.stop="handleToggleSelection(vehicle.id)"
             />
         </div>
 
@@ -64,15 +72,15 @@ const handleViewDetails = (id: number) => {
         <div class="space-y-3 mb-4 pb-4 border-b border-gray-200">
             <div class="flex justify-between text-sm">
                 <span class="text-gray-600 font-semibold">Estado</span>
-                <span class="font-medium text-gray-900">{{ veiculo.state }}</span>
+                <span class="font-medium text-gray-900">{{ vehicle.register_state }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-600 font-semibold">Cidade</span>
-                <span class="font-medium text-gray-900">{{ veiculo.city }}</span>
+                <span class="font-medium text-gray-900">{{ vehicle.register_city }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-600 font-semibold">Perfil</span>
-                <span class="font-medium text-gray-900 capitalize">{{ veiculo.useProfile }}</span>
+                <span class="font-medium text-gray-900 capitalize">{{ vehicle.usage_profile_label }}</span>
             </div>
         </div>
 
@@ -81,8 +89,8 @@ const handleViewDetails = (id: number) => {
             <!-- Etiqueta -->
             <div class="flex items-center justify-center py-3">
                 <img
-                    :src="getEtiquetaImage(veiculo.useProfile)"
-                    :alt="`Etiqueta para ${veiculo.useProfile}`"
+                    :src="getTagImage(vehicle.tag_color)"
+                    :alt="`Etiqueta para ${vehicle.usage_profile_label}`"
                     class="w-16 h-16 object-contain"
                 />
             </div>
@@ -90,14 +98,14 @@ const handleViewDetails = (id: number) => {
             <div class="flex items-baseline justify-between">
                 <span class="text-sm text-gray-600">Preço</span>
                 <span class="text-2xl font-bold text-it-primary">
-                    R$ {{ precoUnitario.toFixed(2) }}
+                    R$ {{ parseFloat(vehicle.tag_price).toFixed(2) }}
                 </span>
             </div>
-            
+
             <div class="flex gap-2 pt-2">
                 <button
                     class="flex-1 px-3 py-2 flex justify-center items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 text-it-primary text-sm font-medium hover:bg-blue-100 transition"
-                    @click.stop="handleViewDetails(veiculo.id)"
+                    @click.stop="handleViewDetails(vehicle.id)"
                 >
                     <i class="pi pi-eye"></i>
                     Ver Detalhes
@@ -106,7 +114,7 @@ const handleViewDetails = (id: number) => {
         </div>
 
         <!-- Indicador de Seleção -->
-        <div v-if="veiculo.selecionado" class="mt-4 flex items-center justify-center gap-2 text-it-primary font-medium text-sm">
+        <div v-if="vehicle.selected" class="mt-4 flex items-center justify-center gap-2 text-it-primary font-medium text-sm">
             <i class="pi pi-check-circle"></i>
             Selecionado
         </div>
