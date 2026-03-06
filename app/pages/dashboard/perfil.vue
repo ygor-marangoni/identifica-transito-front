@@ -564,7 +564,7 @@ const changePassword = async () => {
             <div v-else class="bg-gray-50 dark:bg-surface-700 rounded-lg p-4">
                 <p class="text-sm text-gray-700 dark:text-gray-300">
                     <i class="pi pi-shield text-it-primary mr-2"></i>
-                    Última alteração de senha: há 3 meses
+                    Altere a senha periodicamente para maior segurança. Nunca utilize senhas fracas.
                 </p>
             </div>
         </section>

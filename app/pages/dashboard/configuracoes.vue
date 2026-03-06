@@ -13,12 +13,55 @@ useHead({
     ]
 });
 
+const { $api } = useNuxtApp();
 const route = useRoute();
+
 // Notificações
+interface Setting {
+    id: number;
+    type: string;
+    value: number;
+    active: number;
+}
+
+const settingsMap = ref<Record<string, Setting>>({});
 const notifications = ref({
-    email: true,
-    sms: false
+    email: false,
+    sms: false,
+    alertsDrivers: false
 });
+
+const loadSettings = async () => {
+    try {
+        const data = await $api('/settings');
+        const res = data as { data?: Setting[] } | Setting[];
+        const list: Setting[] = (res as { data?: Setting[] }).data ?? (res as Setting[]);
+        list.forEach((s: Setting) => {
+            settingsMap.value[s.type] = s;
+        });
+        notifications.value.email = !!(settingsMap.value['EMAIL']?.value);
+        notifications.value.sms = !!(settingsMap.value['SMS_WHATSAPP']?.value);
+        notifications.value.alertsDrivers = !!(settingsMap.value['ALERTS_DRIVERS']?.value);
+    } catch (e) {
+        console.error('Erro ao carregar configurações:', e);
+    }
+};
+
+const saveNotification = async (type: string, value: boolean) => {
+    const payload = { type, value: value ? '1' : '0' };
+    try {
+        const existing = settingsMap.value[type];
+        if (existing) {
+            const updated = await $api(`/settings/${existing.id}`, { method: 'PUT', body: payload }) as { data?: Setting } | Setting;
+            settingsMap.value[type] = (updated as { data?: Setting }).data ?? (updated as Setting);
+        } else {
+            const created = await $api('/settings', { method: 'POST', body: payload }) as { data?: Setting } | Setting;
+            settingsMap.value[type] = (created as { data?: Setting }).data ?? (created as Setting);
+        }
+    } catch (e) {
+        console.error('Erro ao salvar configuração:', e);
+    }
+};
 
 // Tema
 const isDarkMode = ref(false);
@@ -38,6 +81,8 @@ onMounted(() => {
         isDarkMode.value = prefersDark;
         applyTheme(prefersDark ? 'dark' : 'light');
     }
+
+    loadSettings();
 });
 
 // Aplicar tema
@@ -54,20 +99,6 @@ const applyTheme = (theme: 'dark' | 'light') => {
 // Watcher para mudança de tema
 watch(isDarkMode, (newValue) => {
     applyTheme(newValue ? 'dark' : 'light');
-});
-
-// Salvar notificações
-const saveNotifications = () => {
-    localStorage.setItem('app-notifications', JSON.stringify(notifications.value));
-    // Aqui você pode adicionar uma chamada de API para salvar no servidor
-};
-
-// Carregar notificações
-onMounted(() => {
-    const saved = localStorage.getItem('app-notifications');
-    if (saved) {
-        notifications.value = JSON.parse(saved);
-    }
 });
 
 const termsAndPolicies = [
@@ -119,7 +150,7 @@ const termsAndPolicies = [
                         <h3 class="text-lg! font-semibold text-gray-900 dark:text-white mb-1!">Notificações por E-mail</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400">Receba e-mails sobre atualizações de pedidos e novidades.</p>
                     </div>
-                    <InputSwitch v-model="notifications.email" @update:modelValue="saveNotifications" />
+                    <InputSwitch v-model="notifications.email" @update:modelValue="(v: boolean) => saveNotification('EMAIL', v)" />
                 </div>
 
                 <!-- SMS/WhatsApp Notifications -->
@@ -128,7 +159,16 @@ const termsAndPolicies = [
                         <h3 class="text-lg! font-semibold text-gray-900 dark:text-white mb-1!">Notificações por SMS/WhatsApp</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400">Alertas importantes sobre seus pedidos.</p>
                     </div>
-                    <InputSwitch v-model="notifications.sms" @update:modelValue="saveNotifications" />
+                    <InputSwitch v-model="notifications.sms" @update:modelValue="(v: boolean) => saveNotification('SMS_WHATSAPP', v)" />
+                </div>
+
+                <!-- Alerts Drivers Notifications -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-surface-700 rounded-lg hover:bg-gray-100 dark:hover:bg-surface-600 transition">
+                    <div class="flex-1">
+                        <h3 class="text-lg! font-semibold text-gray-900 dark:text-white mb-1!">Notificações de Outros Motoristas</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Receba alertas sobre infrações e atividades de outros motoristas.</p>
+                    </div>
+                    <InputSwitch v-model="notifications.alertsDrivers" @update:modelValue="(v: boolean) => saveNotification('ALERTS_DRIVERS', v)" />
                 </div>
             </div>
         </section>
