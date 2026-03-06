@@ -57,6 +57,7 @@ interface Order {
         map_link?: string | null;
     } | null;
     payment_method: string;
+    boleto_url: string | null;
     mp_payment_id: string;
     mp_payment_status: string;
     mp_payment_status_label: string;
@@ -734,9 +735,19 @@ const displayTypePayment = (type: string | undefined) => {
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Pedido realizado em {{ group.first.created_at }}</p>
                             </div>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right flex flex-col items-end gap-2">
                             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(group.totalPrice) }}</p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ displayTypePayment(group.first.payment_method) }}</p>
+                            <a
+                                v-if="group.first.payment_method === 'boleto' && group.first.boleto_url"
+                                :href="group.first.boleto_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-it-primary text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                            >
+                                <i class="pi pi-external-link text-xs"></i>
+                                Abrir boleto
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -772,7 +783,7 @@ const displayTypePayment = (type: string | undefined) => {
                                         </p>
                                     </div>
                                 </div>
-                                <p class="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ formatCurrency(item.price_total) }}</p>
+                                <p class="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ formatCurrency(item.price) }}</p>
                             </div>
 
                             <!-- Pickup Point resumido -->

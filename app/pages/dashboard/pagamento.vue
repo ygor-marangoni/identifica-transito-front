@@ -38,7 +38,17 @@ interface PixResponse {
     status_label: string;
     qr_code: string;
     qr_code_base64: string;
-    ticket_url: string;
+    boleto_url: string;
+    purchases: any[];
+}
+
+interface BoletoResponse {
+    message: string;
+    payment_id: number;
+    status: string;
+    status_label: string;
+    barcode: string | null;
+    boleto_url: string;
     purchases: any[];
 }
 
@@ -172,12 +182,14 @@ const isCreditCardValid = computed(() => {
 const isPaymentButtonDisabled = computed(() => {
     if (!isDeliveryValid.value) return true;
     if (paymentMethod.value === 'credito') return !isCreditCardValid.value;
+    if (paymentMethod.value === 'boleto') return !isBoletoValid.value;
     return false;
 });
 
 const paymentButtonTooltip = computed(() => {
     if (!isDeliveryValid.value) return 'Preencha a forma de entrega ou retirada no passo 1 para continuar.';
     if (paymentMethod.value === 'credito' && !isCreditCardValid.value) return 'Preencha todos os dados do cartão de crédito, incluindo CPF.';
+    if (paymentMethod.value === 'boleto' && !isBoletoValid.value) return 'Preencha o endereço do pagador para gerar o boleto.';
     return undefined;
 });
 
@@ -237,6 +249,47 @@ const isDeliveryValid = computed(() => {
     }
     return !!pontoColeta.value;
 });
+
+const isBoletoValid = computed(() => {
+    const { cep, rua, numero, bairro, cidade, estado } = boletoEndereco.value;
+    return !![cep, rua, numero, bairro, cidade, estado].every(v => v?.trim());
+});
+
+// --- Boleto ---
+const boletoData = ref<BoletoResponse | null>(null);
+const boletoUsarEnderecoEntrega = ref(false);
+const boletoEndereco = ref({ cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' });
+
+watch(boletoUsarEnderecoEntrega, (val) => {
+    if (val) {
+        const { cep, rua, numero, bairro, cidade, estado } = endereco.value;
+        boletoEndereco.value = { cep, rua, numero, bairro, cidade, estado };
+    }
+});
+
+const buscarCEPBoleto = async (cep: string) => {
+    const cepLimpo = cep.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) return;
+    loadingCep.value = true;
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+        const data = await response.json();
+        if (data.erro) return;
+        boletoEndereco.value.rua = data.logradouro;
+        boletoEndereco.value.bairro = data.bairro;
+        boletoEndereco.value.cidade = data.localidade;
+        boletoEndereco.value.estado = data.uf;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        loadingCep.value = false;
+    }
+};
+
+const handleBoletoCepChange = (value: string) => {
+    boletoEndereco.value.cep = value;
+    buscarCEPBoleto(value);
+};
 
 // --- PIX ---
 const pixData = ref<PixResponse | null>(null);
@@ -458,6 +511,37 @@ const handlePagar = async () => {
         return;
     }
 
+    if (paymentMethod.value === 'boleto') {
+        loadingPayment.value = true;
+        try {
+            const { $api } = useNuxtApp();
+            const addr = boletoEndereco.value;
+            const response = await $api('/tag-purchases', {
+                method: 'POST',
+                body: {
+                    payment_method: 'boleto',
+                    coupon_discount: null,
+                    shipping_price: frete.value,
+                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
+                    payer_zip_code: addr.cep,
+                    payer_street: addr.rua,
+                    payer_number: addr.numero,
+                    payer_neighborhood: addr.bairro,
+                    payer_city: addr.cidade,
+                    payer_state: addr.estado,
+                    ...buildDeliveryPayload(),
+                },
+            });
+            boletoData.value = response as BoletoResponse;
+        } catch (error: any) {
+            const errorMsg = error?.data?.message || error?.message || 'Erro ao gerar boleto.';
+            toast.add({ severity: 'error', summary: 'Erro ao gerar boleto', detail: errorMsg, life: 5000 });
+        } finally {
+            loadingPayment.value = false;
+        }
+        return;
+    }
+
     if (paymentMethod.value === 'pix') {
         pixData.value = null;
         loadingPayment.value = true;
@@ -497,7 +581,7 @@ const handlePagar = async () => {
             buttonIcon="pi pi-arrow-left"
         />
 
-        <!-- Sucesso -->
+        <!-- Sucesso: cartão/PIX aprovado -->
         <div v-if="paymentSuccess" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
             <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 text-5xl">
                 <i class="pi pi-check-circle"></i>
@@ -505,6 +589,32 @@ const handlePagar = async () => {
             <h2 class="text-2xl font-bold text-gray-900">Pagamento realizado com sucesso!</h2>
             <p class="text-gray-500 max-w-sm leading-6">Seu pagamento foi confirmado. Em breve você receberá as etiquetas no endereço cadastrado.</p>
             <NuxtLink to="/dashboard/pedidos" class="mt-2 px-6 py-2.5 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                Acompanhar meus pedidos
+            </NuxtLink>
+        </div>
+
+        <!-- Sucesso: boleto gerado -->
+        <div v-else-if="boletoData" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
+            <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 text-5xl">
+                <i class="pi pi-check-circle"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Boleto gerado com sucesso!</h2>
+            <p class="text-gray-500 max-w-sm leading-6">Pague até o vencimento para confirmar seu pedido. Após a compensação bancária (até 3 dias úteis), seu pedido será processado.</p>
+            <a
+                v-if="boletoData.boleto_url"
+                :href="boletoData.boleto_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 px-6 py-2.5 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2"
+            >
+                <i class="pi pi-external-link"></i>
+                Abrir boleto
+            </a>
+            <div v-if="boletoData.barcode" class="w-full max-w-lg text-left mt-2">
+                <p class="text-xs font-semibold text-gray-700 mb-1">Código de barras</p>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono text-xs text-gray-700 break-all select-all">{{ boletoData.barcode }}</div>
+            </div>
+            <NuxtLink to="/dashboard/pedidos" class="text-sm text-it-primary hover:underline">
                 Acompanhar meus pedidos
             </NuxtLink>
         </div>
@@ -791,7 +901,7 @@ const handlePagar = async () => {
                                 <!-- Aguardando gerar QR Code -->
                                 <div v-if="!pixData" class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <p class="text-sm font-semibold text-gray-800">Pague via PIX:</p>
-                                    <p class="text-sm text-gray-600">Clique em "Realizar pagamento" para gerar o QR Code.</p>
+                                    <p class="text-sm text-gray-600">Clique no botão "Gerar PIX" para gerar o QR Code.</p>
                                 </div>
 
                                 <!-- QR Code gerado -->
@@ -853,22 +963,105 @@ const handlePagar = async () => {
                             </div>
 
                             <!-- Boleto -->
-                            <div v-else class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                <p class="text-sm font-semibold text-gray-800">Boleto bancário:</p>
-                                <p class="text-sm text-gray-600">Geraremos seu boleto após a confirmação.</p>
+                            <div v-else class="space-y-4">
+                                <!-- Formulário de endereço do pagador -->
+                                <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">Endereço do pagador</p>
+                                        <p class="text-xs text-gray-500 mt-1">Obrigatório pelo MercadoPago para emissão de boleto bancário.</p>
+                                    </div>
+
+                                    <!-- Checkbox: usar endereço de entrega -->
+                                    <label
+                                        v-if="entrega === 'casa' && isDeliveryValid"
+                                        class="flex items-center gap-2 cursor-pointer select-none"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            v-model="boletoUsarEnderecoEntrega"
+                                            class="w-4 h-4 accent-it-primary cursor-pointer"
+                                        />
+                                        <span class="text-sm text-gray-700">Usar mesmo endereço de entrega</span>
+                                    </label>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-10 gap-4">
+                                        <InputText
+                                            v-model="boletoEndereco.cep"
+                                            label="CEP"
+                                            placeholder="00000-000"
+                                            mask="99999-999"
+                                            icon="pi pi-map-marker"
+                                            :disabled="boletoUsarEnderecoEntrega || loadingCep"
+                                            @change="(e: Event) => handleBoletoCepChange((e.target as HTMLInputElement).value)"
+                                            wrapper-class="lg:col-span-3"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
+                                            v-model="boletoEndereco.rua"
+                                            label="Logradouro"
+                                            placeholder="Av. Paulista"
+                                            icon="pi pi-road"
+                                            :readonly="true"
+                                            :disabled="boletoUsarEnderecoEntrega"
+                                            wrapper-class="md:col-span-2 lg:col-span-7"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
+                                            v-model="boletoEndereco.numero"
+                                            label="Número"
+                                            placeholder="1000"
+                                            type="number"
+                                            icon="pi pi-hashtag"
+                                            :disabled="boletoUsarEnderecoEntrega"
+                                            wrapper-class="lg:col-span-5"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
+                                            v-model="boletoEndereco.bairro"
+                                            label="Bairro"
+                                            placeholder="Bela Vista"
+                                            icon="pi pi-map"
+                                            :readonly="true"
+                                            :disabled="boletoUsarEnderecoEntrega"
+                                            wrapper-class="lg:col-span-5"
+                                            inputClass="w-full"
+                                        />
+                                        <InputText
+                                            v-model="boletoEndereco.cidade"
+                                            label="Cidade"
+                                            placeholder="São Paulo"
+                                            icon="pi pi-building"
+                                            :readonly="true"
+                                            :disabled="boletoUsarEnderecoEntrega"
+                                            wrapper-class="lg:col-span-5"
+                                            inputClass="w-full"
+                                        />
+                                        <SelectInput
+                                            v-model="boletoEndereco.estado"
+                                            label="Estado"
+                                            :options="estados"
+                                            placeholder="Selecione o estado"
+                                            icon="pi pi-map-marker"
+                                            :readonly="true"
+                                            :disabled="boletoUsarEnderecoEntrega"
+                                            wrapper-class="lg:col-span-5"
+                                            inputClass="w-full"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             </div>
 
                             <div class="flex justify-start pt-6 gap-3">
                                 <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                                 <span
-                                    v-if="paymentMethod !== 'pix' || !pixData"
+                                    v-if="(paymentMethod !== 'pix' || !pixData) && (paymentMethod !== 'boleto' || !boletoData)"
                                     v-tooltip.top="paymentButtonTooltip"
                                     class="inline-flex"
                                 >
                                     <Button
-                                        label="Realizar pagamento"
-                                        icon="pi pi-check"
+                                        :label="paymentMethod === 'pix' ? 'Gerar PIX para Pagamento' : paymentMethod === 'boleto' ? 'Gerar Boleto para Pagamento' : 'Realizar Pagamento'"
+                                        :icon="paymentMethod === 'pix' ? 'pi pi-qrcode' : paymentMethod === 'boleto' ? 'pi pi-bars' : 'pi pi-check'"
                                         size="sm"
                                         :loading="loadingPayment"
                                         :disabled="isPaymentButtonDisabled"
