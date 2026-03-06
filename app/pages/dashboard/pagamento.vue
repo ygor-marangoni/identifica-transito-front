@@ -65,6 +65,27 @@ const toast = useToast();
 // Veículos selecionados vindos da página de etiquetas
 const selectedVehicles = useState<Vehicle[]>('selectedVehicles', () => []);
 
+// Quantidade por veículo (mapeado por id)
+const quantities = ref<Record<number, number>>({});
+
+const getQty = (id: number) => quantities.value[id] ?? 1;
+
+const changeQty = (id: number, delta: number) => {
+    const current = getQty(id);
+    const next = Math.max(1, current + delta);
+    quantities.value = { ...quantities.value, [id]: next };
+};
+
+const removeVehicle = (id: number) => {
+    selectedVehicles.value = selectedVehicles.value.filter(v => v.id !== id);
+    const updated = { ...quantities.value };
+    delete updated[id];
+    quantities.value = updated;
+    if (selectedVehicles.value.length === 0) {
+        navigateTo('/dashboard/etiquetas');
+    }
+};
+
 onMounted(() => {
     if (selectedVehicles.value.length === 0) {
         navigateTo('/dashboard/etiquetas');
@@ -75,7 +96,7 @@ onMounted(() => {
 
 const frete = ref(0.00);
 const subtotalKits = computed(() =>
-    selectedVehicles.value.reduce((sum, v) => sum + parseFloat(v.tag_price), 0)
+    selectedVehicles.value.reduce((sum, v) => sum + parseFloat(v.tag_price) * getQty(v.id), 0)
 );
 const total = computed(() => subtotalKits.value + frete.value);
 
@@ -131,7 +152,34 @@ const phoneSelecionado = computed(() => {
 });
 
 // Dados de cartão de crédito
-const cartao = ref({ numero: '', nome: '', validade: '', cvc: '' });
+/*
+cpf apro => 12345678909 Nome aprovado => APRO
+cpf rec => 12345678909 Nome recusado => OTHE
+*/
+const cartao = ref({ numero: '5031 4332 1540 6351', nome: 'APRO', validade: '02/33', cvc: '123', cpf: '12345678909' });
+
+const isCreditCardValid = computed(() => {
+    const { numero, nome, validade, cvc, cpf } = cartao.value;
+    return !![
+        numero.replace(/\s/g, ''),
+        nome,
+        validade,
+        cvc,
+        cpf.replace(/\D/g, ''),
+    ].every(v => v?.trim().length > 0);
+});
+
+const isPaymentButtonDisabled = computed(() => {
+    if (!isDeliveryValid.value) return true;
+    if (paymentMethod.value === 'credito') return !isCreditCardValid.value;
+    return false;
+});
+
+const paymentButtonTooltip = computed(() => {
+    if (!isDeliveryValid.value) return 'Preencha a forma de entrega ou retirada no passo 1 para continuar.';
+    if (paymentMethod.value === 'credito' && !isCreditCardValid.value) return 'Preencha todos os dados do cartão de crédito, incluindo CPF.';
+    return undefined;
+});
 
 // Dados de endereço
 const endereco = ref({ cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' });
@@ -326,7 +374,90 @@ const buildDeliveryPayload = () => {
     };
 };
 
+const loadMercadoPago = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        if ((window as any).MercadoPago) { resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://sdk.mercadopago.com/js/v2';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Falha ao carregar SDK do MercadoPago'));
+        document.head.appendChild(script);
+    });
+};
+
 const handlePagar = async () => {
+    if (paymentMethod.value === 'credito') {
+        loadingPayment.value = true;
+        try {
+            const config = useRuntimeConfig();
+            await loadMercadoPago();
+            const mp = new (window as any).MercadoPago(config.public.mercadoPagoPublicKey, { locale: 'pt-BR' });
+
+            // Identify card brand and issuer from BIN
+            const bin = cartao.value.numero.replace(/\s/g, '').slice(0, 6);
+            const { results } = await mp.getPaymentMethods({ bin });
+            if (!results?.length) throw new Error('Cartão não identificado. Verifique o número e tente novamente.');
+            const paymentMethodId: string = results[0].id;
+            const issuerId: string | undefined = results[0].issuer?.id;
+
+            // Parse expiry MM/YY
+            const [month, year] = cartao.value.validade.split('/');
+
+            // Tokenize card
+            const tokenResponse = await mp.createCardToken({
+                cardNumber: cartao.value.numero.replace(/\s/g, ''),
+                cardholderName: cartao.value.nome,
+                cardExpirationMonth: month,
+                cardExpirationYear: `20${year}`,
+                securityCode: cartao.value.cvc,
+                identificationType: 'CPF',
+                identificationNumber: cartao.value.cpf.replace(/\D/g, ''),
+            });
+
+            if (!tokenResponse?.id) throw new Error('Não foi possível tokenizar o cartão. Verifique os dados e tente novamente.');
+
+            const { $api } = useNuxtApp();
+            const response = await $api('/tag-purchases', {
+                method: 'POST',
+                body: {
+                    payment_method: 'credit_card',
+                    card_token: tokenResponse.id,
+                    installments: 1,
+                    payment_method_id: paymentMethodId,
+                    issuer_id: issuerId ?? null,
+                    coupon_discount: null,
+                    shipping_price: frete.value,
+                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
+                    ...buildDeliveryPayload(),
+                },
+            }) as { status: string; status_label?: string; status_detail?: string };
+
+            if (response.status === 'approved') {
+                paymentSuccess.value = true;
+            } else if (['pending', 'in_process', 'authorized'].includes(response.status)) {
+                toast.add({
+                    severity: 'info',
+                    summary: 'Pagamento em análise',
+                    detail: 'Seu pagamento está sendo processado. Você será notificado em breve.',
+                    life: 8000,
+                });
+            } else {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Pagamento recusado',
+                    detail: response.status_label || 'O pagamento foi recusado. Verifique os dados do cartão ou tente outra forma de pagamento.',
+                    life: 7000,
+                });
+            }
+        } catch (error: any) {
+            const errorMsg = error?.data?.message || error?.message || 'Erro ao processar pagamento com cartão.';
+            toast.add({ severity: 'error', summary: 'Erro no pagamento', detail: errorMsg, life: 5000 });
+        } finally {
+            loadingPayment.value = false;
+        }
+        return;
+    }
+
     if (paymentMethod.value === 'pix') {
         pixData.value = null;
         loadingPayment.value = true;
@@ -338,7 +469,7 @@ const handlePagar = async () => {
                     payment_method: 'pix',
                     coupon_discount: null,
                     shipping_price: frete.value,
-                    vehicles: selectedVehicles.value.map(v => ({ id: v.id })),
+                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
                     ...buildDeliveryPayload(),
                 },
             });
@@ -414,17 +545,22 @@ const handlePagar = async () => {
                                     <i class="pi pi-home"></i>
                                     Receber em Casa
                                 </button>
-                                <button
-                                    type="button"
-                                    :class="[
-                                        'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
-                                        entrega === 'ponto' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
-                                    ]"
-                                    @click="entrega = 'ponto'"
-                                >
-                                    <i class="pi pi-building"></i>
-                                    Retirar em Ponto de Coleta
-                                </button>
+                                <span v-tooltip.top="pontosColetaOptions.length === 0 ? 'Nenhum ponto de coleta disponível no momento.' : undefined" class="inline-flex">
+                                    <button
+                                        type="button"
+                                        :disabled="pontosColetaOptions.length === 0"
+                                        :class="[
+                                            'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                            pontosColetaOptions.length === 0
+                                                ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed opacity-60'
+                                                : entrega === 'ponto' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
+                                        ]"
+                                        @click="pontosColetaOptions.length > 0 && (entrega = 'ponto')"
+                                    >
+                                        <i class="pi pi-building"></i>
+                                        Retirar em Ponto de Coleta
+                                    </button>
+                                </span>
                             </div>
 
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -518,17 +654,46 @@ const handlePagar = async () => {
                                         <div
                                             v-for="vehicle in selectedVehicles"
                                             :key="vehicle.id"
-                                            class="flex items-start justify-between text-sm text-gray-700"
+                                            class="flex items-start justify-between gap-3 text-sm text-gray-700 p-3 bg-gray-50 rounded-lg"
                                         >
-                                            <div class="space-y-1">
-                                                <p class="font-bold">{{ vehicle.name }}</p>
-                                                <p class="text-gray-500">Placa: {{ vehicle.plate?.toUpperCase() }} • {{ vehicle.usage_profile_label }}</p>
+                                            <div class="flex-1 space-y-1 min-w-0">
+                                                <p class="font-bold truncate">{{ vehicle.name }}</p>
+                                                <p class="text-gray-500 capitalize">Placa: {{ vehicle.plate?.toUpperCase() }} • {{ vehicle.usage_profile_label }} • Etiqueta {{ vehicle.tag_color }}</p>
+                                                <!-- Controle de quantidade -->
+                                                <div class="flex items-center gap-2 mt-2">
+                                                    <button
+                                                        type="button"
+                                                        class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-40"
+                                                        :disabled="getQty(vehicle.id) <= 1"
+                                                        @click="changeQty(vehicle.id, -1)"
+                                                    >
+                                                        <i class="pi pi-minus text-xs"></i>
+                                                    </button>
+                                                    <span class="w-6 text-center font-semibold tabular-nums">{{ getQty(vehicle.id) }}</span>
+                                                    <button
+                                                        type="button"
+                                                        class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition"
+                                                        @click="changeQty(vehicle.id, 1)"
+                                                    >
+                                                        <i class="pi pi-plus text-xs"></i>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <span class="font-semibold whitespace-nowrap ml-4">R$ {{ parseFloat(vehicle.tag_price).toFixed(2) }}</span>
+                                            <div class="flex flex-col items-end gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    class="text-red-400 hover:text-red-600 transition"
+                                                    v-tooltip.top="'Remover item'"
+                                                    @click="removeVehicle(vehicle.id)"
+                                                >
+                                                    <i class="pi pi-times text-sm"></i>
+                                                </button>
+                                                <span class="font-semibold whitespace-nowrap">R$ {{ (parseFloat(vehicle.tag_price) * getQty(vehicle.id)).toFixed(2) }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="border-t border-gray-200 mt-4 pt-3 text-sm font-semibold text-gray-900">
-                                        Subtotal ({{ selectedVehicles.length }} veículo{{ selectedVehicles.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
+                                        Subtotal ({{ selectedVehicles.length }} item{{ selectedVehicles.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
                                     </div>
                                 </div>
 
@@ -613,6 +778,7 @@ const handlePagar = async () => {
                                             <InputText v-model="cartao.validade" label="Validade (MM/AA)" placeholder="MM/AA" mask="99/99" icon="pi pi-calendar" inputClass="w-full" />
                                             <InputText v-model="cartao.cvc" label="CVC" placeholder="123" mask="999" icon="pi pi-lock" inputClass="w-full" />
                                         </div>
+                                        <InputText v-model="cartao.cpf" label="CPF do Titular" placeholder="000.000.000-00" mask="999.999.999-99" icon="pi pi-id-card" inputClass="w-full" />
                                     </div>
                                 </div>
                                 <div class="hidden lg:flex items-center justify-center">
@@ -697,7 +863,7 @@ const handlePagar = async () => {
                                 <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                                 <span
                                     v-if="paymentMethod !== 'pix' || !pixData"
-                                    v-tooltip.top="!isDeliveryValid ? 'Preencha a forma de entrega ou retirada no passo 1 para continuar.' : undefined"
+                                    v-tooltip.top="paymentButtonTooltip"
                                     class="inline-flex"
                                 >
                                     <Button
@@ -705,7 +871,7 @@ const handlePagar = async () => {
                                         icon="pi pi-check"
                                         size="sm"
                                         :loading="loadingPayment"
-                                        :disabled="!isDeliveryValid"
+                                        :disabled="isPaymentButtonDisabled"
                                         @click="handlePagar"
                                     />
                                 </span>

@@ -41,6 +41,7 @@ interface Order {
     vehicle_id: number;
     tag_name: string;
     tag_slug: string;
+    qty: number;
     price: string;
     price_total: string;
     shipping_price: string;
@@ -433,6 +434,28 @@ const filteredOrders = computed(() => {
     return allOrders.value;
 });
 
+// Agrupa pedidos pelo mesmo mp_payment_id (compras feitas juntas)
+interface OrderGroup {
+    mp_payment_id: string;
+    items: Order[];
+    totalPrice: number;
+    first: Order;
+}
+
+const groupedOrders = computed((): OrderGroup[] => {
+    const map = new Map<string, OrderGroup>();
+    for (const order of filteredOrders.value) {
+        const key = String(order.mp_payment_id);
+        if (!map.has(key)) {
+            map.set(key, { mp_payment_id: key, items: [], totalPrice: 0, first: order });
+        }
+        const group = map.get(key)!;
+        group.items.push(order);
+        group.totalPrice += parseFloat(order.price_total);
+    }
+    return Array.from(map.values());
+});
+
 // Estatísticas via API
 const stats = ref({ total: 0, in_progress: 0, completed: 0, failed: 0 });
 const loadingStats = ref(false);
@@ -526,6 +549,16 @@ const confirmReceiveProduct = (shipmentId?: number) => {
 
 const getTagImage = (tagSlug?: string | null) => {
     return tagSlug ? `/images/dashboard/etiquetas/${tagSlug}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
+};
+
+const displayTypePayment = (type: string | undefined) => {
+    if (!type) return 'Desconhecido';
+
+    const typeKey = type.toLowerCase();
+    if (typeKey === 'credit_card') return 'Cartão de Crédito';
+    if (typeKey === 'boleto') return 'Boleto';
+    if (typeKey === 'pix') return 'Pix';
+    return type;
 };
 </script>
 
@@ -653,58 +686,57 @@ const getTagImage = (tagSlug?: string | null) => {
         </div>
 
         <!-- Lista de Pedidos -->
-        <div v-else-if="filteredOrders.length > 0" class="space-y-4">
+        <div v-else-if="groupedOrders.length > 0" class="space-y-4">
             <div
-                v-for="order in filteredOrders"
-                :key="order.id"
+                v-for="group in groupedOrders"
+                :key="group.mp_payment_id"
                 class="bg-white dark:bg-surface-800 rounded-xl border border-gray-100 dark:border-surface-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
             >
                 <!-- Cabeçalho do pedido -->
                 <div class="p-6 border-b border-gray-100 dark:border-surface-700">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-start gap-4">
-                            <div :class="[getStatusConfig(order).bgLight, getStatusConfig(order).darkBgLight, 'w-12 h-12 rounded-xl flex items-center justify-center']">
-                                <i :class="[getStatusConfig(order).icon, getStatusConfig(order).textColor, getStatusConfig(order).darkTextColor, 'text-xl']"></i>
+                            <div :class="[getStatusConfig(group.first).bgLight, getStatusConfig(group.first).darkBgLight, 'w-12 h-12 rounded-xl flex items-center justify-center']">
+                                <i :class="[getStatusConfig(group.first).icon, getStatusConfig(group.first).textColor, getStatusConfig(group.first).darkTextColor, 'text-xl']"></i>
                             </div>
                             <div>
                                 <div class="flex lg:items-center flex-col lg:flex-row gap-3 mb-1">
-                                    <h3 class="text-lg! mb-1! font-bold text-gray-900 dark:text-white">#PED-{{ order.mp_payment_id }} - {{ order.vehicle?.name || 'Veículo não informado' }}</h3>
+                                    <h3 class="text-lg! mb-1! font-bold text-gray-900 dark:text-white">#PED-{{ group.mp_payment_id }}</h3>
                                     <div class="flex gap-3">
                                         <span
-                                            v-if="!isPaymentCancelled(order)"
+                                            v-if="!isPaymentCancelled(group.first)"
                                             :class="[
-                                                getStatusConfig(order).textColor,
-                                                getStatusConfig(order).darkTextColor,
-                                                getStatusConfig(order).bgLight,
-                                                getStatusConfig(order).darkBgLight,
+                                                getStatusConfig(group.first).textColor,
+                                                getStatusConfig(group.first).darkTextColor,
+                                                getStatusConfig(group.first).bgLight,
+                                                getStatusConfig(group.first).darkBgLight,
                                                 'px-3 py-1 rounded-full text-xs font-medium'
                                             ]"
                                             v-tooltip.top="'Entrega/Retirada'"
                                         >
-                                            {{ getStatusConfig(order).label }}
+                                            {{ getStatusConfig(group.first).label }}
                                         </span>
-                                        <!-- Badge pagamento -->
                                         <span
-                                            v-if="order.mp_payment_status_label"
+                                            v-if="group.first.mp_payment_status_label"
                                             :class="[
-                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).bgLight,
-                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).textColor,
-                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).darkBgLight,
-                                                getPaymentStatusConfig(getOrderPaymentStatus(order)).darkTextColor,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(group.first)).bgLight,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(group.first)).textColor,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(group.first)).darkBgLight,
+                                                getPaymentStatusConfig(getOrderPaymentStatus(group.first)).darkTextColor,
                                                 'px-3 py-1 rounded-full text-xs font-medium'
                                             ]"
                                             v-tooltip.top="'Pagamento'"
                                         >
-                                            {{ order.mp_payment_status_label }}
+                                            {{ group.first.mp_payment_status_label }}
                                         </span>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Pedido realizado em {{ formatDate(order.created_at) }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Pedido realizado em {{ group.first.created_at }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(order.price_total) }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 capitalize">{{ order.payment_method?.toUpperCase() }}</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(group.totalPrice) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ displayTypePayment(group.first.payment_method) }}</p>
                         </div>
                     </div>
                 </div>
@@ -714,60 +746,63 @@ const getTagImage = (tagSlug?: string | null) => {
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Itens do pedido -->
                         <div class="lg:col-span-2 space-y-3">
-                            <h4 class="text-sm! font-semibold text-gray-700 dark:text-gray-300 mb-3">Itens do Pedido</h4>
-                            <div class="flex lg:items-center justify-between flex-col lg:flex-row p-3 bg-gray-50 dark:bg-surface-700 rounded-lg">
+                            <h4 class="text-sm! font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                                Itens do Pedido <span class="text-gray-400 font-normal">({{ group.items.length }})</span>
+                            </h4>
+
+                            <div
+                                v-for="item in group.items"
+                                :key="item.id"
+                                class="flex lg:items-center justify-between flex-col lg:flex-row p-3 bg-gray-50 dark:bg-surface-700 rounded-lg gap-3"
+                            >
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-it-primary/10 flex items-center justify-center">
-                                        <i class="pi pi-tag text-it-primary"></i>
-                                    </div>
+                                    <img
+                                        :src="getTagImage(item.tag_slug)"
+                                        :alt="item.tag_name"
+                                        class="w-10 h-10 object-contain shrink-0"
+                                    />
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">Kit de Etiquetas</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ item.tag_name }}
+                                            <span v-if="item.qty > 1" class="ml-1 text-xs text-gray-500">(x{{ item.qty }})</span>
+                                        </p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            Veículo #{{ order.vehicle?.id || order.vehicle_id }} - {{ order.vehicle?.name || 'Nome não informado' }} ({{ order.vehicle?.plate_number || 'Placa não informada' }})
+                                            {{ item.vehicle?.name || 'Veículo não informado' }}
+                                            <span v-if="item.vehicle?.plate_number"> · {{ item.vehicle.plate_number.toUpperCase() }}</span>
                                         </p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <img
-                                            :src="getTagImage(order?.tag_slug)"
-                                            :alt="`Selo ${order?.tag_slug || ''}`"
-                                            class="w-7 h-7 object-contain"
-                                        />
-                                        <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(order.price) }}</p>
-                                    </div>
-                                    <p v-if="parseFloat(order.shipping_price) > 0" class="text-xs text-gray-500 dark:text-gray-400">+ {{ formatCurrency(order.shipping_price) }} frete</p>
-                                </div>
+                                <p class="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{{ formatCurrency(item.price_total) }}</p>
                             </div>
 
-                            <!-- Pickup Point -->
-                            <div v-if="order.pickup_point" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                            <!-- Pickup Point resumido -->
+                            <div v-if="group.first.pickup_point" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
                                     <i class="pi pi-map-marker text-purple-600"></i>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">Ponto de retirada</p>
-                                    <p class="font-medium text-gray-900 dark:text-white">{{ order.pickup_point.name }}</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ group.first.pickup_point.name }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Informações de entrega/rastreamento -->
-                        <div v-if="order.delivery || order.pickup_point" class="space-y-4">
-                            <h4 v-if="order?.shipment?.tracking_code || order.pickup_point" class="text-sm! font-semibold text-gray-700 dark:text-gray-300">Informações de Entrega</h4>
+                        <div v-if="group.first.delivery || group.first.pickup_point" class="space-y-4">
+                            <h4 v-if="group.first.shipment?.tracking_code || group.first.pickup_point" class="text-sm! font-semibold text-gray-700 dark:text-gray-300">Informações de Entrega</h4>
 
-                            <div v-if="order.pickup_point" class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-900 rounded-lg">
+                            <div v-if="group.first.pickup_point" class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-900 rounded-lg">
                                 <div class="flex items-start gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2">
                                             <i class="pi pi-map-marker text-purple-600 dark:text-purple-400 mt-0.5"></i>
-                                            <p v-if="order.pickup_point.address" class="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                                                {{ order.pickup_point.address }}
+                                            <p v-if="group.first.pickup_point.address" class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                                                {{ group.first.pickup_point.address }}
                                             </p>
                                         </div>
                                         <a
-                                            v-if="order.pickup_point.map_link"
-                                            :href="order.pickup_point.map_link"
+                                            v-if="group.first.pickup_point.map_link"
+                                            :href="group.first.pickup_point.map_link"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="inline-flex items-center gap-2 mt-2 text-xs font-medium text-purple-700 dark:text-purple-300 hover:underline"
@@ -775,72 +810,60 @@ const getTagImage = (tagSlug?: string | null) => {
                                             <i class="pi pi-map"></i>
                                             Ver no mapa
                                         </a>
-                                        <p v-if="order.pickup_point.responsible || order.pickup_point.responsable" class="text-xs text-purple-700 dark:text-purple-300 mt-1 flex gap-2">
+                                        <p v-if="group.first.pickup_point.responsible || group.first.pickup_point.responsable" class="text-xs text-purple-700 dark:text-purple-300 mt-1 flex gap-2">
                                             <i class="pi pi-user"></i>
-                                            <strong>Responsável:</strong> {{ order.pickup_point.responsible || order.pickup_point.responsable }}
+                                            <strong>Responsável:</strong> {{ group.first.pickup_point.responsible || group.first.pickup_point.responsable }}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Código de rastreamento -->
-                            <div v-if="order.shipment?.tracking_code" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+                            <div v-if="group.first.shipment?.tracking_code" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg">
                                 <div class="flex items-start gap-2">
                                     <i class="pi pi-map-marker text-blue-600 dark:text-blue-400 mt-0.5"></i>
                                     <div class="flex-1">
                                         <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Código de Rastreamento</p>
-                                        <p class="font-mono text-sm text-blue-900 dark:text-blue-300 font-semibold">{{ order.shipment.tracking_code }}</p>
-                                        <p v-if="order.shipment.carrier" class="text-xs text-blue-600 dark:text-blue-400 mt-1">{{ order.shipment.carrier }}</p>
+                                        <p class="font-mono text-sm text-blue-900 dark:text-blue-300 font-semibold">{{ group.first.shipment.tracking_code }}</p>
+                                        <p v-if="group.first.shipment.carrier" class="text-xs text-blue-600 dark:text-blue-400 mt-1">{{ group.first.shipment.carrier }}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Último evento -->
-                            <!-- <div v-if="order.shipment?.last_event" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Último evento</p>
-                                <p class="text-sm text-gray-900 dark:text-white">{{ order.shipment.last_event }}</p>
-                            </div> -->
-
                             <!-- Data de entrega -->
-                            <div v-if="order.shipment?.delivered_at" class="flex items-center gap-2 text-sm">
+                            <div v-if="group.first.shipment?.delivered_at" class="flex items-center gap-2 text-sm">
                                 <i class="pi pi-calendar text-green-600 dark:text-green-400"></i>
                                 <div>
                                     <p class="text-gray-600 dark:text-gray-400">Entregue em</p>
-                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(order.shipment.delivered_at) }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(group.first.shipment.delivered_at) }}</p>
                                 </div>
                             </div>
 
                             <!-- Previsão de entrega -->
-                            <div v-else-if="order.shipment?.estimated_delivery_at" class="flex items-center gap-2 text-sm">
+                            <div v-else-if="group.first.shipment?.estimated_delivery_at" class="flex items-center gap-2 text-sm">
                                 <i class="pi pi-calendar text-orange-600 dark:text-orange-400"></i>
                                 <div>
                                     <p class="text-gray-600 dark:text-gray-400">Previsão de entrega</p>
-                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(order.shipment.estimated_delivery_at) }}</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(group.first.shipment.estimated_delivery_at) }}</p>
                                 </div>
-                            </div>
-
-                            <!-- Sem envio / retirada -->
-                            <div v-else-if="!order.shipment && !order.pickup_point" class="p-3 bg-gray-50 dark:bg-surface-700 rounded-lg text-sm text-gray-500 dark:text-gray-400">
-                                <i class="pi pi-info-circle mr-2"></i>
-                                Informações de envio indisponíveis.
                             </div>
 
                             <!-- Botão de rastreamento -->
                             <Button
-                                v-if="order.shipment?.tracking_code && !isDeliveredStatus(order)"
+                                v-if="group.first.shipment?.tracking_code && !isDeliveredStatus(group.first)"
                                 label="Rastrear Pedido"
                                 icon="pi pi-external-link"
                                 size="sm"
                                 class="w-full"
-                                @click="openTracking(order.shipment.tracking_code)"
+                                @click="openTracking(group.first.shipment.tracking_code)"
                             />
 
                             <button
-                                v-if="order.shipment?.id && !order.pickup_point && !isDeliveredStatus(order) && !isAwaitingShipmentStatus(order)"
+                                v-if="group.first.shipment?.id && !group.first.pickup_point && !isDeliveredStatus(group.first) && !isAwaitingShipmentStatus(group.first)"
                                 type="button"
                                 class="w-full mt-2 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                :disabled="deliveringShipmentIds.includes(order.shipment.id)"
-                                @click="confirmReceiveProduct(order.shipment.id)"
+                                :disabled="deliveringShipmentIds.includes(group.first.shipment.id)"
+                                @click="confirmReceiveProduct(group.first.shipment.id)"
                             >
                                 <i class="pi pi-check mr-2"></i>
                                 Recebi meu Produto
@@ -849,16 +872,16 @@ const getTagImage = (tagSlug?: string | null) => {
                     </div>
 
                     <!-- Barra de progresso -->
-                    <div v-if="!isPaymentCancelled(order)" class="mt-6 pt-6 border-t border-gray-100 dark:border-surface-700">
+                    <div v-if="!isPaymentCancelled(group.first)" class="mt-6 pt-6 border-t border-gray-100 dark:border-surface-700">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status do Pedido</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ getStatusProgress(order) }}%</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ getStatusProgress(group.first) }}%</span>
                         </div>
                         <div class="h-2 rounded-full bg-gray-100 dark:bg-surface-700 overflow-hidden">
                             <div
-                                :class="getStatusConfig(order).color"
+                                :class="getStatusConfig(group.first).color"
                                 class="h-full transition-all duration-500"
-                                :style="{ width: `${getStatusProgress(order)}%` }"
+                                :style="{ width: `${getStatusProgress(group.first)}%` }"
                             ></div>
                         </div>
                     </div>
