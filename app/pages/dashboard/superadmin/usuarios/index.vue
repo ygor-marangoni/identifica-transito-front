@@ -103,6 +103,7 @@ const handleDelete = (user: User) => {
             try {
                 await $api(`/admin/users/${user.id}`, { method: 'DELETE' });
                 toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Usuário excluído com sucesso.', life: 3000 });
+                fetchUserStats();
                 fetchUsers(pagination.value.currentPage);
             } catch (error: any) {
                 const msg = error?.data?.message || error?.message || 'Não foi possível excluir o usuário.';

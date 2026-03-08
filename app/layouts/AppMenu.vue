@@ -97,7 +97,7 @@ const superAdminModel = ref([
                 to: '/dashboard/superadmin/pedidos'
             },
             {
-                label: 'Pontos de Vendas',
+                label: 'Pontos de Venda',
                 icon: 'pi pi-fw pi-map-marker',
                 to: '/dashboard/superadmin/pontos-de-venda'
             }
