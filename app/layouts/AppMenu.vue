@@ -1,10 +1,18 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { handleLogout } from '@/utils/general';
 import AppMenuItem from './AppMenuItem.vue';
 
-const model = ref([
+const auth = useAuth();
+auth.init();
+
+const isSuperAdmin = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'superAdmin' || type === 1;
+});
+
+const clientModel = ref([
     {
         label: 'Dashboard',
         items: [
@@ -53,6 +61,51 @@ const model = ref([
         ]
     }
 ]);
+
+const superAdminModel = ref([
+    {
+        label: 'Dashboard',
+        items: [
+            {
+                label: 'Resumo',
+                icon: 'pi pi-fw pi-home',
+                to: '/dashboard/superadmin'
+            }
+        ]
+    },
+    {
+        label: 'Gerenciamento',
+        items: [
+            {
+                label: 'Usuários',
+                icon: 'pi pi-fw pi-users',
+                to: '/dashboard/superadmin/usuarios'
+            },
+            {
+                label: 'Veículos',
+                icon: 'pi pi-fw pi-car',
+                to: '/dashboard/superadmin/veiculos'
+            },
+            {
+                label: 'Etiquetas',
+                icon: 'pi pi-fw pi-tag',
+                to: '/dashboard/superadmin/etiquetas'
+            },
+            {
+                label: 'Pedidos',
+                icon: 'pi pi-fw pi-list',
+                to: '/dashboard/superadmin/pedidos'
+            },
+            {
+                label: 'Pontos de Vendas',
+                icon: 'pi pi-fw pi-map-marker',
+                to: '/dashboard/superadmin/pontos-de-venda'
+            }
+        ]
+    }
+]);
+
+const model = computed(() => isSuperAdmin.value ? superAdminModel.value : clientModel.value);
 
 const toast = useToast();
 </script>

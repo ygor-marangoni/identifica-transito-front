@@ -18,6 +18,14 @@
         layout: 'dashboard',
     });
 
+    // Redirect SuperAdmin to their own dashboard
+    const _auth = useAuth();
+    _auth.init();
+    const _type = _auth.user.value?.type;
+    if (_type === 'superAdmin' || _type === 1) {
+        await navigateTo('/dashboard/superadmin', { replace: true });
+    }
+
   useHead({
     title: 'Dashboard - Identifica Trânsito',
     meta: [
@@ -49,11 +57,11 @@
     const heroStats = computed(() => ({
         vehicles: {
             label: 'Veículos ativos',
-            count: String(stats.value.vehicles).padStart(2, '0')
+            count: String(stats.value.vehicles)
         },
         orders: {
             label: 'Etiquetas cadastradas',
-            count: String(stats.value.tags).padStart(2, '0')
+            count: String(stats.value.tags)
         }
     }));
 

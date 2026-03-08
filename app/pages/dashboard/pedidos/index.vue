@@ -57,6 +57,8 @@ interface Order {
         map_link?: string | null;
     } | null;
     payment_method: string;
+    discount_coupon?: number | null;
+    coupon_info?: { code: string; type: number; value: string } | null;
     boleto_url: string | null;
     mp_payment_id: string;
     mp_payment_status: string;
@@ -548,6 +550,20 @@ const confirmReceiveProduct = (shipmentId?: number) => {
     });
 };
 
+const formatCouponDiscount = (group: OrderGroup, couponInfo: { code: string; type: number; value: string }) => {
+    const couponItems = group.items.filter(item => item.coupon_info?.code === couponInfo.code);
+    if (couponInfo.type === 2) {
+        const totalDiscount = couponItems.reduce((sum, item) => sum + Number(couponInfo.value) * item.qty, 0);
+        return formatCurrency(totalDiscount);
+    }
+    const pct = Number(couponInfo.value);
+    if (pct >= 100) {
+        const originalTotal = couponItems.reduce((sum, item) => sum + Number(item.price) * item.qty, 0);
+        return formatCurrency(originalTotal);
+    }
+    return `${pct}%`;
+};
+
 const getTagImage = (tagSlug?: string | null) => {
     return tagSlug ? `/images/dashboard/etiquetas/${tagSlug}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
 };
@@ -559,6 +575,7 @@ const displayTypePayment = (type: string | undefined) => {
     if (typeKey === 'credit_card') return 'Cartão de Crédito';
     if (typeKey === 'boleto') return 'Boleto';
     if (typeKey === 'pix') return 'Pix';
+    if (typeKey === 'free') return 'Grátis';
     return type;
 };
 </script>
@@ -738,6 +755,16 @@ const displayTypePayment = (type: string | undefined) => {
                         <div class="text-right flex flex-col items-end gap-2">
                             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(group.totalPrice) }}</p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ displayTypePayment(group.first.payment_method) }}</p>
+                            <div
+                                v-if="group.first.coupon_info"
+                                class="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-xs text-green-700 dark:text-green-300"
+                            >
+                                <i class="pi pi-tag text-xs"></i>
+                                <span class="font-mono font-semibold uppercase">{{ group.first.coupon_info.code }}</span>
+                                <span v-if="Number(group.first.coupon_info.value) > 0" class="text-green-600 dark:text-green-400">
+                                    &minus;{{ formatCouponDiscount(group, group.first.coupon_info) }}
+                                </span>
+                            </div>
                             <a
                                 v-if="group.first.payment_method === 'boleto' && group.first.boleto_url"
                                 :href="group.first.boleto_url"

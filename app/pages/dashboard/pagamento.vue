@@ -84,6 +84,8 @@ const changeQty = (id: number, delta: number) => {
     const current = getQty(id);
     const next = Math.max(1, current + delta);
     quantities.value = { ...quantities.value, [id]: next };
+    couponData.value = null;
+    couponError.value = '';
 };
 
 const removeVehicle = (id: number) => {
@@ -91,6 +93,8 @@ const removeVehicle = (id: number) => {
     const updated = { ...quantities.value };
     delete updated[id];
     quantities.value = updated;
+    couponData.value = null;
+    couponError.value = '';
     if (selectedVehicles.value.length === 0) {
         navigateTo('/dashboard/etiquetas');
     }
@@ -109,6 +113,50 @@ const subtotalKits = computed(() =>
     selectedVehicles.value.reduce((sum, v) => sum + parseFloat(v.tag_price) * getQty(v.id), 0)
 );
 const total = computed(() => subtotalKits.value + frete.value);
+
+// Cupom de desconto
+const couponCode = ref('');
+const couponLoading = ref(false);
+const couponError = ref('');
+const couponData = ref<{
+    coupon: { code: string; type: number; value: number };
+    subtotal: number;
+    discount: number;
+    total: number;
+} | null>(null);
+
+const displayTotal = computed(() => couponData.value ? couponData.value.total + frete.value : total.value);
+const isFree = computed(() => displayTotal.value === 0);
+
+const vehiclesPayload = computed(() =>
+    selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id })))
+);
+
+const applyCoupon = async () => {
+    const code = couponCode.value.trim();
+    if (!code) return;
+    couponLoading.value = true;
+    couponError.value = '';
+    couponData.value = null;
+    try {
+        const { $api } = useNuxtApp();
+        const res = await $api('/tag-purchases/coupon-preview', {
+            method: 'POST',
+            body: { coupon_discount: code, vehicles: vehiclesPayload.value },
+        }) as any;
+        couponData.value = res?.data ?? res;
+    } catch (error: any) {
+        couponError.value = error?.data?.message || 'Cupom de desconto inválido ou expirado.';
+    } finally {
+        couponLoading.value = false;
+    }
+};
+
+const removeCoupon = () => {
+    couponCode.value = '';
+    couponData.value = null;
+    couponError.value = '';
+};
 
 // Opções de pagamento
 const paymentMethod = ref<'credito' | 'pix' | 'boleto'>('pix');
@@ -181,6 +229,7 @@ const isCreditCardValid = computed(() => {
 
 const isPaymentButtonDisabled = computed(() => {
     if (!isDeliveryValid.value) return true;
+    if (isFree.value) return false;
     if (paymentMethod.value === 'credito') return !isCreditCardValid.value;
     if (paymentMethod.value === 'boleto') return !isBoletoValid.value;
     return false;
@@ -188,6 +237,7 @@ const isPaymentButtonDisabled = computed(() => {
 
 const paymentButtonTooltip = computed(() => {
     if (!isDeliveryValid.value) return 'Preencha a forma de entrega ou retirada no passo 1 para continuar.';
+    if (isFree.value) return undefined;
     if (paymentMethod.value === 'credito' && !isCreditCardValid.value) return 'Preencha todos os dados do cartão de crédito, incluindo CPF.';
     if (paymentMethod.value === 'boleto' && !isBoletoValid.value) return 'Preencha o endereço do pagador para gerar o boleto.';
     return undefined;
@@ -439,6 +489,30 @@ const loadMercadoPago = (): Promise<void> => {
 };
 
 const handlePagar = async () => {
+    if (isFree.value) {
+        loadingPayment.value = true;
+        try {
+            const { $api } = useNuxtApp();
+            await $api('/tag-purchases', {
+                method: 'POST',
+                body: {
+                    payment_method: 'free',
+                    coupon_discount: couponData.value?.coupon?.code || null,
+                    shipping_price: frete.value,
+                    vehicles: vehiclesPayload.value,
+                    ...buildDeliveryPayload(),
+                },
+            });
+            paymentSuccess.value = true;
+        } catch (error: any) {
+            const errorMsg = error?.data?.message || error?.message || 'Erro ao confirmar pedido.';
+            toast.add({ severity: 'error', summary: 'Erro ao confirmar', detail: errorMsg, life: 5000 });
+        } finally {
+            loadingPayment.value = false;
+        }
+        return;
+    }
+
     if (paymentMethod.value === 'credito') {
         loadingPayment.value = true;
         try {
@@ -478,9 +552,9 @@ const handlePagar = async () => {
                     installments: 1,
                     payment_method_id: paymentMethodId,
                     issuer_id: issuerId ?? null,
-                    coupon_discount: null,
+                    coupon_discount: couponData.value?.coupon?.code || null,
                     shipping_price: frete.value,
-                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
+                    vehicles: vehiclesPayload.value,
                     ...buildDeliveryPayload(),
                 },
             }) as { status: string; status_label?: string; status_detail?: string };
@@ -520,9 +594,9 @@ const handlePagar = async () => {
                 method: 'POST',
                 body: {
                     payment_method: 'boleto',
-                    coupon_discount: null,
+                    coupon_discount: couponData.value?.coupon?.code || null,
                     shipping_price: frete.value,
-                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
+                    vehicles: vehiclesPayload.value,
                     payer_zip_code: addr.cep,
                     payer_street: addr.rua,
                     payer_number: addr.numero,
@@ -551,9 +625,9 @@ const handlePagar = async () => {
                 method: 'POST',
                 body: {
                     payment_method: 'pix',
-                    coupon_discount: null,
+                    coupon_discount: couponData.value?.coupon?.code || null,
                     shipping_price: frete.value,
-                    vehicles: selectedVehicles.value.flatMap(v => Array.from({ length: getQty(v.id) }, () => ({ id: v.id }))),
+                    vehicles: vehiclesPayload.value,
                     ...buildDeliveryPayload(),
                 },
             });
@@ -625,7 +699,7 @@ const handlePagar = async () => {
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col">
                         <span class="text-xs font-medium opacity-90">Total</span>
-                        <span class="text-xl font-bold">R$ {{ total.toFixed(2) }}</span>
+                        <span class="text-xl font-bold">R$ {{ displayTotal.toFixed(2) }}</span>
                     </div>
                     <div class="w-px h-8 bg-white/30"></div>
                     <div class="flex flex-col text-xs">
@@ -808,12 +882,54 @@ const handlePagar = async () => {
                                 </div>
 
                                 <!-- Financeiro -->
-                                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
                                     <h3 class="text-lg! color-it-primary font-semibold mb-3">Resumo Financeiro</h3>
+
+                                    <!-- Cupom de desconto -->
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-semibold text-gray-700">Cupom de desconto</label>
+                                        <div v-if="couponData" class="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm">
+                                            <i class="pi pi-tag text-green-600"></i>
+                                            <span class="font-semibold text-green-700 flex-1">{{ couponData.coupon.code }}</span>
+                                            <span class="text-green-600 font-medium">-R$ {{ couponData.discount.toFixed(2) }}</span>
+                                            <button type="button" @click="removeCoupon" class="text-gray-400 hover:text-red-500 transition ml-1">
+                                                <i class="pi pi-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                        <div v-else class="flex gap-2">
+                                            <input
+                                                v-model="couponCode"
+                                                type="text"
+                                                placeholder="Digite seu cupom"
+                                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                :disabled="couponLoading"
+                                                @keyup.enter="applyCoupon"
+                                            />
+                                            <button
+                                                type="button"
+                                                @click="applyCoupon"
+                                                :disabled="couponLoading || !couponCode.trim()"
+                                                class="px-4 py-2 bg-it-primary text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50 whitespace-nowrap"
+                                            >
+                                                <i v-if="couponLoading" class="pi pi-spin pi-spinner mr-1"></i>
+                                                Aplicar
+                                            </button>
+                                        </div>
+                                        <p v-if="couponError" class="text-xs text-red-600 flex items-center gap-1">
+                                            <i class="pi pi-exclamation-circle"></i>
+                                            {{ couponError }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Valores -->
                                     <div class="space-y-3 text-sm text-gray-700">
                                         <div class="flex justify-between">
                                             <span>Subtotal ({{ selectedVehicles.length }}x)</span>
                                             <span class="font-semibold">R$ {{ subtotalKits.toFixed(2) }}</span>
+                                        </div>
+                                        <div v-if="couponData" class="flex justify-between text-green-600">
+                                            <span>Desconto ({{ couponData.coupon.code }})</span>
+                                            <span class="font-semibold">-R$ {{ couponData.discount.toFixed(2) }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span>Frete</span>
@@ -821,7 +937,8 @@ const handlePagar = async () => {
                                         </div>
                                         <div class="border-t border-gray-200 pt-3 flex justify-between text-base font-bold text-gray-900">
                                             <span>Total</span>
-                                            <span>R$ {{ total.toFixed(2) }}</span>
+                                            <span v-if="displayTotal === 0" class="text-green-600">Grátis</span>
+                                            <span v-else>R$ {{ displayTotal.toFixed(2) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -841,7 +958,17 @@ const handlePagar = async () => {
                         <template #default="{ activateCallback }">
                             <div class="space-y-6">
                             <h3 class="text-lg! font-semibold text-gray-900">Forma de Pagamento</h3>
-                            <div class="flex flex-wrap gap-3">
+
+                            <!-- Gratuito: cupom cobre 100% -->
+                            <div v-if="isFree" class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
+                                <i class="pi pi-check-circle text-2xl"></i>
+                                <div>
+                                    <p class="font-semibold">Pedido 100% gratuito!</p>
+                                    <p class="text-sm text-green-600">O cupom <strong>{{ couponData?.coupon.code }}</strong> cobre o valor total. Não é necessário informar forma de pagamento.</p>
+                                </div>
+                            </div>
+
+                            <div v-else class="flex flex-wrap gap-3">
                                 <button
                                     type="button"
                                     :class="[
@@ -878,7 +1005,7 @@ const handlePagar = async () => {
                             </div>
 
                             <!-- Cartão de Crédito -->
-                            <div v-if="paymentMethod === 'credito'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div v-if="!isFree && paymentMethod === 'credito'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <p class="text-sm font-semibold text-gray-800">Dados do cartão:</p>
                                     <div class="grid grid-cols-1 gap-4">
@@ -897,7 +1024,7 @@ const handlePagar = async () => {
                             </div>
 
                             <!-- PIX -->
-                            <div v-else-if="paymentMethod === 'pix'" class="space-y-4">
+                            <div v-else-if="!isFree && paymentMethod === 'pix'" class="space-y-4">
                                 <!-- Aguardando gerar QR Code -->
                                 <div v-if="!pixData" class="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <p class="text-sm font-semibold text-gray-800">Pague via PIX:</p>
@@ -963,7 +1090,7 @@ const handlePagar = async () => {
                             </div>
 
                             <!-- Boleto -->
-                            <div v-else class="space-y-4">
+                            <div v-else-if="!isFree" class="space-y-4">
                                 <!-- Formulário de endereço do pagador -->
                                 <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <div>
@@ -1060,8 +1187,8 @@ const handlePagar = async () => {
                                     class="inline-flex"
                                 >
                                     <Button
-                                        :label="paymentMethod === 'pix' ? 'Gerar PIX para Pagamento' : paymentMethod === 'boleto' ? 'Gerar Boleto para Pagamento' : 'Realizar Pagamento'"
-                                        :icon="paymentMethod === 'pix' ? 'pi pi-qrcode' : paymentMethod === 'boleto' ? 'pi pi-bars' : 'pi pi-check'"
+                                        :label="isFree ? 'Confirmar Pedido' : paymentMethod === 'pix' ? 'Gerar PIX para Pagamento' : paymentMethod === 'boleto' ? 'Gerar Boleto para Pagamento' : 'Realizar Pagamento'"
+                                        :icon="isFree ? 'pi pi-check-circle' : paymentMethod === 'pix' ? 'pi pi-qrcode' : paymentMethod === 'boleto' ? 'pi pi-bars' : 'pi pi-check'"
                                         size="sm"
                                         :loading="loadingPayment"
                                         :disabled="isPaymentButtonDisabled"

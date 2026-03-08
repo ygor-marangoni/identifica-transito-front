@@ -53,9 +53,11 @@ const mapVehicleData = (vehicle: Record<string, any>) => {
         perfilUso: getUsageProfileLabel(vehicle.usage_profile) || String(vehicle.usage_profile || ''),
         dataCadastro: vehicle.created_at || '',
         etiqueta: vehicle.etiqueta || {
-            codigo: 'PIT' + vehicle.id, 
+            codigo: 'PIT' + vehicle.id,
             tipo: vehicle.type_label?.toUpperCase() || 'Indisponível',
-            imagem: '/images/dashboard/etiquetas/azul.svg'
+            imagem: vehicle.tag_color
+                ? `/images/dashboard/etiquetas/${vehicle.tag_color}.svg`
+                : '/images/dashboard/etiquetas/azul.svg'
         }
     };
 };
