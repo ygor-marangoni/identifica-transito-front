@@ -92,7 +92,7 @@ const closeProfileMenu = () => {
                                 />
                                 <div>
                                     <p class="font-semibold text-gray-900 dark:text-white mb-0!">{{ userName }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0!">{{ userEmail }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0! overflow-hidden text-ellipsis max-w-36.25">{{ userEmail }}</p>
                                 </div>
                             </div>
                         </div>

@@ -15,28 +15,46 @@ useHead({
     ]
 });
 
-const faqItems = ref([
-    {
-        header: 'Como funciona o pagamento da etiqueta?',
-        content: 'O pagamento pode ser realizado via cartão de crédito, PIX ou boleto. Após confirmar o pedido, você receberá a etiqueta no endereço cadastrado ou poderá retirar em um ponto de coleta.'
-    },
-    {
-        header: 'Como faço para retirar minha etiqueta em um ponto de coleta?',
-        content: 'Ao finalizar a compra, selecione a opção "Retirar em Ponto de Coleta" e escolha o local mais próximo. Você receberá um número de pedido via e-mail que deve ser apresentado na retirada.'
-    },
-    {
-        header: 'Como aplicar a etiqueta no veículo?',
-        content: 'A etiqueta é autoadesiva. Limpe bem a superfície antes de aplicar para garantir a melhor aderência. Aplique uma etiqueta na parte superior direita do para-brisa (vidro dianteiro) e outra na parte superior direita do vidro traseiro. Certifique-se de que não obstrua a visão do condutor e esteja em conformidade com as leis de trânsito locais.'
-    },
-    {
-        header: 'Posso alterar os dados do meu veículo após cadastrá-lo?',
-        content: 'Sim, você pode editar as informações do seu veículo na seção "Meus Veículos" no aplicativo. Algumas informações, como a placa, podem ter restrições de alteração após a emissão de uma etiqueta.'
-    },
-    {
-        header: 'O que fazer se eu perder minha etiqueta?',
-        content: 'Caso perca sua etiqueta, entre em contato com nosso suporte. Poderá ser necessário adquirir uma nova etiqueta para o veículo.'
+const { $api } = useNuxtApp();
+
+interface FaqItem {
+    id: number;
+    question: string;
+    answer: string;
+    active?: boolean | number;
+    order?: number;
+}
+
+const faqItems = ref<FaqItem[]>([]);
+const faqLoading = ref(false);
+const faqLoadError = ref('');
+
+const fetchFaqs = async () => {
+    faqLoading.value = true;
+    faqLoadError.value = '';
+
+    try {
+        const res = await $api('/faqs') as any;
+        const payload = res?.data ?? res;
+
+        const list = Array.isArray(payload)
+            ? payload
+            : (Array.isArray(payload?.data) ? payload.data : []);
+
+        faqItems.value = list
+            .filter((item: FaqItem) => item?.active === undefined || item?.active === true || item?.active === 1)
+            .sort((a: FaqItem, b: FaqItem) => (a?.order ?? 0) - (b?.order ?? 0));
+    } catch (error) {
+        console.error('Erro ao carregar FAQs públicas:', error);
+        faqLoadError.value = 'Não foi possível carregar as perguntas frequentes no momento.';
+    } finally {
+        faqLoading.value = false;
     }
-]);
+};
+
+onMounted(() => {
+    fetchFaqs();
+});
 
 const contactChannels = [
     {
@@ -48,12 +66,12 @@ const contactChannels = [
         href: 'mailto:suporte@identificatransito.com.br'
     },
     {
-        icon: 'pi pi-phone',
+        icon: 'pi pi-whatsapp',
         title: 'Telefone / WhatsApp',
         description: 'Fale conosco durante o horário comercial (Seg-Sex, 9h-18h).',
-        contact: '(XX) YYYYY-YYYY',
-        action: 'Ligar agora',
-        href: 'tel:+5511999999999'
+        contact: '(11) 98497-1689',
+        action: 'Chame no WhatsApp',
+        href: 'https://wa.me/5511984971689'
     },
     {
         icon: 'pi pi-comments',
@@ -83,17 +101,29 @@ const contactChannels = [
                 <p class="text-gray-600">Encontre as respostas para as dúvidas mais comuns</p>
             </div>
 
-            <Accordion :multiple="false" :activeIndex="0" class="w-full">
+            <div v-if="faqLoading" class="space-y-3">
+                <Skeleton v-for="n in 4" :key="n" height="50px" class="w-full" />
+            </div>
+
+            <div v-else-if="faqLoadError" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {{ faqLoadError }}
+            </div>
+
+            <Accordion v-else-if="faqItems.length > 0" :multiple="false" :activeIndex="0" class="w-full">
                 <AccordionTab
                     v-for="(item, index) in faqItems"
-                    :key="index"
-                    :header="item.header"
+                    :key="item.id ?? index"
+                    :header="item.question"
                     headerClass="text-gray-900 font-semibold text-base"
                     contentClass="text-gray-600"
                 >
-                    {{ item.content }}
+                    {{ item.answer }}
                 </AccordionTab>
             </Accordion>
+
+            <div v-else class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                Nenhuma pergunta frequente disponível no momento.
+            </div>
         </section>
 
         <!-- Support Channels Section -->

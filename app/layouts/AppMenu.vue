@@ -12,6 +12,11 @@ const isSuperAdmin = computed(() => {
     return type === 'superAdmin' || type === 1;
 });
 
+const isAdmin = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'admin' || type === 2;
+});
+
 const clientModel = ref([
     {
         label: 'Dashboard',
@@ -59,6 +64,17 @@ const clientModel = ref([
                 to: '/dashboard/configuracoes'
             }
         ]
+    },
+    {
+        label: 'Projeto',
+        items: [
+            {
+                label: 'Sobre o Projeto',
+                icon: 'pi pi-fw pi-info-circle',
+                to: '/projeto-identifica-transito',
+                class: 'rotated-icon'
+            },
+        ]
     }
 ]);
 
@@ -97,15 +113,84 @@ const superAdminModel = ref([
                 to: '/dashboard/superadmin/pedidos'
             },
             {
+                label: 'Cupom de Desconto',
+                icon: 'pi pi-fw pi-ticket',
+                to: '/dashboard/superadmin/cupons-de-desconto'
+            },
+            {
                 label: 'Pontos de Venda',
                 icon: 'pi pi-fw pi-map-marker',
                 to: '/dashboard/superadmin/pontos-de-venda'
+            },
+            {
+                label: 'FAQ',
+                icon: 'pi pi-fw pi-question-circle',
+                to: '/dashboard/superadmin/faq'
             }
+        ]
+    },
+    {
+        label: 'Projeto',
+        items: [
+            {
+                label: 'Sobre o Projeto',
+                icon: 'pi pi-fw pi-info-circle',
+                to: '/projeto-identifica-transito',
+                class: 'rotated-icon'
+            },
         ]
     }
 ]);
 
-const model = computed(() => isSuperAdmin.value ? superAdminModel.value : clientModel.value);
+const adminModel = ref([
+    {
+        label: 'Dashboard',
+        items: [
+            {
+                label: 'Resumo',
+                icon: 'pi pi-fw pi-home',
+                to: '/dashboard/admin'
+            }
+        ]
+    },
+    {
+        label: 'Gerenciamento',
+        items: [
+            {
+                label: 'Usuários',
+                icon: 'pi pi-fw pi-users',
+                to: '/dashboard/admin/usuarios'
+            },
+            {
+                label: 'Veículos',
+                icon: 'pi pi-fw pi-car',
+                to: '/dashboard/admin/veiculos'
+            },
+            {
+                label: 'Pedidos',
+                icon: 'pi pi-fw pi-list',
+                to: '/dashboard/admin/pedidos'
+            }
+        ]
+    },
+    {
+        label: 'Projeto',
+        items: [
+            {
+                label: 'Sobre o Projeto',
+                icon: 'pi pi-fw pi-info-circle',
+                to: '/projeto-identifica-transito',
+                class: 'rotated-icon'
+            },
+        ]
+    }
+]);
+
+const model = computed(() => {
+    if (isSuperAdmin.value) return superAdminModel.value;
+    if (isAdmin.value) return adminModel.value;
+    return clientModel.value;
+});
 
 const toast = useToast();
 </script>

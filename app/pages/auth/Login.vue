@@ -5,6 +5,7 @@
   import InputPassword from '~/components/forms/InputPassword.vue';
   import Button from '~/components/forms/Button.vue';
   import { useToast } from 'primevue/usetoast';
+  import { getDashboardByType, getUserType } from '~/utils/authRedirect';
 
   const toast = useToast();
 
@@ -40,7 +41,7 @@
       });
 
       const token = response?.token || response?.data?.token || response?.access_token;
-      const user = response?.data || response?.user || response?.data?.user || null;
+      const user = response?.user || response?.data?.user || response?.data || null;
 
       if (!token) {
         throw new Error('Token ausente na resposta.');
@@ -49,7 +50,8 @@
       const auth = useAuth();
       auth.setSession(token, user);
 
-      await navigateTo('/dashboard');
+      const userType = getUserType(user);
+      await navigateTo(getDashboardByType(userType));
     } catch (error) {
       const apiMessage = error?.data?.message || error?.data?.error;
       errorMessage.value = apiMessage || error?.message || 'Nao foi possivel fazer login. Tente novamente.';

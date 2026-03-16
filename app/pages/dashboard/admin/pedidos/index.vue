@@ -1,0 +1,464 @@
+<script setup lang="ts">
+import HeroSection from '~/components/dashboard/HeroSection.vue';
+import PaginationControls from '~/components/PaginationControls.vue';
+import { useToast } from 'primevue/usetoast';
+
+definePageMeta({ layout: 'dashboard' });
+useHead({ title: 'Pedidos - Admin | Identifica Trânsito' });
+
+const { $api } = useNuxtApp();
+const toast = useToast();
+
+interface Shipment {
+    id: number;
+    tracking_code: string | null;
+    carrier: string;
+    carrier_service: string | null;
+    status: number;
+    status_label: string;
+    estimated_delivery_at: string | null;
+    delivered_at: string | null;
+    last_event: string | null;
+    notes: string | null;
+}
+
+interface Order {
+    id: number;
+    vehicle_id: number;
+    vehicle_name: string;
+    vehicle_plate: string;
+    user_id: number;
+    user_name: string;
+    tag_id: number;
+    tag_name: string;
+    tag_slug: string | null;
+    discount_coupon: number | null;
+    coupon_info: { code: string; type: number; value: string } | null;
+    qty: number;
+    price: string;
+    price_total: string;
+    shipping_price: string;
+    delivery: any | null;
+    pickup_point: { id: number; label: string } | null;
+    payment_method: string;
+    mp_payment_id: string | null;
+    mp_payment_status: string | null;
+    mp_payment_status_label: string | null;
+    boleto_url: string | null;
+    status: number;
+    shipment: Shipment | null;
+    created_at: string;
+}
+
+const PAYMENT_STATUS = [
+    { label: 'Pendente', value: 0 },
+    { label: 'Aprovado', value: 1 },
+    { label: 'Cancelado', value: 2 },
+    { label: 'Rejeitado', value: 3 },
+];
+
+const SHIPMENT_STATUS = [
+    { label: 'Aguardando postagem', value: 0 },
+    { label: 'Postado', value: 1 },
+    { label: 'Em trânsito', value: 2 },
+    { label: 'Saiu para entrega', value: 3 },
+    { label: 'Entregue', value: 4 },
+    { label: 'Tentativa falhou', value: 5 },
+    { label: 'Devolvido', value: 6 },
+];
+
+const PICKUP_STATUS = [
+    { label: 'Aguardando', value: 0 },
+    { label: 'Disponível para Retirada', value: 1 },
+    { label: 'Retirado', value: 4 },
+];
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+    credit_card: 'Cartão',
+    boleto: 'Boleto',
+    pix: 'PIX',
+    free: 'Gratuito',
+};
+
+const paymentStatusClass = (status: number) => ({
+    0: 'bg-yellow-100 text-yellow-700',
+    1: 'bg-green-100 text-green-700',
+    2: 'bg-gray-100 text-gray-500',
+    3: 'bg-red-100 text-red-700',
+}[status] ?? 'bg-gray-100 text-gray-500');
+
+const shipmentStatusClass = (status: number) => ({
+    0: 'bg-gray-100 text-gray-500',
+    1: 'bg-blue-100 text-blue-700',
+    2: 'bg-blue-100 text-blue-700',
+    3: 'bg-indigo-100 text-indigo-700',
+    4: 'bg-green-100 text-green-700',
+    5: 'bg-orange-100 text-orange-700',
+    6: 'bg-red-100 text-red-700',
+}[status] ?? 'bg-gray-100 text-gray-500');
+
+const getShipmentStatusLabel = (order: Order) => {
+    const status = order.shipment?.status ?? 0;
+    const options = order.pickup_point ? PICKUP_STATUS : SHIPMENT_STATUS;
+    return options.find((s) => s.value === status)?.label ?? '-';
+};
+
+const getOrderDisplayId = (order: Order) => order.mp_payment_id ?? String(order.id);
+
+// ── List ──────────────────────────────────────────────────────────────────────
+const orders = ref<Order[]>([]);
+const loading = ref(false);
+const search = ref('');
+const pagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
+
+const fetchOrders = async (page = 1) => {
+    loading.value = true;
+    try {
+        const params = new URLSearchParams({ page: String(page), per_page: '15' });
+        if (search.value) params.set('q', search.value);
+        const res = await $api(`/admin-pdv/orders?${params}`) as any;
+        orders.value = Array.isArray(res?.data) ? res.data : [];
+        pagination.value.currentPage = Number(res?.meta?.current_page ?? page);
+        pagination.value.lastPage = Number(res?.meta?.last_page ?? 1);
+        pagination.value.total = Number(res?.meta?.total ?? orders.value.length);
+    } catch (e) {
+        console.error('Erro ao carregar pedidos:', e);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const goToPage = (page: number) => {
+    if (page < 1 || page > pagination.value.lastPage || page === pagination.value.currentPage || loading.value) return;
+    fetchOrders(page);
+};
+
+const onSearch = () => {
+    pagination.value.currentPage = 1;
+    fetchOrders(1);
+};
+
+const formatDate = (d: string) => {
+    if (!d) return '-';
+    if (d.includes('/')) return d.split(' ')[0];
+    return new Date(d).toLocaleDateString('pt-BR');
+};
+
+const formatCurrency = (v: string | number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v));
+
+// ── Shipment inline edit (pickup) ─────────────────────────────────────────────
+const editingShipmentId = ref<number | null>(null);
+const editShipmentStatusInline = ref<number>(0);
+const savingShipmentInline = ref(false);
+
+const cancelShipmentEdit = () => { editingShipmentId.value = null; };
+
+const saveShipmentInline = async (order: Order) => {
+    savingShipmentInline.value = true;
+    try {
+        await $api(`/admin-pdv/orders/${order.id}`, {
+            method: 'PATCH',
+            body: { status: editShipmentStatusInline.value },
+        });
+        if (order.shipment) order.shipment.status = editShipmentStatusInline.value;
+        editingShipmentId.value = null;
+        toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Status de entrega atualizado.', life: 3000 });
+    } catch (error: any) {
+        const msg = error?.data?.message || 'Não foi possível atualizar o status.';
+        toast.add({ severity: 'error', summary: 'Erro', detail: msg, life: 5000 });
+    } finally {
+        savingShipmentInline.value = false;
+    }
+};
+
+// ── Shipment modal (delivery) ─────────────────────────────────────────────────
+const showShipmentModal = ref(false);
+const modalOrder = ref<Order | null>(null);
+const editShipmentStatus = ref<number>(0);
+const editTrackingCode = ref<string>('');
+const savingShipment = ref(false);
+
+const isPickup = (order: Order) => order.pickup_point !== null;
+
+const openShipmentEdit = (order: Order) => {
+    if (isPickup(order)) {
+        editingShipmentId.value = order.id;
+        editShipmentStatusInline.value = order.shipment?.status ?? 0;
+    } else {
+        modalOrder.value = order;
+        editShipmentStatus.value = order.shipment?.status ?? 0;
+        editTrackingCode.value = order.shipment?.tracking_code ?? '';
+        showShipmentModal.value = true;
+    }
+};
+
+const saveShipmentModal = async () => {
+    if (!modalOrder.value) return;
+    savingShipment.value = true;
+    try {
+        await $api(`/admin-pdv/orders/${modalOrder.value.id}`, {
+            method: 'PATCH',
+            body: {
+                status: editShipmentStatus.value,
+                tracking_code: editTrackingCode.value || null,
+            },
+        });
+        if (modalOrder.value.shipment) {
+            modalOrder.value.shipment.status = editShipmentStatus.value;
+            modalOrder.value.shipment.tracking_code = editTrackingCode.value || null;
+        }
+        showShipmentModal.value = false;
+        toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Status de entrega atualizado.', life: 3000 });
+    } catch (error: any) {
+        const msg = error?.data?.message || 'Não foi possível atualizar o status.';
+        toast.add({ severity: 'error', summary: 'Erro', detail: msg, life: 5000 });
+    } finally {
+        savingShipment.value = false;
+    }
+};
+
+onMounted(() => fetchOrders());
+</script>
+
+<template>
+    <div class="space-y-6">
+        <HeroSection
+            title="Pedidos"
+            subtitle="Gerencie todos os pedidos da plataforma"
+            greeting="Admin"
+            :showButton="false"
+        />
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <!-- Search -->
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+                <div class="relative flex-1 min-w-60">
+                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input
+                        v-model="search"
+                        type="text"
+                        placeholder="Buscar por cliente, placa..."
+                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        @keyup.enter="onSearch"
+                    />
+                </div>
+                <button
+                    @click="onSearch"
+                    class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                >
+                    Buscar
+                </button>
+                <span class="text-sm text-gray-500 ml-auto">{{ pagination.total }} pedido(s)</span>
+            </div>
+
+            <!-- Skeleton -->
+            <div v-if="loading" class="space-y-3">
+                <div v-for="n in 8" :key="n" class="flex gap-4 items-center p-3">
+                    <Skeleton width="3%" height="14px" />
+                    <Skeleton width="12%" height="14px" />
+                    <Skeleton width="18%" height="14px" />
+                    <Skeleton width="12%" height="14px" />
+                    <Skeleton width="5%" height="14px" />
+                    <Skeleton width="10%" height="14px" />
+                    <Skeleton width="14%" height="24px" />
+                    <Skeleton width="16%" height="24px" />
+                    <Skeleton width="8%" height="14px" />
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div v-else-if="orders.length > 0" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-gray-200 bg-gray-50">
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">#</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Id Pedido</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cliente</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Veículo</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Etiqueta</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Qty</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Total</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Entrega</th>
+                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(order, index) in orders"
+                            :key="order.id"
+                            class="border-b border-gray-100 hover:bg-gray-50 transition"
+                        >
+                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 15 }}</td>
+
+                            <td class="py-3 px-4 text-gray-700 font-mono text-xs">{{ getOrderDisplayId(order) }}</td>
+
+                            <td class="py-3 px-4 text-gray-700">{{ order.user_name }}</td>
+
+                            <td class="py-3 px-4">
+                                <p class="font-medium text-gray-900">{{ order.vehicle_name }}</p>
+                                <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 text-xs uppercase">{{ order.vehicle_plate }}</span>
+                            </td>
+
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <img
+                                        v-if="order.tag_slug"
+                                        :src="`/images/dashboard/etiquetas/${order.tag_slug}.svg`"
+                                        :alt="order.tag_name"
+                                        class="w-6 h-6 object-contain"
+                                    />
+                                    <span class="text-gray-700">{{ order.tag_name }}</span>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-4 text-gray-700">{{ order.qty }}</td>
+
+                            <td class="py-3 px-4">
+                                <p class="font-medium text-gray-900">{{ formatCurrency(order.price_total) }}</p>
+                                <span v-if="order.coupon_info" class="text-xs text-green-600">
+                                    {{ order.coupon_info.code }}
+                                </span>
+                            </td>
+
+                            <!-- Payment Status -->
+                            <td class="py-3 px-4">
+                                <div class="flex flex-col gap-1">
+                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium w-fit', paymentStatusClass(order.status)]">
+                                        {{ PAYMENT_STATUS.find(s => s.value === order.status)?.label ?? '-' }}
+                                    </span>
+                                    <span class="text-xs text-gray-400">{{ PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Shipment Status -->
+                            <td class="py-3 px-4">
+                                <div v-if="editingShipmentId === order.id" class="flex flex-col gap-2 min-w-38">
+                                    <select
+                                        v-model="editShipmentStatusInline"
+                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option v-for="opt in PICKUP_STATUS" :key="opt.value" :value="opt.value">
+                                            {{ opt.label }}
+                                        </option>
+                                    </select>
+                                    <div class="flex gap-1.5">
+                                        <button
+                                            @click="saveShipmentInline(order)"
+                                            :disabled="savingShipmentInline"
+                                            class="flex-1 px-2 py-1 bg-it-primary text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                                        >
+                                            <i class="pi pi-check text-xs"></i> Salvar
+                                        </button>
+                                        <button
+                                            @click="cancelShipmentEdit"
+                                            class="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50 transition"
+                                        >
+                                            <i class="pi pi-times text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div v-else class="flex flex-col gap-1">
+                                    <button
+                                        @click="openShipmentEdit(order)"
+                                        class="group flex items-center gap-1.5 w-fit"
+                                        title="Clique para editar"
+                                    >
+                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', shipmentStatusClass(order.shipment?.status ?? 0)]">
+                                            {{ getShipmentStatusLabel(order) }}
+                                        </span>
+                                        <i class="pi pi-pencil text-gray-400 text-xs opacity-0 group-hover:opacity-100 transition"></i>
+                                    </button>
+                                    <span class="text-xs text-gray-400">
+                                        {{ order.pickup_point ? order.pickup_point.label : 'Entrega em domicílio' }}
+                                    </span>
+                                    <span v-if="order.shipment?.tracking_code" class="text-xs text-blue-500 font-mono">
+                                        {{ order.shipment.tracking_code }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-4 text-gray-500">{{ formatDate(order.created_at) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty -->
+            <div v-else class="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
+                <i class="pi pi-shopping-cart text-4xl"></i>
+                <p>Nenhum pedido encontrado</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-5 pt-4 border-t border-gray-100">
+                <PaginationControls
+                    :current-page="pagination.currentPage"
+                    :last-page="pagination.lastPage"
+                    :loading="loading"
+                    @page-change="goToPage"
+                />
+            </div>
+        </div>
+
+        <!-- Shipment Modal (entrega em domicílio) -->
+        <Dialog
+            v-model:visible="showShipmentModal"
+            header="Atualizar Entrega"
+            :modal="true"
+            :closable="true"
+            :style="{ width: '440px' }"
+        >
+            <div v-if="modalOrder" class="space-y-5 pt-2">
+                <div>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Pedido <span class="font-medium text-gray-700">#{{ modalOrder.id }}</span> —
+                        {{ modalOrder.user_name }} · {{ modalOrder.vehicle_name }}
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Status de Entrega</label>
+                    <select
+                        v-model="editShipmentStatus"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option v-for="opt in SHIPMENT_STATUS" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Código de Rastreio</label>
+                    <input
+                        v-model="editTrackingCode"
+                        type="text"
+                        placeholder="Ex: BR123456789BR"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    />
+                    <p class="text-xs text-gray-400 mt-1">Opcional. Informe o código de rastreio da transportadora.</p>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <button
+                        @click="showShipmentModal = false"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="saveShipmentModal"
+                        :disabled="savingShipment"
+                        class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                    >
+                        <i v-if="!savingShipment" class="pi pi-check mr-1"></i>
+                        <i v-else class="pi pi-spin pi-spinner mr-1"></i>
+                        Salvar
+                    </button>
+                </div>
+            </template>
+        </Dialog>
+    </div>
+</template>
