@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
 const menuItems = [
     { href: '#topo', label: 'Minha Conta', icon: 'pi pi-user' },
     { href: '#projeto', label: 'O Projeto', icon: 'pi pi-flag' },
@@ -23,16 +26,22 @@ const impactStats = [
     {
         icon: 'pi pi-car',
         value: '38.256',
+        counterTarget: 38256,
+        counterFormat: 'dot',
         description: 'mortes em acidentes de trânsito registradas no Brasil entre 2020 e 2024.'
     },
     {
         icon: 'pi pi-globe',
         value: '1,35 mi',
+        counterTarget: 1.35,
+        counterFormat: 'mi',
         description: 'de vidas perdidas por ano no mundo em ocorrências de trânsito.'
     },
     {
         icon: 'pi pi-users',
         value: '1ª causa',
+        counterTarget: 1,
+        counterFormat: 'ordinal',
         description: 'de morte entre jovens e crianças em diversas realidades urbanas.'
     }
 ];
@@ -41,55 +50,81 @@ const projectPillars = [
     {
         icon: 'pi pi-id-card',
         title: 'Identificação clara do perfil',
-        description: 'A etiqueta comunica rapidamente uma condição ou contexto relevante de condução.'
+        description: 'A etiqueta comunica rapidamente uma condição ou contexto relevante de condução.',
+        tone: 'pillar-card--blue'
     },
     {
         icon: 'pi pi-heart',
         title: 'Mais empatia entre condutores',
-        description: 'Ao entender quem está ao volante, o trânsito tende a reagir com mais respeito e cautela.'
+        description: 'Ao entender quem está ao volante, o trânsito tende a reagir com mais respeito e cautela.',
+        tone: 'pillar-card--rose'
     },
     {
         icon: 'pi pi-moon',
         title: 'Alta visibilidade dia e noite',
-        description: 'Material reflexivo pensado para continuar legível em cenários de baixa luminosidade.'
+        description: 'Material reflexivo pensado para continuar legível em cenários de baixa luminosidade.',
+        tone: 'pillar-card--emerald'
     }
 ];
 
+const projectGallery = [
+    '/images/lp/o-projeto/img-01.webp',
+    // '/images/lp/o-projeto/img-02.webp',
+    // '/images/lp/o-projeto/img-03.webp'
+];
+
+const activeProjectImage = ref(0);
+let projectCarouselTimer: ReturnType<typeof setInterval> | null = null;
+
+const activeTagIndex = ref(0);
+let tagCarouselTimer: ReturnType<typeof setInterval> | null = null;
+
+const selectTag = (index: number) => {
+    activeTagIndex.value = index;
+    // Reset carousel timer when user selects manually
+    if (tagCarouselTimer) {
+        clearInterval(tagCarouselTimer);
+        tagCarouselTimer = setInterval(() => {
+            activeTagIndex.value = (activeTagIndex.value + 1) % featuredTags.length;
+        }, 4000);
+    }
+};
+
 const featuredTags = [
     {
-        icon: 'pi pi-user',
-        title: 'Pessoa idosa',
-        description: 'Indica um perfil que pode exigir mais tempo e previsibilidade no trânsito.',
-        image: '/images/dashboard/etiquetas/azul.svg',
-        tone: 'border-blue-100 bg-blue-50 text-blue-700'
+        title: 'Etiqueta Vermelha',
+        description: 'Motoristas com carteira de habilitação temporária.',
+        image: '/images/lp/etiquetas/vermelho.svg',
+        imageCover: '/images/lp/etiquetas/img-vermelho.webp',
+        tone: 'tag-card--red'
     },
     {
-        icon: 'pi pi-heart',
-        title: 'Gestante',
-        description: 'Estimula mais cuidado em situações de aceleração, frenagem e aproximação.',
-        image: '/images/dashboard/etiquetas/vermelho.svg',
-        tone: 'border-red-100 bg-red-50 text-red-700'
+        title: 'Etiqueta Azul',
+        description: 'Carros de aplicativos, carros de locadoras, carros de empresas.',
+        image: '/images/lp/etiquetas/azul.svg',
+        imageCover: '/images/lp/etiquetas/img-azul.webp',
+        tone: 'tag-card--blue'
     },
     {
-        icon: 'pi pi-heart-fill',
-        title: 'Recém-nascido',
-        description: 'Sinaliza transporte sensível e reforça a necessidade de direção mais humana ao redor.',
-        image: '/images/dashboard/etiquetas/amarelo.svg',
-        tone: 'border-amber-100 bg-amber-50 text-amber-700'
+        title: 'Etiqueta Amarela',
+        description: 'Gestantes ou motoristas com recém-nascidos.',
+        image: '/images/lp/etiquetas/amarelo.svg',
+        imageCover: '/images/lp/etiquetas/img-amarelo.webp',
+        tone: 'tag-card--yellow'
     },
     {
-        icon: 'pi pi-id-card',
-        title: 'CNH temporária',
-        description: 'Ajuda outros motoristas a adotarem mais paciência com quem ainda está ganhando experiência.',
-        image: '/images/dashboard/etiquetas/verde.svg',
-        tone: 'border-emerald-100 bg-emerald-50 text-emerald-700'
+        title: 'Etiqueta Branca',
+        description: 'Pessoas com mais de 60 anos, PCD e condições não visíveis, como autismo e deficiências ocultas.',
+        image: '/images/lp/etiquetas/branco.svg',
+        imageCover: '/images/lp/etiquetas/img-branco.webp',
+        tone: 'tag-card--white'
     },
     {
-        icon: 'pi pi-eye-slash',
-        title: 'Deficiências ocultas',
-        description: 'Comunica um contexto importante mesmo quando a condição não é perceptível externamente.',
-        image: '/images/dashboard/etiquetas/branco.svg',
-        tone: 'border-slate-200 bg-slate-50 text-slate-700'
+        title: 'Etiqueta Verde',
+        description: 'Condutores com carteira de habilitação definitiva.',
+        image: '/images/lp/etiquetas/verde.svg',
+        imageCover: '/images/lp/etiquetas/img-verde.webp',
+        tone: 'tag-card--green'
     }
 ];
 
@@ -98,7 +133,6 @@ const benefits = [
     'Mais empatia e paciência nas interações entre motoristas.',
     'Identificação mais rápida do perfil em situações críticas e de apoio.',
     'Etiquetas reflexivas com boa leitura à noite e sob chuva.',
-    'QR Code integrado para apresentar apenas o perfil do condutor.',
     'Contribuição prática para uma cultura de trânsito mais humana.'
 ];
 
@@ -151,6 +185,153 @@ const faqItems = [
 ];
 
 const currentYear = new Date().getFullYear();
+
+const formatCounterValue = (value: number, format: string) => {
+    if (format === 'dot') {
+        return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    if (format === 'mi') {
+        return `${value.toFixed(2).replace('.', ',')} mi`;
+    }
+
+    if (format === 'ordinal') {
+        return `${Math.round(value)}ª causa`;
+    }
+
+    return Math.round(value).toString();
+};
+
+const prepareWordsForAnimation = (selector: string) => {
+    const titles = document.querySelectorAll<HTMLElement>(selector);
+
+    titles.forEach((title) => {
+        if (title.dataset.wordsReady === 'true') {
+            return;
+        }
+
+        const text = title.textContent?.trim() || '';
+        const words = text.split(/\s+/).filter(Boolean);
+        title.innerHTML = words.map((word) => `<span class="title-word">${word}</span>`).join(' ');
+        title.dataset.wordsReady = 'true';
+    });
+};
+
+const initLandingAnimations = () => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    prepareWordsForAnimation('.js-word-title');
+
+    const heroTimeline = gsap.timeline();
+    heroTimeline
+        .from('.hero-kicker', {
+            opacity: 0,
+            y: 18,
+            duration: 0.45,
+            ease: 'power2.out'
+        })
+        .from(
+            '.hero-title .hero-word',
+            {
+                opacity: 0,
+                y: 36,
+                duration: 0.55,
+                ease: 'power3.out',
+                stagger: 0.06
+            },
+            '-=0.05'
+        )
+        .from(
+            ['.hero-text', '.hero-actions'],
+            {
+                opacity: 0,
+                y: 24,
+                duration: 0.55,
+                ease: 'power2.out',
+                stagger: 0.1
+            },
+            '-=0.15'
+        );
+
+    const revealTargets = document.querySelectorAll(
+        '.impact-card, .pillar-card, .tag-card, .benefit-visual__panel, .step-card, .faq-item, .pricing-card, .cta-section__inner > div, .cta-section__button, .project-visual, .project-visual__privacy'
+    );
+
+    revealTargets.forEach((target) => {
+        gsap.from(target, {
+            opacity: 0,
+            y: 28,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+                trigger: target,
+                start: 'top 84%'
+            }
+        });
+    });
+
+    const counters = document.querySelectorAll<HTMLElement>('.impact-count');
+    counters.forEach((counter) => {
+        const target = Number(counter.dataset.target || '0');
+        const format = counter.dataset.format || 'dot';
+        const state = { value: 0 };
+
+        gsap.to(state, {
+            value: target,
+            duration: 2,
+            ease: 'power2.out',
+            onUpdate: () => {
+                counter.textContent = formatCounterValue(state.value, format);
+            },
+            scrollTrigger: {
+                trigger: counter,
+                start: 'top 86%',
+                once: true
+            }
+        });
+    });
+
+    const sectionWordTitles = document.querySelectorAll<HTMLElement>('.js-word-title');
+    sectionWordTitles.forEach((title) => {
+        const words = title.querySelectorAll('.title-word');
+        gsap.from(words, {
+            opacity: 0,
+            y: 24,
+            duration: 0.55,
+            ease: 'power3.out',
+            stagger: 0.05,
+            scrollTrigger: {
+                trigger: title,
+                start: 'top 84%'
+            }
+        });
+    });
+};
+
+onMounted(async () => {
+    await nextTick();
+    initLandingAnimations();
+
+    projectCarouselTimer = setInterval(() => {
+        activeProjectImage.value = (activeProjectImage.value + 1) % projectGallery.length;
+    }, 4200);
+
+    tagCarouselTimer = setInterval(() => {
+        activeTagIndex.value = (activeTagIndex.value + 1) % featuredTags.length;
+    }, 4000);
+});
+
+onBeforeUnmount(() => {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+
+    if (projectCarouselTimer) {
+        clearInterval(projectCarouselTimer);
+    }
+
+    if (tagCarouselTimer) {
+        clearInterval(tagCarouselTimer);
+    }
+});
 
 useSeoMeta({
     title: 'Identifica Trânsito | Etiquetas reflexivas com QR Code para um trânsito mais seguro',
@@ -257,18 +438,24 @@ useHead({
         </header>
 
         <header class="hero-card" aria-labelledby="hero-title">
-            <div class="hero-inner w-full max-w-[1240px] mx-auto px-6 lg:px-10">
+            <div class="hero-inner w-full max-w-310 mx-auto px-6 lg:px-10">
                 <div class="hero-copy">
                     <span class="hero-kicker">
                         <img src="/images/lp/etiqueta-vermelha.png" alt="Selo do projeto" class="hero-kicker__seal">
                         PROJETO DE IDENTIFICAÇÃO NO TRÂNSITO
                     </span>
                     <h1 id="hero-title" class="hero-title">
-                        Condução mais
-                        <span class="hero-highlight">segura</span>
-                        e
-                        <span class="hero-highlight">solidária</span>
-                        nas estradas do Brasil
+                        <span class="hero-word">Condução</span>
+                        <span class="hero-word">mais</span>
+                        <span class="hero-word hero-highlight">segura</span>
+                        <span class="hero-word">e</span>
+                        <span class="hero-word hero-highlight">solidária</span>
+                        <span class="hero-word">nas</span>
+                        <span class="hero-word">estradas</span>
+                        <span class="hero-word">de</span>
+                        <span class="hero-word">todo</span> 
+                        <span class="hero-word">o</span> 
+                        <span class="hero-word">Brasil</span>
                     </h1>
                     <p class="hero-text">
                         Etiquetas reflexivas que identificam o perfil de cada motorista, promovendo empatia, respeito
@@ -279,8 +466,8 @@ useHead({
                         <NuxtLink to="/auth/login" class="primary-action">
                             Garantir minhas etiquetas
                         </NuxtLink>
-                        <a href="#como-funciona" class="secondary-action">
-                            Saiba como funciona
+                        <a href="#projeto" class="secondary-action">
+                            Conheça o projeto
                         </a>
                     </div>
                 </div>
@@ -289,30 +476,30 @@ useHead({
 
         <main class="lp-shell">
             <section class="problem-section" aria-labelledby="problema-title">
-                <div class="section-inner">
+                <div class="section-inner max-w-310">
                     <div class="section-heading">
                         <span class="eyebrow">Impacto</span>
-                        <h2 id="problema-title">O trânsito brasileiro cobra um preço alto</h2>
+                        <h2 id="problema-title" class="js-word-title">O trânsito brasileiro cobra um preço alto</h2>
                         <p>O projeto nasce como resposta a um cenário em que falta contexto, falta empatia e sobram riscos.</p>
                     </div>
 
                     <div class="impact-grid">
                         <article v-for="stat in impactStats" :key="stat.value" class="impact-card">
                             <i :class="stat.icon"></i>
-                            <strong>{{ stat.value }}</strong>
+                            <strong class="impact-count" :data-target="stat.counterTarget" :data-format="stat.counterFormat">{{ stat.value }}</strong>
                             <p>{{ stat.description }}</p>
                         </article>
                     </div>
                 </div>
             </section>
 
-            <section id="projeto" class="content-section" aria-labelledby="projeto-title">
-                <div class="section-inner">
+            <section id="projeto" class="content-section content-section--project" aria-labelledby="projeto-title">
+                <div class="section-inner max-w-310">
                     <div class="section-grid">
                         <article>
                             <div class="section-heading">
                                 <span class="eyebrow">O Projeto</span>
-                                <h2 id="projeto-title">O que é o Projeto Identifica Trânsito?</h2>
+                                <h2 id="projeto-title" class="js-word-title">O que é o Projeto Identifica Trânsito?</h2>
                             </div>
 
                             <p class="section-text">
@@ -321,8 +508,8 @@ useHead({
                                 empática e segura no trânsito.
                             </p>
 
-                            <div class="pillar-list">
-                                <article v-for="pillar in projectPillars" :key="pillar.title" class="pillar-card">
+                            <div class="pillar-list pillar-list--spaced">
+                                <article v-for="pillar in projectPillars" :key="pillar.title" class="pillar-card" :class="pillar.tone">
                                     <div class="pillar-icon">
                                         <i :class="pillar.icon"></i>
                                     </div>
@@ -336,66 +523,92 @@ useHead({
 
                         <aside class="project-visual">
                             <div class="project-visual__frame">
-                                <NuxtImg
-                                    src="/images/dashboard/sobre-it.jpg"
-                                    alt="Foto ilustrativa do projeto Identifica Trânsito aplicada em veículo"
-                                    width="720"
-                                    height="640"
-                                    class="project-visual__image"
-                                />
+                                <Transition name="project-image-fade" mode="out-in">
+                                    <NuxtImg
+                                        :key="activeProjectImage"
+                                        :src="projectGallery[activeProjectImage]"
+                                        alt="Foto ilustrativa do projeto Identifica Trânsito aplicada em veículo"
+                                        width="1036"
+                                        height="1296"
+                                        class="project-visual__image"
+                                    />
+                                </Transition>
                             </div>
                             <div class="project-visual__privacy">
-                                <i class="pi pi-lock"></i>
-                                <div>
-                                    <strong>Privacidade preservada</strong>
-                                    <p>
-                                        A leitura do QR Code não revela identidade civil do motorista. Ela contextualiza apenas o
-                                        perfil informado, como qualquer outra sinalização voltada à segurança.
-                                    </p>
-                                </div>
+                                <p>
+                                    A leitura do QR Code não revela identidade civil do motorista. Ela contextualiza apenas o
+                                    perfil informado, como qualquer outra sinalização voltada à segurança.
+                                </p>
                             </div>
                         </aside>
                     </div>
                 </div>
             </section>
 
-            <section id="etiquetas" class="content-section content-section--soft" aria-labelledby="etiquetas-title">
-                <div class="section-inner">
-                    <div class="section-heading section-heading--center">
+            <section id="etiquetas" class="content-section content-section--tags" aria-labelledby="etiquetas-title">
+                <div class="section-inner max-w-310">
+                    <div class="section-heading section-heading--center section-heading--narrow">
                         <span class="eyebrow">As Etiquetas</span>
-                        <h2 id="etiquetas-title">Conheça 5 perfis em destaque</h2>
-                        <p>Cada etiqueta comunica ao trânsito ao redor um contexto importante de quem está ao volante.</p>
+                        <h2 id="etiquetas-title" class="js-word-title">Etiquetas refletivas com códigos QR para uma condução segura, visível dia e noite</h2>
+                        <param>Cada cor representa um perfil específico de condução e melhora a leitura contextual no trânsito.</param>
                     </div>
 
-                    <div class="tag-grid">
-                        <article v-for="tag in featuredTags" :key="tag.title" class="tag-card">
-                            <div class="tag-card__media" :class="tag.tone">
-                                <img :src="tag.image" :alt="`Etiqueta ${tag.title}`" class="tag-card__image">
-                            </div>
-                            <div class="tag-card__content">
-                                <span class="tag-card__icon">
-                                    <i :class="tag.icon"></i>
-                                </span>
-                                <h3>{{ tag.title }}</h3>
-                                <p>{{ tag.description }}</p>
-                            </div>
-                        </article>
+                    <div class="tags-layout">
+                        <!-- Coluna esquerda: Imagem grande -->
+                        <div class="tags-visual">
+                            <Transition name="tag-image-fade" mode="out-in" v-if="featuredTags[activeTagIndex]">
+                                <NuxtImg
+                                    :key="activeTagIndex"
+                                    :src="featuredTags[activeTagIndex]!.imageCover"
+                                    :alt="`Imagem representativa de ${featuredTags[activeTagIndex]!.title}`"
+                                    width="540"
+                                    height="580"
+                                    class="tags-visual__image"
+                                />
+                            </Transition>
+                        </div>
+
+                        <!-- Coluna direita: Carrossel vertical -->
+                        <div class="tags-carousel">
+                            <article 
+                                v-for="(tag, index) in featuredTags" 
+                                :key="tag.title" 
+                                class="tag-carousel-card"
+                                :class="[tag.tone, { 'tag-carousel-card--active': activeTagIndex === index }]"
+                                @click="selectTag(index)"
+                                @mouseenter="selectTag(index)"
+                                :tabindex="0"
+                                @keydown.enter="selectTag(index)"
+                            >
+                                <div class="tag-carousel-card__indicator" :class="tag.tone">
+                                    <img :src="tag.image" :alt="`Ícone da ${tag.title}`" class="tag-carousel-card__icon" width="48" height="48">
+                                </div>
+                                <div class="tag-carousel-card__content flex items-center gap-4">
+                                    <div>
+                                        <h3>{{ tag.title }}</h3>
+                                        <p>{{ tag.description }}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
                     </div>
 
-                    <p class="support-note">
-                        A plataforma já contempla outros perfis além destes destaques, ampliando as possibilidades de identificação
-                        com responsabilidade e utilidade prática.
-                    </p>
+                    <article class="tag-message">
+                        <p>
+                            <strong>Identifica Trânsito</strong> é mais do que identificação: é uma comunidade que prioriza
+                            condução consciente e solidária, fortalecendo o compromisso com estradas mais seguras.
+                        </p>
+                    </article>
                 </div>
             </section>
 
             <section id="beneficios" class="content-section" aria-labelledby="beneficios-title">
-                <div class="section-inner">
+                <div class="section-inner max-w-310">
                     <div class="section-grid section-grid--reverse">
                         <article>
                             <div class="section-heading">
                                 <span class="eyebrow">Benefícios</span>
-                                <h2 id="beneficios-title">Por que usar o Identifica Trânsito?</h2>
+                                <h2 id="beneficios-title" class="js-word-title">Por que usar o Identifica Trânsito?</h2>
                             </div>
 
                             <ul class="benefit-list">
@@ -404,9 +617,7 @@ useHead({
                                     <span>{{ benefit }}</span>
                                 </li>
                             </ul>
-                        </article>
 
-                        <aside class="benefit-visual">
                             <div class="benefit-visual__panel">
                                 <div class="benefit-visual__badge">
                                     <i class="pi pi-qrcode"></i>
@@ -415,19 +626,29 @@ useHead({
                                 <h3>Informação útil sem invasão de privacidade</h3>
                                 <p>
                                     O foco do sistema é orientar comportamentos mais seguros e humanos no trânsito, nunca expor o
-                                    motorista. O QR Code serve para explicar o perfil de condução, não para identificar pessoas.
+                                    motorista. O QR Code da etiqueta leva para a explicação do Projeto e não para identificar pessoas.
                                 </p>
                             </div>
+                        </article>
+
+                        <aside class="benefit-visual">
+
+                            <NuxtImg src="/images/lp/beneficios.webp" 
+                                alt="Ilustração de um QR Code sendo escaneado para mostrar o perfil de condução" 
+                                width="100%" 
+                                class="benefit-visual__image rounded-lg shadow-md"
+                            />
+                            
                         </aside>
                     </div>
                 </div>
             </section>
 
             <section id="preco" class="pricing-section" aria-labelledby="preco-title">
-                <div class="section-inner">
+                <div class="section-inner max-w-310">
                     <div class="section-heading section-heading--center section-heading--light">
                         <span class="eyebrow">Preço</span>
-                        <h2 id="preco-title">Preço único, simples e acessível</h2>
+                        <h2 id="preco-title" class="js-word-title">Preço único, simples e acessível</h2>
                         <p>Sem mensalidades. Sem surpresas. Você escolhe suas etiquetas e paga uma única vez.</p>
                     </div>
 
@@ -452,10 +673,10 @@ useHead({
             </section>
 
             <section id="como-funciona" class="content-section content-section--compact" aria-labelledby="como-funciona-title">
-                <div class="section-inner">
+                <div class="section-inner max-w-310">
                     <div class="section-heading section-heading--center">
                         <span class="eyebrow">Como Funciona</span>
-                        <h2 id="como-funciona-title">Em 3 passos simples</h2>
+                        <h2 id="como-funciona-title" class="js-word-title">Em 3 passos simples</h2>
                     </div>
 
                     <div class="steps-grid">
@@ -471,36 +692,11 @@ useHead({
                 </div>
             </section>
 
-            <section class="content-section content-section--soft" aria-labelledby="depoimentos-title">
-                <div class="section-inner">
-                    <div class="section-heading section-heading--center">
-                        <span class="eyebrow">Depoimentos</span>
-                        <h2 id="depoimentos-title">O que os participantes dizem</h2>
-                        <p>Espaço reservado para depoimentos reais do projeto assim que estiverem disponíveis.</p>
-                    </div>
-
-                    <div class="testimonial-placeholder">
-                        <article>
-                            <strong>Em breve</strong>
-                            <p>Casos reais de participantes que já usam as etiquetas no dia a dia.</p>
-                        </article>
-                        <article>
-                            <strong>Em breve</strong>
-                            <p>Experiências de quem percebeu mais empatia e clareza nas interações no trânsito.</p>
-                        </article>
-                        <article>
-                            <strong>Em breve</strong>
-                            <p>Relatos sobre segurança, visibilidade e compreensão do perfil de condução.</p>
-                        </article>
-                    </div>
-                </div>
-            </section>
-
             <section id="faq" class="content-section" aria-labelledby="faq-title">
-                <div class="section-inner">
+                <div class="section-inner max-w-310">
                     <div class="section-heading section-heading--center">
                         <span class="eyebrow">FAQ</span>
-                        <h2 id="faq-title">Perguntas frequentes</h2>
+                        <h2 id="faq-title" class="js-word-title">Perguntas frequentes</h2>
                         <p>As dúvidas mais comuns sobre privacidade, funcionamento e uso das etiquetas.</p>
                     </div>
 
@@ -517,10 +713,10 @@ useHead({
             </section>
 
             <section class="cta-section" aria-labelledby="cta-title">
-                <div class="section-inner cta-section__inner">
+                <div class="section-inner cta-section__inner max-w-310">
                     <div>
                         <span class="eyebrow eyebrow--light">Participe</span>
-                        <h2 id="cta-title">Faça parte da mudança no trânsito brasileiro</h2>
+                        <h2 id="cta-title" class="js-word-title">Faça parte da mudança no trânsito brasileiro</h2>
                         <p>
                             Adquira suas etiquetas, mostre o perfil de condução do seu veículo e ajude a construir um trânsito
                             mais seguro e humano.
@@ -533,7 +729,7 @@ useHead({
         </main>
 
         <footer class="lp-footer">
-            <div class="section-inner lp-footer__inner">
+            <div class="section-inner lp-footer__inner max-w-310">
                 <div class="lp-footer__brand">
                     <img src="/images/logo-it.svg" alt="Logo Identifica Trânsito" class="h-10">
                     <p>Projeto voltado à empatia, visibilidade e prevenção de acidentes no trânsito brasileiro.</p>
@@ -586,7 +782,7 @@ useHead({
 
 .section-inner {
     width: 100%;
-    max-width: 1240px;
+    /* max-width: 1240px; */
     margin: 0 auto;
     padding: 0 1.5rem;
 }
@@ -776,7 +972,7 @@ useHead({
     flex-direction: column;
     justify-content: center;
     gap: 1.25rem;
-    max-width: 42rem;
+    max-width: 34rem;
     color: #fff;
 }
 
@@ -821,16 +1017,21 @@ useHead({
 
 .hero-title {
     margin: 0;
-    font-size: clamp(2.75rem, 4.1vw, 4.2rem);
+    font-size: clamp(2.75rem, 4.1vw, 3rem);
     font-weight: 900;
     color: #fff;
     line-height: 1.05;
     letter-spacing: -0.03em;
 }
 
+.hero-word {
+    display: inline-block;
+    margin-right: 1rem;
+}
+
 .hero-highlight {
     display: inline-block;
-    margin: 0 0.15rem;
+    margin: 0 0.65rem 0 0.15rem;
     padding: 0.1rem 0.6rem 0.14rem;
     border-radius: 0.45rem;
     background: #eef2ff;
@@ -857,7 +1058,7 @@ useHead({
 
 .hero-text {
     max-width: 40rem;
-    font-size: 18px;
+    font-size: 16px;
     color: rgba(219, 228, 255, 0.86);
     font-weight: 300;
 }
@@ -906,8 +1107,8 @@ useHead({
 }
 
 .problem-section {
-    margin-top: 1.5rem;
-    padding: 0;
+    margin-top: 2.75rem;
+    padding: 2.2rem 0 2.6rem;
     background: transparent;
     color: #0f172a;
 }
@@ -924,12 +1125,23 @@ useHead({
     text-align: center;
 }
 
+.section-heading--narrow h2 {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .section-heading h2,
 .cta-section h2 {
     margin: 0;
-    font-size: clamp(2rem, 3vw, 3.2rem);
+    font-size: clamp(1.72rem, 2.2vw, 2.75rem);
     line-height: 1.02;
     letter-spacing: -0.04em;
+}
+
+.title-word {
+    display: inline-block;
+    margin-right: 0.35rem;
 }
 
 .section-heading p {
@@ -983,7 +1195,7 @@ useHead({
 .impact-card strong {
     display: block;
     margin-bottom: 0.55rem;
-    font-size: clamp(2rem, 3vw, 3.3rem);
+    font-size: clamp(2rem, 3vw, 2.5rem);
     line-height: 1;
     letter-spacing: -0.05em;
 }
@@ -992,15 +1204,23 @@ useHead({
 .pricing-section,
 .cta-section {
     margin-top: 1.5rem;
-    padding: 2.75rem 0;
+    padding: 5rem 0;
 }
 
-.content-section {
+/* .content-section {
     border-top: 1px solid rgba(148, 163, 184, 0.12);
+} */
+
+.content-section--project {
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.03));
 }
 
 .content-section--soft {
     background: linear-gradient(180deg, rgba(234, 240, 255, 0.65), rgba(255, 255, 255, 0.55));
+}
+
+.content-section--tags {
+    background: linear-gradient(180deg, rgba(220, 238, 255, 0.75), rgba(245, 248, 255, 0.8));
 }
 
 .content-section--compact {
@@ -1027,8 +1247,17 @@ useHead({
     gap: 1rem;
 }
 
+.pillar-list--spaced {
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.pillar-list--spaced {
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
 .pillar-card,
-.project-visual__privacy,
 .benefit-visual__panel,
 .step-card,
 .testimonial-placeholder article,
@@ -1043,6 +1272,18 @@ useHead({
     grid-template-columns: auto 1fr;
     gap: 1rem;
     padding: 1.15rem;
+}
+
+.pillar-card--blue {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.14), rgba(255, 255, 255, 0.9));
+}
+
+.pillar-card--rose {
+    background: linear-gradient(145deg, rgba(244, 63, 94, 0.14), rgba(255, 255, 255, 0.9));
+}
+
+.pillar-card--emerald {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(255, 255, 255, 0.9));
 }
 
 .pillar-icon,
@@ -1067,43 +1308,205 @@ useHead({
 .project-visual {
     display: grid;
     gap: 1rem;
+    position: relative;
 }
 
 .project-visual__frame {
     overflow: hidden;
     border-radius: 1.7rem;
+    /*border: 1px solid rgba(59, 130, 246, 0.2);*/
     background: linear-gradient(180deg, rgba(25, 37, 226, 0.12), rgba(25, 37, 226, 0.03));
 }
 
 .project-visual__image {
     width: 100%;
-    aspect-ratio: 1 / 0.82;
+    /* aspect-ratio: 1 / 0.82; */
     object-fit: cover;
 }
 
 .project-visual__privacy {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 1rem;
-    padding: 1.15rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    color: #b91c1c;
+    text-align: center;
+}
+
+.project-visual__privacy p {
+    margin: 0 auto;
+    color: #b91c1c;
+    max-width: 85%;
+    line-height: 1.4;
+    font-size: 1rem;
+}
+
+.project-image-fade-enter-active,
+.project-image-fade-leave-active {
+    transition: opacity 0.7s ease;
+}
+
+.project-image-fade-enter-from,
+.project-image-fade-leave-to {
+    opacity: 0;
 }
 
 .project-visual__privacy i {
-    width: 2.9rem;
-    height: 2.9rem;
-    border-radius: 1rem;
-    background: rgba(15, 23, 42, 0.08);
-    color: #0f172a;
-    display: inline-flex;
+    color: #b91c1c;
+    font-size: 1rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+}
+
+.tags-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: flex-start;
+    margin: 5.5rem 0 2.5rem 0;
+}
+
+.tags-visual {
+    position: sticky;
+    top: 120px;
+}
+
+.tags-visual__image {
+    width: 100%;
+    aspect-ratio: 3 / 3.2;
+    object-fit: cover;
+    border-radius: 1.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.15);
+}
+
+.tags-carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.tags-carousel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tags-carousel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tags-carousel::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 2px;
+}
+
+.tags-carousel::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+.tag-carousel-card {
+    display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 1rem;
+    padding: 1.2rem 1.1rem;
+    border: 1.5px solid rgba(148, 163, 184, 0.2);
+    border-radius: 1.3rem;
+    background: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.tag-carousel-card:hover {
+    border-color: rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.tag-carousel-card--active {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+}
+
+/* .tag-carousel-card__indicator {
+    width: 0.42rem;
+    min-width: 0.42rem;
+    height: 3.8rem;
+    border-radius: 999px;
+    margin-top: 0.2rem;
+    transition: all 0.3s ease;
+} */
+
+.tag-carousel-card--red .tag-carousel-card__indicator {
+    background: linear-gradient(180deg, rgba(251, 113, 133, 1), rgba(239, 68, 68, 0.8));
+}
+
+.tag-carousel-card--blue .tag-carousel-card__indicator {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 1), rgba(59, 130, 246, 0.8));
+}
+
+.tag-carousel-card--yellow .tag-carousel-card__indicator {
+    background: linear-gradient(180deg, rgba(250, 204, 21, 1), rgba(217, 119, 6, 0.8));
+}
+
+.tag-carousel-card--white .tag-carousel-card__indicator {
+    background: linear-gradient(180deg, rgba(203, 213, 225, 1), rgba(148, 163, 184, 0.8));
+}
+
+.tag-carousel-card--green .tag-carousel-card__indicator {
+    background: linear-gradient(180deg, rgba(74, 222, 128, 1), rgba(16, 185, 129, 0.8));
+}
+
+/* .tag-carousel-card--active .tag-carousel-card__indicator {
+    width: 0.55rem;
+    box-shadow: 0 0 16px currentColor;
+} */
+
+.tag-carousel-card__content {
+    flex: 1;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.tag-carousel-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.tag-carousel-card p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+    color: #64748b;
+}
+
+.tag-image-fade-enter-active,
+.tag-image-fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.tag-image-fade-enter-from,
+.tag-image-fade-leave-to {
+    opacity: 0;
 }
 
 .tag-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.tag-grid--profiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem;
+}
+
 .tag-card {
+    display: grid;
+    grid-template-columns: 10.5rem 1fr;
+    align-items: center;
     overflow: hidden;
     border: 1px solid rgba(148, 163, 184, 0.15);
     border-radius: 1.5rem;
@@ -1113,19 +1516,62 @@ useHead({
 .tag-card__media {
     display: flex;
     justify-content: center;
-    padding: 1.25rem 1rem 0.85rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    align-items: center;
+    height: 100%;
+    padding: 1rem;
 }
 
 .tag-card__image {
-    width: 7.75rem;
+    width: 8.5rem;
     max-width: 100%;
+}
+
+.tag-card__image--profile {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 999px;
+    border: 4px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.18);
+}
+
+.tag-card--red .tag-card__media {
+    background: linear-gradient(180deg, rgba(251, 113, 133, 0.24), rgba(251, 113, 133, 0.1));
+}
+
+.tag-card--blue .tag-card__media {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 0.25), rgba(96, 165, 250, 0.12));
+}
+
+.tag-card--yellow .tag-card__media {
+    background: linear-gradient(180deg, rgba(250, 204, 21, 0.28), rgba(250, 204, 21, 0.12));
+}
+
+.tag-card--white .tag-card__media {
+    background: linear-gradient(180deg, rgba(203, 213, 225, 0.35), rgba(203, 213, 225, 0.14));
+}
+
+.tag-card--green .tag-card__media {
+    background: linear-gradient(180deg, rgba(74, 222, 128, 0.28), rgba(74, 222, 128, 0.12));
 }
 
 .tag-card__content {
     display: grid;
     gap: 0.8rem;
     padding: 1.15rem;
+}
+
+.tag-message {
+    margin-top: 1.5rem;
+    padding: 1.2rem 1.25rem;
+    border-left: 4px solid #1d4ed8;
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.tag-message p {
+    margin: 0;
+    font-size: 1.06rem;
+    color: #1f2937;
 }
 
 .support-note {
@@ -1158,6 +1604,7 @@ useHead({
 }
 
 .benefit-visual__panel {
+    margin-top: 1.5rem;
     padding: 1.5rem;
     background: linear-gradient(180deg, #f8fbff, #eef3ff);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -1400,10 +1847,18 @@ useHead({
         width: 70%;
         max-width: none;
     }
+
+    .section-inner,
+    .cta-section__inner,
+    .lp-footer__inner {
+        width: 70%;
+        max-width: none;
+    }
 }
 
 @media (max-width: 1199px) {
-    .tag-grid {
+    .tag-grid,
+    .tag-grid--profiles {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
@@ -1446,6 +1901,14 @@ useHead({
     }
 
     .tag-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tag-grid--profiles {
+        grid-template-columns: 1fr;
+    }
+
+    .tag-card {
         grid-template-columns: 1fr;
     }
 
