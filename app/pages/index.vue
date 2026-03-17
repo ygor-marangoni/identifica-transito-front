@@ -357,6 +357,12 @@ useHead({
         {
             rel: 'stylesheet',
             href: 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap'
+        },
+        {
+            rel: 'preload',
+            as: 'image',
+            href: '/images/lp/bg-hero.webp',
+            media: '(max-width: 1023px)'
         }
     ],
     script: [
@@ -438,6 +444,20 @@ useHead({
         </header>
 
         <header class="hero-card" aria-labelledby="hero-title">
+            <div class="hero-media" aria-hidden="true">
+                <video
+                    class="hero-video"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                >
+                    <source src="/images/lp/video-hero.mp4" type="video/mp4">
+                </video>
+                <div class="hero-media-overlay"></div>
+            </div>
+
             <div class="hero-inner w-full max-w-310 mx-auto px-6 lg:px-10">
                 <div class="hero-copy">
                     <span class="hero-kicker">
@@ -958,11 +978,38 @@ useHead({
     min-height: 600px;
     padding: 0;
     border-radius: 0;
-    background:
-        linear-gradient(90deg, rgba(8, 15, 78, 0.95) 0%, rgba(8, 15, 78, 0.82) 40%, rgba(8, 15, 78, 0.36) 70%, rgba(8, 15, 78, 0.28) 100%),
-        url('/images/lp/bg-hero.webp');
-    background-size: cover;
-    background-position: center;
+    overflow: hidden;
+    background: #080f4e;
+}
+
+.hero-media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.hero-video {
+    position: absolute;
+    bottom: -20%;
+    right: -16%;
+    width: auto;
+    height: auto;
+    min-width: 100%;
+    min-height: 150%;
+    max-width: none;
+    display: block;
+}
+
+.hero-media-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(8, 15, 78, 0.98) 0%, rgba(8, 15, 78, 0.92) 42%, rgba(8, 15, 78, 0.62) 72%, rgba(8, 15, 78, 0.52) 100%);
+}
+
+.hero-inner {
+    position: relative;
+    z-index: 1;
 }
 
 .hero-copy {
@@ -1868,6 +1915,10 @@ useHead({
         display: flex;
     }
 
+    .hero-media {
+        display: none;
+    }
+
     .section-grid,
     .impact-grid,
     .steps-grid,
@@ -1886,6 +1937,11 @@ useHead({
         min-height: 31rem;
         border-radius: 1.25rem;
         margin: 0.5rem;
+        background:
+            linear-gradient(90deg, rgba(8, 15, 78, 0.95) 0%, rgba(8, 15, 78, 0.82) 40%, rgba(8, 15, 78, 0.36) 70%, rgba(8, 15, 78, 0.28) 100%),
+            url('/images/lp/bg-hero.webp');
+        background-size: cover;
+        background-position: center;
     }
 }
 
