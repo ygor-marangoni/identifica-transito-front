@@ -9,6 +9,14 @@ export default defineNuxtConfig({
         '/': { prerender: true },
         '/dashboard/**': { ssr: false },
         '/auth/**': { ssr: false },
+        '/uikit/**': { prerender: false },
+        '/uikit/ChartDoc': { prerender: false },
+        '/uikit/TableDoc': { prerender: false },
+    },
+    nitro: {
+        prerender: {
+            failOnError: false,
+        }
     },
     runtimeConfig: {
         public: {
