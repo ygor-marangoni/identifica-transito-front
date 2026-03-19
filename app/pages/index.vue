@@ -22,6 +22,7 @@ const {
     featuredTags,
     impactStats,
     isMobileMenuOpen,
+    loginUrl,
     menuItems,
     pricingTagImages,
     projectGallery,
@@ -37,11 +38,12 @@ const {
         <LandingNav
             :menu-items="menuItems"
             :is-mobile-menu-open="isMobileMenuOpen"
+            :login-url="loginUrl"
             @toggle-menu="toggleMobileMenu"
             @close-menu="closeMobileMenu"
         />
 
-        <LandingHeroSection />
+        <LandingHeroSection :login-url="loginUrl" />
 
         <main class="lp-shell">
             <LandingImpactSection :impact-stats="impactStats" />
@@ -56,10 +58,10 @@ const {
                 @select-tag="selectTag"
             />
             <LandingBenefitsSection :benefits="benefits" />
-            <LandingPricingSection :pricing-tag-images="pricingTagImages" />
+            <LandingPricingSection :pricing-tag-images="pricingTagImages" :login-url="loginUrl" />
             <LandingStepsSection :steps="steps" />
             <LandingFaqSection :faq-items="faqItems" />
-            <LandingCtaSection />
+            <LandingCtaSection :login-url="loginUrl" />
         </main>
 
         <LandingFooter :current-year="currentYear" />

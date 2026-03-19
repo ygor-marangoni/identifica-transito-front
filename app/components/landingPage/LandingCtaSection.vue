@@ -1,3 +1,7 @@
+<script setup lang="ts">
+defineProps<{ loginUrl: string }>();
+</script>
+
 <template>
     <section class="cta-section" aria-labelledby="cta-title">
         <div class="section-inner cta-section__inner max-w-310">
@@ -10,7 +14,7 @@
                 </p>
             </div>
 
-            <NuxtLink to="/auth/login" class="cta-section__button">Quero Participar Agora</NuxtLink>
+            <a :href="loginUrl" class="cta-section__button">Quero Participar Agora</a>
         </div>
     </section>
 </template>

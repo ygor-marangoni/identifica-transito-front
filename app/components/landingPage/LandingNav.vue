@@ -4,6 +4,7 @@ import type { LandingMenuItem } from '../../types/landing';
 defineProps<{
     menuItems: LandingMenuItem[];
     isMobileMenuOpen: boolean;
+    loginUrl: string;
 }>();
 
 defineEmits<{
@@ -33,10 +34,10 @@ defineEmits<{
         </a>
 
         <div class="mobile-actions">
-            <NuxtLink to="/auth/login" class="mobile-cta" aria-label="Entrar ou cadastrar">
+            <a :href="loginUrl" class="mobile-cta" aria-label="Entrar ou cadastrar">
                 <i class="pi pi-user"></i>
                 <span>Entrar / Cadastrar</span>
-            </NuxtLink>
+            </a>
             <button
                 type="button"
                 class="mobile-menu-toggle"

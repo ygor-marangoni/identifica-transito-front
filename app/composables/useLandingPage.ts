@@ -7,7 +7,7 @@ import type {
     LandingStep
 } from '../types/landing';
 
-const menuItems: LandingMenuItem[] = [
+const menuItemsData = [
     { href: '/auth/login', label: 'Minha Conta', icon: 'pi pi-user' },
     { href: '#projeto', label: 'O Projeto', icon: 'pi pi-flag' },
     { href: '#etiquetas', label: 'As Etiquetas', icon: 'pi pi-tag' },
@@ -298,6 +298,13 @@ export const useLandingPage = () => {
     const base = useRuntimeConfig().app.baseURL.replace(/\/$/, '');
     const withBase = (path: string) => `${base}${path}`;
 
+    const menuItems: LandingMenuItem[] = menuItemsData.map((item) => ({
+        ...item,
+        href: item.href.startsWith('#') ? item.href : withBase(item.href)
+    }));
+
+    const loginUrl = withBase('/auth/login');
+
     const featuredTagsWithCovers: LandingFeaturedTag[] = featuredTags.map((tag) => ({
         ...tag,
         imageCover: withBase(tag.imageCover)
@@ -471,6 +478,7 @@ export const useLandingPage = () => {
         featuredTags: featuredTagsWithCovers,
         impactStats,
         isMobileMenuOpen,
+        loginUrl,
         menuItems,
         pricingTagImages,
         projectGallery,

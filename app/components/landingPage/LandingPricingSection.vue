@@ -4,6 +4,7 @@ defineProps<{
         src: string;
         alt: string;
     }>;
+    loginUrl: string;
 }>();
 </script>
 
@@ -25,7 +26,7 @@ defineProps<{
                     </div>
                     <p class="pricing-card__meta">Pagamento único, sem recorrência.</p>
 
-                    <NuxtLink to="/auth/login" class="pricing-card__cta">Criar minha conta</NuxtLink>
+                    <a :href="loginUrl" class="pricing-card__cta">Criar minha conta</a>
                 </div>
 
                 <ul class="pricing-list">

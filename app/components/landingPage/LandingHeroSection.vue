@@ -1,3 +1,7 @@
+<script setup lang="ts">
+defineProps<{ loginUrl: string }>();
+</script>
+
 <template>
     <header class="hero-card" aria-labelledby="hero-title">
         <div class="hero-media" aria-hidden="true">
@@ -40,9 +44,9 @@
                 </p>
 
                 <div class="hero-actions">
-                    <NuxtLink to="/auth/login" class="primary-action">
+                    <a :href="loginUrl" class="primary-action">
                         Garantir minhas etiquetas
-                    </NuxtLink>
+                    </a>
                     <a href="#projeto" class="secondary-action">
                         Conheça o projeto
                     </a>
