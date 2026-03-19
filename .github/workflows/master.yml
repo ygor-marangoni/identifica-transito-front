@@ -23,10 +23,21 @@ jobs:
       # run: npm run build
       run: npm run generate
     
+    - name: ⚙️ Set rsync switches
+      id: rsync_switches
+      run: |
+        if echo "${{ github.event.head_commit.message }}" | grep -qi "\[force\]"; then
+          echo "switches=-rlvz --delete --omit-dir-times --no-perms --ignore-times" >> $GITHUB_OUTPUT
+          echo "Deploy FORÇADO: todos os arquivos serão enviados"
+        else
+          echo "switches=-rlvz --delete --omit-dir-times --no-perms" >> $GITHUB_OUTPUT
+          echo "Deploy incremental: apenas arquivos alterados"
+        fi
+
     - name: 📂 Deploy via rsync SSH
       uses: burnett01/rsync-deployments@7.0.1
       with:
-        switches: -rlvz --delete --omit-dir-times --no-perms
+        switches: ${{ steps.rsync_switches.outputs.switches }}
         path: ./.output/public/
         remote_path: /home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
         remote_host: ${{ secrets.SSH_HOST }}
