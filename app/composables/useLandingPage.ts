@@ -295,6 +295,14 @@ const initLandingAnimations = (gsapModule: GsapModule, scrollTriggerModule: Scro
 
 export const useLandingPage = () => {
     const { $api } = useNuxtApp();
+    const base = useRuntimeConfig().app.baseURL.replace(/\/$/, '');
+    const withBase = (path: string) => `${base}${path}`;
+
+    const featuredTagsWithCovers: LandingFeaturedTag[] = featuredTags.map((tag) => ({
+        ...tag,
+        imageCover: withBase(tag.imageCover)
+    }));
+
     const pricingTagImages = featuredTags.map((tag) => ({
         src: tag.image,
         alt: tag.title
@@ -460,7 +468,7 @@ export const useLandingPage = () => {
         closeMobileMenu,
         currentYear,
         faqItems,
-        featuredTags,
+        featuredTags: featuredTagsWithCovers,
         impactStats,
         isMobileMenuOpen,
         menuItems,

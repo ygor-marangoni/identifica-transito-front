@@ -23,7 +23,7 @@ defineEmits<{
             <div class="tags-layout">
                 <div class="tags-visual">
                     <Transition v-if="featuredTags[activeTagIndex]" name="tag-image-fade" mode="out-in">
-                        <NuxtImg
+                        <img
                             :key="activeTagIndex"
                             :src="featuredTags[activeTagIndex]!.imageCover"
                             :alt="`Imagem representativa de ${featuredTags[activeTagIndex]!.title}`"
