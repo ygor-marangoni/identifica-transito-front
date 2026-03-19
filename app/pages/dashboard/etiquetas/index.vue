@@ -65,8 +65,15 @@ onMounted(fetchVehicles);
 const loading = ref(false);
 const toast = useToast();
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 const getTagImage = (tagColor: string) => {
-    return tagColor ? `/images/dashboard/etiquetas/${tagColor}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
+    const path = tagColor ? `/images/dashboard/etiquetas/${tagColor}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
+    return assetWithBase(path);
 };
 
 const totalSelected = computed(() =>

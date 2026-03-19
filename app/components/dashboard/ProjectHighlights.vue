@@ -1,4 +1,10 @@
 <script setup>
+    const config = useRuntimeConfig();
+    const assetWithBase = (path: string) => {
+        if (path.startsWith('data:') || path.startsWith('http')) return path;
+        return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+    };
+
     const benefits = [
         {
             number: 1,
@@ -34,7 +40,7 @@
         <div class="lg:w-1/3 shrink-0">
             <div class="relative w-full aspect-square bg-linear-to-br from-blue-50 to-indigo-100 rounded-2xl border border-gray-200 overflow-hidden">
                 <img 
-                    src="/images/dashboard/sobre-it.jpg" 
+                    :src="assetWithBase('/images/dashboard/sobre-it.jpg')"
                     alt="Identifica Trânsito" 
                     class="w-full h-full object-cover"
                 />

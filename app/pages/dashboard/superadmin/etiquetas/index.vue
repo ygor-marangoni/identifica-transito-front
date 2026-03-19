@@ -11,6 +11,12 @@ const { $api } = useNuxtApp();
 const confirm = useConfirm();
 const toast = useToast();
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 interface Tag {
     id: number;
     name: string;
@@ -160,7 +166,7 @@ onMounted(() => fetchTags());
                                 <div class="flex items-center gap-2">
                                     <img
                                         v-if="t.color_name"
-                                        :src="`/images/dashboard/etiquetas/${t.color_name}.svg`"
+                                        :src="assetWithBase(`/images/dashboard/etiquetas/${t.color_name}.svg`)"
                                         :alt="t.color_name"
                                         class="w-7 h-7 object-contain"
                                     />

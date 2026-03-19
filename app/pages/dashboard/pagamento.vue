@@ -14,6 +14,12 @@ definePageMeta({
     layout: 'dashboard'
 });
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 useHead({
     title: 'Pagamento - Identifica Trânsito',
     meta: [
@@ -812,8 +818,8 @@ const handlePagar = async () => {
 
                                 <div class="lg:col-span-2 hidden md:block">
                                     <div class="bg-gray-100 gap-4 rounded-2xl overflow-hidden h-full flex items-center justify-center min-h-75">
-                                        <img src="/images/dashboard/post-01.jpg" alt="Entrega e Retirada" class="w-75" />
-                                        <img src="/images/dashboard/post-02.jpg" alt="Entrega e Retirada" class="w-75" />
+                                        <img :src="assetWithBase('/images/dashboard/post-01.jpg')" alt="Entrega e Retirada" class="w-75" />
+                                        <img :src="assetWithBase('/images/dashboard/post-02.jpg')" alt="Entrega e Retirada" class="w-75" />
                                     </div>
                                 </div>
                             </div>

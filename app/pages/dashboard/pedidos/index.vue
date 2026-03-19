@@ -564,8 +564,15 @@ const formatCouponDiscount = (group: OrderGroup, couponInfo: { code: string; typ
     return `${pct}%`;
 };
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 const getTagImage = (tagSlug?: string | null) => {
-    return tagSlug ? `/images/dashboard/etiquetas/${tagSlug}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
+    const path = tagSlug ? `/images/dashboard/etiquetas/${tagSlug}.svg` : '/images/dashboard/etiquetas/amarelo.svg';
+    return assetWithBase(path);
 };
 
 const displayTypePayment = (type: string | undefined) => {

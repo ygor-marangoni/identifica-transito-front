@@ -9,6 +9,12 @@ useHead({ title: 'Pedidos - SuperAdmin | Identifica Trânsito' });
 const { $api } = useNuxtApp();
 const toast = useToast();
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 interface Shipment {
     id: number;
     tracking_code: string | null;
@@ -335,7 +341,7 @@ onMounted(() => fetchOrders());
                                 <div class="flex items-center gap-2">
                                     <img
                                         v-if="order.tag_slug"
-                                        :src="`/images/dashboard/etiquetas/${order.tag_slug}.svg`"
+                                        :src="assetWithBase(`/images/dashboard/etiquetas/${order.tag_slug}.svg`)"
                                         :alt="order.tag_name"
                                         class="w-6 h-6 object-contain"
                                     />

@@ -24,6 +24,12 @@ useHead({
 
 const route = useRoute();
 const { confirmDelete } = useVehicleActions();
+
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
 const toast = useToast();
 
 const vehicleData = ref({
@@ -36,7 +42,7 @@ const vehicleData = ref({
     etiqueta: {
         codigo: '',
         tipo: 'Indisponível',
-        imagem: '/images/dashboard/etiquetas/azul.svg'
+        imagem: assetWithBase('/images/dashboard/etiquetas/azul.svg')
     }
 });
 
@@ -56,8 +62,8 @@ const mapVehicleData = (vehicle: Record<string, any>) => {
             codigo: 'PIT' + vehicle.id,
             tipo: vehicle.type_label?.toUpperCase() || 'Indisponível',
             imagem: vehicle.tag_color
-                ? `/images/dashboard/etiquetas/${vehicle.tag_color}.svg`
-                : '/images/dashboard/etiquetas/azul.svg'
+                ? assetWithBase(`/images/dashboard/etiquetas/${vehicle.tag_color}.svg`)
+                : assetWithBase('/images/dashboard/etiquetas/azul.svg')
         }
     };
 };

@@ -6,8 +6,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
     ssr: true,
     routeRules: {
-        '/': { ssr: true, prerender: true },
-        '/**': { ssr: false }
+        '/': { prerender: true },
+        '/dashboard/**': { ssr: false },
+        '/auth/**': { ssr: false },
     },
     runtimeConfig: {
         public: {

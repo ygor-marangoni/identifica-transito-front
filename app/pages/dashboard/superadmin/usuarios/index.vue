@@ -13,6 +13,12 @@ const { $api } = useNuxtApp();
 const confirm = useConfirm();
 const toast = useToast();
 
+const config = useRuntimeConfig();
+const assetWithBase = (path: string) => {
+    if (path.startsWith('data:') || path.startsWith('http')) return path;
+    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+};
+
 interface User {
     id: number;
     name: string;
@@ -218,7 +224,7 @@ onMounted(() => {
                             <td class="py-3 px-4 text-gray-400 text-xs">{{ u.id }}</td>
                             <td class="py-3 px-4">
                                 <img
-                                    :src="u.photo || '/images/dashboard/avatar.jpg'"
+                                    :src="assetWithBase(u.photo || '/images/dashboard/avatar.jpg')"
                                     :alt="u.name"
                                     class="w-8 h-8 rounded-full object-cover"
                                 />
