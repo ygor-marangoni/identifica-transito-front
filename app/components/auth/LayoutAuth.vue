@@ -46,11 +46,23 @@
         <!-- bg-[#1925E2] -->
         <p class="text-md font-light italic mb-4 px-4">Acompanhe nossas redes sociais</p>
         <div class="flex gap-4">
-          <a href="#" class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10">
+          <a
+            href="https://www.instagram.com/identificatransito/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Acessar Instagram do Identifica Trânsito"
+            class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10"
+          >
             <i class="pi pi-instagram"></i>
           </a>
-          <a href="#" class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10">
-            <i class="pi pi-facebook"></i>
+          <a
+            href="https://wa.me/5511984971689"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Falar no WhatsApp do Identifica Trânsito"
+            class="p-2 rounded-full bg-[#424EFF] hover:bg-opacity-10"
+          >
+            <i class="pi pi-whatsapp"></i>
           </a>
         </div>
       </div>
