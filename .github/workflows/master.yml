@@ -26,7 +26,7 @@ jobs:
     - name: 📂 Deploy via rsync SSH
       uses: burnett01/rsync-deployments@7.0.1
       with:
-        switches: -avzr --delete --omit-dir-times
+        switches: -rlvz --delete --omit-dir-times --no-perms
         path: ./.output/public/
         remote_path: /home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
         remote_host: ${{ secrets.SSH_HOST }}
