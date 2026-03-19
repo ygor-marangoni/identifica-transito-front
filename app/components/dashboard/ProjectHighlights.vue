@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
     const config = useRuntimeConfig();
     const assetWithBase = (path: string) => {
         if (path.startsWith('data:') || path.startsWith('http')) return path;
