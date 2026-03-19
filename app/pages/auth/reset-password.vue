@@ -23,8 +23,16 @@
   });
 
   // Extrair token e email da URL
-  const token = computed(() => route.query.token || '');
-  const email = computed(() => decodeURIComponent(route.query.email || ''));
+  // Trata caso onde o backend gera URL malformada com parâmetros duplicados
+  const token = computed(() => {
+    const t = route.query.token;
+    return Array.isArray(t) ? t[0] : (t || '');
+  });
+  const email = computed(() => {
+    const e = route.query.email;
+    const raw = Array.isArray(e) ? e[e.length - 1] : (e || '');
+    return decodeURIComponent(raw).split('?')[0];
+  });
 
   const password = ref('');
   const confirmPassword = ref('');
