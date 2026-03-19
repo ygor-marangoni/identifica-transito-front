@@ -62,9 +62,9 @@ const projectPillars: LandingProjectPillar[] = [
     }
 ];
 
-const projectGallery = ['/images/lp/o-projeto/img-01.webp'];
+const projectGalleryPaths = ['/images/lp/o-projeto/img-01.webp'];
 
-const featuredTags: LandingFeaturedTag[] = [
+const featuredTagsData = [
     {
         title: 'Etiqueta Vermelha',
         description: 'Motoristas com carteira de habilitação temporária.',
@@ -164,10 +164,6 @@ const fallbackFaqItems: LandingFaqItem[] = [
     }
 ];
 
-const pricingTagImages = featuredTags.map((tag) => ({
-    src: tag.image,
-    alt: tag.title
-}));
 
 const formatCounterValue = (value: number, format: string) => {
     if (format === 'dot') {
@@ -299,6 +295,22 @@ const initLandingAnimations = (gsapModule: GsapModule, scrollTriggerModule: Scro
 
 export const useLandingPage = () => {
     const { $api } = useNuxtApp();
+    const config = useRuntimeConfig();
+    const base = config.app.baseURL.replace(/\/$/, '');
+    const withBase = (path: string) => `${base}${path}`;
+
+    const featuredTags: LandingFeaturedTag[] = featuredTagsData.map((tag) => ({
+        ...tag,
+        image: withBase(tag.image),
+        imageCover: withBase(tag.imageCover)
+    }));
+
+    const projectGallery = projectGalleryPaths.map(withBase);
+
+    const pricingTagImages = featuredTags.map((tag) => ({
+        src: tag.image,
+        alt: tag.title
+    }));
 
     const isMobileMenuOpen = ref(false);
     const activeProjectImage = ref(0);
