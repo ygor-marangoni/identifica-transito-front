@@ -26,11 +26,12 @@ jobs:
     - name: ⚙️ Set rsync switches
       id: rsync_switches
       run: |
+        EXCLUDES="--exclude='.env' --exclude='vendor/'"
         if echo "${{ github.event.head_commit.message }}" | grep -qi "\[force\]"; then
-          echo "switches=-rlvz --delete --omit-dir-times --no-perms --ignore-times --exclude='.env'" >> $GITHUB_OUTPUT
+          echo "switches=-rlvz --delete --omit-dir-times --no-perms --ignore-times $EXCLUDES" >> $GITHUB_OUTPUT
           echo "Deploy FORÇADO: todos os arquivos serão enviados"
         else
-          echo "switches=-rlvz --delete --omit-dir-times --no-perms --exclude='.env'" >> $GITHUB_OUTPUT
+          echo "switches=-rlvz --delete --omit-dir-times --no-perms $EXCLUDES" >> $GITHUB_OUTPUT
           echo "Deploy incremental: apenas arquivos alterados"
         fi
 
