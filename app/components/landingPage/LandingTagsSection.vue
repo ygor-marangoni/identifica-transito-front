@@ -46,7 +46,7 @@ defineEmits<{
                         @keydown.enter="$emit('select-tag', index)"
                     >
                         <div class="tag-carousel-card__indicator" :class="tag.tone">
-                            <img :src="tag.image" :alt="`Ícone da ${tag.title}`" class="tag-carousel-card__icon" width="48" height="48">
+                            <NuxtImg :src="tag.image" :alt="`Ícone da ${tag.title}`" class="tag-carousel-card__icon" width="48" height="48" />
                         </div>
                         <div class="tag-carousel-card__content flex items-center gap-4">
                             <div>
