@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     },
   components: true,
   app: {
-    baseURL: '/identifica-transito/',
+    baseURL: '/',
     head: {
         link: [
             { rel: 'icon', type: 'image/svg+xml', href: '/images/logo-it-icon.svg' },
