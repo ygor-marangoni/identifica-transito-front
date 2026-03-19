@@ -23,11 +23,13 @@ jobs:
       # run: npm run build
       run: npm run generate
     
-    - name: 📂 Deploy dist folder only
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+    - name: 📂 Deploy via rsync SSH
+      uses: burnett01/rsync-deployments@7.0.1
       with:
-        server: ${{ secrets.ftp_host }}
-        username: ${{ secrets.ftp_username }}
-        password: ${{ secrets.ftp_password }}
-        local-dir: ./.output/public/
-        server-dir: www.identificatransito.com.br/public/aprovacao/
+        switches: -avzr --delete
+        path: ./.output/public/
+        remote_path: /home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_user: ${{ secrets.SSH_USERNAME }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+        remote_port: ${{ secrets.SSH_PORT }}
