@@ -311,7 +311,7 @@ export const useLandingPage = () => {
     }));
 
     const pricingTagImages = featuredTags.map((tag) => ({
-        src: tag.image,
+        src: withBase(tag.image),
         alt: tag.title
     }));
 
