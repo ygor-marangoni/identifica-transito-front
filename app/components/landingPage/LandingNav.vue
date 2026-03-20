@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { LandingMenuItem } from '../../types/landing';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 defineProps<{
     menuItems: LandingMenuItem[];
@@ -11,6 +12,28 @@ defineEmits<{
     (event: 'toggle-menu'): void;
     (event: 'close-menu'): void;
 }>();
+
+const activeSection = ref('');
+let observer: IntersectionObserver | null = null;
+
+onMounted(() => {
+    observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    activeSection.value = `#${entry.target.id}`;
+                }
+            });
+        },
+        { rootMargin: '-30% 0px -60% 0px', threshold: 0 }
+    );
+
+    document.querySelectorAll('section[id], header[id]').forEach((el) => observer?.observe(el));
+});
+
+onUnmounted(() => observer?.disconnect());
+
+const isActive = (href: string) => href === activeSection.value;
 </script>
 
 <template>
@@ -20,7 +43,7 @@ defineEmits<{
         </a>
 
         <nav class="fixed-nav__menu">
-            <a v-for="item in menuItems" :key="item.href" :href="item.href" class="fixed-nav__link">
+            <a v-for="item in menuItems" :key="item.href" :href="item.href" class="fixed-nav__link" :class="{ 'fixed-nav__link--active': isActive(item.href) }">
                 <i :class="item.icon"></i>
                 <span>{{ item.label }}</span>
             </a>
