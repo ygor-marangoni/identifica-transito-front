@@ -13,11 +13,13 @@ const auth = useAuth();
 auth.init();
 
 const toast = useToast();
+const config = useRuntimeConfig();
 
 const userName = computed(() => auth.user.value?.name || 'Usuario');
 const userEmail = computed(() => auth.user.value?.email || '');
 const lastAvatar = ref('');
-const userAvatar = computed(() => auth.user.value?.photo || lastAvatar.value || '/images/dashboard/avatar.jpg');
+const defaultAvatar = `${config.app.baseURL}images/dashboard/avatar.jpg`.replace(/\/+/g, '/');
+const userAvatar = computed(() => auth.user.value?.photo || lastAvatar.value || defaultAvatar);
 
 watch(
     () => auth.user.value?.photo,
@@ -43,7 +45,7 @@ const closeProfileMenu = () => {
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                <img src="/images/logo-it-icon.svg" alt="Logo" class="h-10" />
+                <img :src="`${config.app.baseURL}images/logo-it-icon.svg`.replace(/\/+/g, '/')" alt="Logo" class="h-10" />
                 <span>Identifica Trânsito</span>
             </router-link>
         </div>
