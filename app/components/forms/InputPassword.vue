@@ -1,7 +1,7 @@
 <template>
   <div :class="wrapperClass">
     <label v-if="label" :for="id" :class="`block text-md font-bold text-gray-600 mb-2 ${labelClass}`">
-      {{ label }}
+      {{ label }}<span v-if="required" class="text-red-500 ml-0.5">*</span>
     </label>
     <InputText
       v-model="valueProxy"

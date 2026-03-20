@@ -85,7 +85,7 @@ function onBlur(event: FocusEvent) {
 <template>
     <div :class="wrapperClass">
         <label v-if="label" :for="id" :class="labelClass">
-            {{ label }}
+            {{ label }}<span v-if="required" class="text-red-500 ml-0.5">*</span>
         </label>
         <!-- With icon -->
         <IconField v-if="showIcon && icon">

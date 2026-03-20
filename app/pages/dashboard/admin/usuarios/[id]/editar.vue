@@ -3,8 +3,10 @@ import HeroSection from '~/components/dashboard/HeroSection.vue';
 import FormInputText from '~/components/forms/InputText.vue';
 import InputPassword from '~/components/forms/InputPassword.vue';
 import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
 import { useToast } from 'primevue/usetoast';
+import { BIOLOGICAL_SEX_OPTIONS, getBiologicalSexFromUser } from '~/utils/userBiologicalSex';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Editar Usuário - Admin | Identifica Trânsito' });
@@ -24,6 +26,7 @@ const form = ref({
     cpf: '',
     birth_date: '',
     phone: '',
+    gender: '',
     pdv_id: null as number | null,
 });
 
@@ -45,6 +48,7 @@ const fetchUser = async () => {
         form.value.cpf = user.cpf ?? '';
         form.value.birth_date = parseBirthDate(user.birth_date);
         form.value.phone = user.phone ?? '';
+        form.value.gender = getBiologicalSexFromUser(user);
     } catch (e) {
         toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os dados do usuário.', life: 5000 });
         navigateTo('/dashboard/admin/usuarios');
@@ -71,6 +75,7 @@ const handleSubmit = async () => {
             cpf: form.value.cpf || null,
             birth_date: form.value.birth_date || null,
             phone: form.value.phone || null,
+            gender: form.value.gender || null,
         };
 
         if (form.value.password) {
@@ -130,25 +135,27 @@ const handleSubmit = async () => {
                             <FormInputText
                                 v-model="form.name"
                                 id="name"
-                                label="Nome completo *"
+                                label="Nome completo"
                                 placeholder="Nome do usuário"
                                 showIcon
                                 icon="pi pi-user"
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                             <FormInputText
                                 v-model="form.email"
                                 id="email"
                                 type="email"
-                                label="E-mail *"
+                                label="E-mail"
                                 placeholder="email@exemplo.com"
                                 showIcon
                                 icon="pi pi-envelope"
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
 
@@ -165,6 +172,20 @@ const handleSubmit = async () => {
                                 inputClass="w-full"
                                 :disabled="loading"
                             />
+                            <SelectInput
+                                v-model="form.gender"
+                                id="gender"
+                                label="Sexo Biológico"
+                                :options="BIOLOGICAL_SEX_OPTIONS"
+                                placeholder="Selecione"
+                                icon="pi pi-user"
+                                wrapperClass="w-full"
+                                :disabled="loading"
+                                required
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
                                 v-model="form.phone"
                                 id="phone"
@@ -176,6 +197,7 @@ const handleSubmit = async () => {
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
 
@@ -190,6 +212,7 @@ const handleSubmit = async () => {
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
                     </div>

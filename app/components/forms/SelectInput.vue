@@ -85,11 +85,21 @@ const selectedOptionIcon = computed(() => props.icon || null);
 </script>
 
 <template>
-    <div :class="wrapperClass">
+    <div :class="['relative', wrapperClass]">
         <!-- Label -->
         <label v-if="label" :for="id" :class="labelClass">
-            {{ label }}
+            {{ label }}<span v-if="required" class="text-red-500 ml-0.5">*</span>
         </label>
+
+        <!-- Input nativo oculto para validação do browser -->
+        <input
+            v-if="required"
+            :value="modelValue ?? ''"
+            required
+            tabindex="-1"
+            aria-hidden="true"
+            class="absolute bottom-0 left-0 w-full opacity-0 h-0 pointer-events-none"
+        />
 
         <!-- Select com Icon no lado esquerdo -->
         <div v-if="selectedOptionIcon" class="relative">

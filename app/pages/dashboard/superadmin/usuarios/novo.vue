@@ -6,6 +6,7 @@ import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndica
 import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
 import { useToast } from 'primevue/usetoast';
+import { BIOLOGICAL_SEX_OPTIONS } from '~/utils/userBiologicalSex';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Novo Usuário - SuperAdmin | Identifica Trânsito' });
@@ -21,6 +22,7 @@ const form = ref({
     cpf: '',
     birth_date: '',
     phone: '',
+    gender: '',
     type: null as number | null,
     pdv_id: null as number | null,
 });
@@ -69,6 +71,7 @@ const handleSubmit = async () => {
                 cpf: form.value.cpf || null,
                 birth_date: form.value.birth_date || null,
                 phone: form.value.phone || null,
+                gender: form.value.gender || null,
                 pdv_id: form.value.pdv_id || null,
             },
         });
@@ -111,25 +114,27 @@ const handleSubmit = async () => {
                             <FormInputText
                                 v-model="form.name"
                                 id="name"
-                                label="Nome completo *"
+                                label="Nome completo"
                                 placeholder="Nome do usuário"
                                 showIcon
                                 icon="pi pi-user"
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                             <FormInputText
                                 v-model="form.email"
                                 id="email"
                                 type="email"
-                                label="E-mail *"
+                                label="E-mail"
                                 placeholder="email@exemplo.com"
                                 showIcon
                                 icon="pi pi-envelope"
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
 
@@ -146,6 +151,20 @@ const handleSubmit = async () => {
                                 inputClass="w-full"
                                 :disabled="loading"
                             />
+                            <SelectInput
+                                v-model="form.gender"
+                                id="gender"
+                                label="Sexo Biológico"
+                                :options="BIOLOGICAL_SEX_OPTIONS"
+                                placeholder="Selecione"
+                                icon="pi pi-user"
+                                wrapperClass="w-full"
+                                :disabled="loading"
+                                required
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
                                 v-model="form.phone"
                                 id="phone"
@@ -157,6 +176,7 @@ const handleSubmit = async () => {
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
 
@@ -171,6 +191,7 @@ const handleSubmit = async () => {
                                 wrapper-class="w-full"
                                 inputClass="w-full"
                                 :disabled="loading"
+                                required
                             />
                         </div>
                     </div>
@@ -186,7 +207,7 @@ const handleSubmit = async () => {
                                 <InputPassword
                                     v-model="form.password"
                                     id="password"
-                                    label="Senha *"
+                                    label="Senha"
                                     placeholder="Senha de acesso"
                                     autocomplete="new-password"
                                     wrapper-class="w-full"
@@ -198,7 +219,8 @@ const handleSubmit = async () => {
                             <SelectInput
                                 v-model="form.type"
                                 id="type"
-                                label="Tipo de Usuário *"
+                                label="Tipo de Usuário"
+                                required
                                 :options="TIPOS_USUARIO"
                                 placeholder="Selecione o tipo"
                                 optionLabel="label"

@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import Carousel from 'primevue/carousel';  
   
+  const config = useRuntimeConfig();
+
   const props = withDefaults(defineProps<{
     hiddenLinksFooter?: boolean;
   }>(), {
@@ -41,6 +43,14 @@
             </p>
         </template>
       </Carousel>
+
+      <a
+        :href="config.app.baseURL"
+        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/40 text-white text-sm font-medium hover:bg-white/10 transition"
+      >
+        <i class="pi pi-arrow-left text-xs"></i>
+        Conheça o Projeto
+      </a>
 
       <div id="socials" class="flex flex-col items-center relative">
         <!-- bg-[#1925E2] -->

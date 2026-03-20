@@ -5,9 +5,11 @@ import HeroSection from '~/components/dashboard/HeroSection.vue';
 import InputText from '~/components/forms/InputText.vue';
 import InputPassword from '~/components/forms/InputPassword.vue';
 import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
 import Button from '~/components/forms/Button.vue';
 import AvatarCropModal from '~/components/dashboard/AvatarCropModal.vue';
 import {formatBirthDate} from '~/utils/date';
+import { BIOLOGICAL_SEX_OPTIONS, getBiologicalSexFromUser } from '~/utils/userBiologicalSex';
 
 definePageMeta({
     layout: 'dashboard'
@@ -37,6 +39,7 @@ const userProfile = ref({
     nome: '',
     cpf: '',
     email: '',
+    sexoBiologico: '',
     telefone: '',
     dataNascimento: '',
     avatar: '/images/dashboard/avatar.jpg'
@@ -61,6 +64,7 @@ watchEffect(() => {
         nome: (user.name as string) || '',
         cpf: (user.cpf as string) || '',
         email: (user.email as string) || '',
+        sexoBiologico: getBiologicalSexFromUser(user as Record<string, unknown>),
         telefone: (user.phone as string) || '',
         dataNascimento: (user.birth_date as string) || '',
         avatar: (user.photo as string) || '/images/dashboard/avatar.jpg'
@@ -92,9 +96,10 @@ const saveProfile = async () => {
 
         // Preparar FormData para enviar arquivo e dados
         const formData = new FormData();
-        formData.append('_method', 'PUT'); // Method spoofing para Laravel
+        formData.append('_method', 'PUT');
         formData.append('name', editingData.value.nome);
         formData.append('email', editingData.value.email);
+        formData.append('gender', editingData.value.sexoBiologico || '');
         formData.append('phone', editingData.value.telefone.replace(/\D/g, ''));
         formData.append('birth_date', formatBirthDate(editingData.value.dataNascimento));
         
@@ -103,7 +108,6 @@ const saveProfile = async () => {
             formData.append('photo', selectedFile.value);
         }
 
-        // POST com _method=PUT para funcionar com FormData no Laravel
         const response = await $api(`/users/${userId}`, {
             method: 'POST',
             body: formData
@@ -374,22 +378,21 @@ const changePassword = async () => {
 
             <!-- Form Grid -->
             <div class="space-y-6">
-                <!-- Nome Completo (Full Width) -->
-                <InputText
-                    v-model="editingData.nome"
-                    label="Nome Completo"
-                    placeholder="Seu nome e sobrenome"
-                    icon="pi pi-user"
-                    :readonly="!isEditing"
-                    :disabled="!isEditing"
-                    wrapper-class="w-full"
-                    inputClass="w-full"
-                />
+                <!-- Nome Completo + CPF na mesma linha -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                    <InputText
+                        v-model="editingData.nome"
+                        label="Nome Completo"
+                        placeholder="Seu nome e sobrenome"
+                        icon="pi pi-user"
+                        :readonly="!isEditing"
+                        :disabled="!isEditing"
+                        wrapper-class="md:col-span-3"
+                        inputClass="w-full"
+                        required
+                    />
 
-                <!-- Outros campos em grid 2 colunas -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- CPF (Read-only) -->
-                    <div class="relative">
+                    <div class="relative md:col-span-2">
                         <InputText
                             v-model="userProfile.cpf"
                             label="CPF"
@@ -406,8 +409,9 @@ const changePassword = async () => {
                             </span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Email -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <InputText
                         v-model="editingData.email"
                         label="E-mail"
@@ -416,11 +420,25 @@ const changePassword = async () => {
                         type="email"
                         :readonly="!isEditing"
                         :disabled="!isEditing"
-                        wrapper-class="w-full"
+                        wrapper-class="md:col-span-3"
                         inputClass="w-full"
+                        required
                     />
 
-                    <!-- Telefone -->
+                    <SelectInput
+                        v-model="editingData.sexoBiologico"
+                        id="sexoBiologico"
+                        label="Sexo Biológico"
+                        :options="BIOLOGICAL_SEX_OPTIONS"
+                        placeholder="Selecione"
+                        icon="pi pi-user"
+                        wrapperClass="md:col-span-2"
+                        :disabled="!isEditing"
+                        required
+                    />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputText
                         v-model="editingData.telefone"
                         label="Telefone"
@@ -431,9 +449,9 @@ const changePassword = async () => {
                         :disabled="!isEditing"
                         wrapper-class="w-full"
                         inputClass="w-full"
+                        required
                     />
 
-                    <!-- Data de Nascimento -->
                     <InputText
                         v-model="editingData.dataNascimento"
                         label="Data de Nascimento"
@@ -445,6 +463,7 @@ const changePassword = async () => {
                         :disabled="!isEditing"
                         wrapper-class="w-full"
                         inputClass="w-full"
+                        required
                     />
                 </div>
             </div>

@@ -3,9 +3,11 @@
   import LayoutAuth from '~/components/auth/LayoutAuth.vue';
   import InputText from '~/components/forms/InputText.vue';
   import InputPassword from '~/components/forms/InputPassword.vue';
+  import SelectInput from '~/components/forms/SelectInput.vue';
   import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
   import Button from '~/components/forms/Button.vue';
   import { formatBirthDate } from '~/utils/date';
+  import { BIOLOGICAL_SEX_OPTIONS } from '~/utils/userBiologicalSex';
 
   // Configurar título da página
   useHead({
@@ -22,6 +24,7 @@
   const formData = ref({
     fullName: '',
     email: '',
+    biologicalSex: '',
     cpf: '',
     birthDate: '',
     phone: '',
@@ -62,6 +65,7 @@
         body: {
           name: formData.value.fullName,
           email: formData.value.email,
+          biological_sex: formData.value.biologicalSex || null,
           cpf: formData.value.cpf.replace(/\D/g, ''),
           birth_date: formatBirthDate(formData.value.birthDate),
           phone: formData.value.phone.replace(/\D/g, ''),
@@ -93,23 +97,19 @@
     <p class="text-it-gray text-sm mb-8!">Preencha todos os dados abaixo para se registrar na plataforma</p>
 
     <form ref="formRef" @submit.prevent="handleRegister" class="space-y-4">
-      <!-- Grid de 2 colunas no desktop -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Nome Completo -->
-        <InputText
-          v-model="formData.fullName"
-          type="text"
-          id="fullName"
-          label="Nome Completo"
-          placeholder="Digite seu nome completo"
-          required
-          showIcon
-          icon="pi pi-user"
-          inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-          wrapperClass="md:col-span-2"
-        />
+      <InputText
+        v-model="formData.fullName"
+        type="text"
+        id="fullName"
+        label="Nome Completo"
+        placeholder="Digite seu nome completo"
+        required
+        showIcon
+        icon="pi pi-user"
+        inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
+      />
 
-        <!-- E-mail -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
         <InputText
           v-model="formData.email"
           type="email"
@@ -120,10 +120,22 @@
           showIcon
           icon="pi pi-envelope"
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
-          wrapperClass="md:col-span-2"
+          wrapperClass="md:col-span-3"
         />
 
-        <!-- CPF -->
+        <SelectInput
+          v-model="formData.biologicalSex"
+          id="biologicalSex"
+          label="Sexo Biológico"
+          :options="BIOLOGICAL_SEX_OPTIONS"
+          placeholder="Selecione"
+          icon="pi pi-user"
+          required
+          wrapperClass="md:col-span-2"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputText
           v-model="formData.cpf"
           type="text"
@@ -137,7 +149,6 @@
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         />
 
-        <!-- Data de Nascimento -->
         <InputText
           v-model="formData.birthDate"
           type="text"
@@ -151,7 +162,6 @@
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         />
 
-        <!-- Celular / Whatsapp -->
         <InputText
           v-model="formData.phone"
           type="tel"
@@ -165,7 +175,6 @@
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         />
 
-        <!-- Senha -->
         <InputPassword
           v-model="formData.password"
           id="password"
