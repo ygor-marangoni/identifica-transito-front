@@ -27,11 +27,7 @@ export default defineNuxtConfig({
   components: true,
   app: {
     baseURL: '/aprovacao/',
-    head: {
-        link: [
-            { rel: 'icon', type: 'image/svg+xml', href: '/images/logo-it-icon.svg' },
-        ]
-    }
+    head: {}
   },
   modules: ['@nuxt/fonts', '@nuxt/image', '@primevue/nuxt-module'],
   vite: {    plugins: [      tailwindcss(),    ],  },
