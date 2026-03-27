@@ -65,7 +65,7 @@
         body: {
           name: formData.value.fullName,
           email: formData.value.email,
-          biological_sex: formData.value.biologicalSex || null,
+          gender: formData.value.biologicalSex || null,
           cpf: formData.value.cpf.replace(/\D/g, ''),
           birth_date: formatBirthDate(formData.value.birthDate),
           phone: formData.value.phone.replace(/\D/g, ''),

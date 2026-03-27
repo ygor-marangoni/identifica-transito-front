@@ -38,12 +38,12 @@ jobs:
         fi
 
     - name: 📂 Deploy via rsync SSH
-      uses: burnett01/rsync-deployments@7.0.1
-      with:
-        switches: ${{ steps.rsync_switches.outputs.switches }}
-        path: ./.output/public/
-        remote_path: /home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
-        remote_host: ${{ secrets.SSH_HOST }}
-        remote_user: ${{ secrets.SSH_USERNAME }}
-        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        remote_port: ${{ secrets.SSH_PORT }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        rsync ${{ steps.rsync_switches.outputs.switches }} \
+          -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+          ./.output/public/ \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
