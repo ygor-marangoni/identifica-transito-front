@@ -39,7 +39,7 @@ const userProfile = ref({
     nome: '',
     cpf: '',
     email: '',
-    sexoBiologico: '',
+    gender: '',
     telefone: '',
     dataNascimento: '',
     avatar: '/images/dashboard/avatar.jpg'
@@ -64,7 +64,7 @@ watchEffect(() => {
         nome: (user.name as string) || '',
         cpf: (user.cpf as string) || '',
         email: (user.email as string) || '',
-        sexoBiologico: getBiologicalSexFromUser(user as Record<string, unknown>),
+        gender: getBiologicalSexFromUser(user as Record<string, unknown>),
         telefone: (user.phone as string) || '',
         dataNascimento: (user.birth_date as string) || '',
         avatar: (user.photo as string) || '/images/dashboard/avatar.jpg'
@@ -99,7 +99,7 @@ const saveProfile = async () => {
         formData.append('_method', 'PUT');
         formData.append('name', editingData.value.nome);
         formData.append('email', editingData.value.email);
-        formData.append('gender', editingData.value.sexoBiologico || '');
+        formData.append('gender', editingData.value.gender || '');
         formData.append('phone', editingData.value.telefone.replace(/\D/g, ''));
         formData.append('birth_date', formatBirthDate(editingData.value.dataNascimento));
         
@@ -427,7 +427,7 @@ const changePassword = async () => {
 
                     <SelectInput
                         v-model="editingData.sexoBiologico"
-                        id="sexoBiologico"
+                        id="gender"
                         label="Sexo Biológico"
                         :options="BIOLOGICAL_SEX_OPTIONS"
                         placeholder="Selecione"
