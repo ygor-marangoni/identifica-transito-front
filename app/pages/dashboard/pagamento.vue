@@ -825,7 +825,7 @@ const handlePagar = async () => {
                             </div>
                             </div>
                             <div class="flex justify-end pt-6">
-                                <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                                <Button variant="secondary" label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                             </div>
                         </template>
                     </StepPanel>
@@ -950,8 +950,8 @@ const handlePagar = async () => {
                                 </div>
                             </div>
                             <div class="flex justify-between pt-6 gap-3">
-                                <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
-                                <Button label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
+                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
+                                <Button label="Continuar" variant="secondary" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
                             </div>
                         </template>
                     </StepPanel>
@@ -1186,7 +1186,7 @@ const handlePagar = async () => {
                             </div>
 
                             <div class="flex justify-start pt-6 gap-3">
-                                <Button label="Voltar" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
                                 <span
                                     v-if="(paymentMethod !== 'pix' || !pixData) && (paymentMethod !== 'boleto' || !boletoData)"
                                     v-tooltip.top="paymentButtonTooltip"
