@@ -83,7 +83,7 @@ const handleGoBack = () => {
             height: 100%;
             background-image: var(--hero-bg-image);
             background-repeat: no-repeat;
-            background-position: center -160px;
+            background-position: center -290px;
             background-size: 100%;
             border-radius: inherit;
             pointer-events: none;
