@@ -37,7 +37,7 @@ const contactChannels = [
         <div class="bg-linear-to-r from-[#0C1DB8] via-[#1E3AFA] to-[#2563EB] p-8 sm:p-10 text-white relative">
           <div class="absolute right-0 top-0 w-48 h-48 bg-white/10 rounded-full blur-2xl -translate-y-1/3 translate-x-1/3"></div>
           <img src="/images/logo-it-white.svg" alt="Identifica Trânsito" class="h-12 sm:h-14 mb-6 relative z-10" />
-          <h1 class="text-3xl sm:text-4xl font-extrabold leading-tight mb-3 relative z-10">Política de Privacidade</h1>
+          <h1 class="text-3xl sm:text-4xl font-extrabold leading-tight mb-3 relative z-10 text-white!">Política de Privacidade</h1>
           <p class="text-blue-100 text-sm sm:text-base max-w-3xl relative z-10">
             Transparência sobre como tratamos seus dados pessoais e respeitamos seus direitos, em conformidade com a Lei no 13.709/2018 (LGPD).
           </p>

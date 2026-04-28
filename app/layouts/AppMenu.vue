@@ -51,6 +51,7 @@ const clientModel = ref([
                 label: 'Sobre o Projeto',
                 icon: 'pi pi-fw pi-info-circle',
                 to: '/',
+                target: '_blank',
                 class: 'rotated-icon'
             },
             {
@@ -72,6 +73,7 @@ const clientModel = ref([
                 label: 'Sobre o Projeto',
                 icon: 'pi pi-fw pi-info-circle',
                 to: '/',
+                target: '_blank',
                 class: 'rotated-icon'
             },
         ]
@@ -136,6 +138,7 @@ const superAdminModel = ref([
                 label: 'Sobre o Projeto',
                 icon: 'pi pi-fw pi-info-circle',
                 to: '/',
+                target: '_blank',
                 class: 'rotated-icon'
             },
         ]
@@ -180,6 +183,7 @@ const adminModel = ref([
                 label: 'Sobre o Projeto',
                 icon: 'pi pi-fw pi-info-circle',
                 to: '/',
+                target: '_blank',
                 class: 'rotated-icon'
             },
         ]

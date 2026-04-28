@@ -199,9 +199,9 @@
         />
         <label for="acceptTerms" class="text-sm text-gray-600">
           Declaro que li e estou de acordo com os termos da 
-          <NuxtLink to="/politica-de-privacidade#base-legal" class="text-blue-600 hover:text-blue-700 font-medium">Lei Geral de Proteção de Dados (LGPD)</NuxtLink> 
+          <NuxtLink to="/politica-de-privacidade#base-legal" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium">Lei Geral de Proteção de Dados (LGPD)</NuxtLink> 
           e com a 
-          <NuxtLink to="/politica-de-privacidade" class="text-blue-600 hover:text-blue-700 font-medium">Política de Privacidade</NuxtLink>.
+          <NuxtLink to="/politica-de-privacidade" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium">Política de Privacidade</NuxtLink>.
         </label>
       </div>
 

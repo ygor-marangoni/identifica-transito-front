@@ -19,7 +19,7 @@
 
 
 <template>
-  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-it-primary lg:bg-[#F0F1FF]! p-3 lg:p-0 relative">
+  <div class="flex md:h-screen min-h-screen md:overflow-hidden bg-[#1925e2] lg:bg-[#F0F1FF]! p-3 lg:p-0 relative">
 
     <!-- Background video (left side) -->
     <video
@@ -90,7 +90,7 @@
 
       <!-- Rodapé -->
       <div v-if="!hiddenLinksFooter" class="absolute bottom-6 text-center text-gray-400 text-xs z-3">
-        <NuxtLink to="/politica-de-privacidade" class="hover:text-gray-600">Política de Privacidade</NuxtLink>
+        <NuxtLink to="/politica-de-privacidade" target="_blank" class="hover:text-gray-600">Política de Privacidade</NuxtLink>
         <span class="mx-2">|</span>
         <NuxtLink to="/politica-de-privacidade#base-legal" class="hover:text-gray-600">Termos LGPD</NuxtLink>
       </div>

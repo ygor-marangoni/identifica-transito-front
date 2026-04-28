@@ -59,6 +59,7 @@ onMounted(fetchVehicles);
     <div class="space-y-10">
         <!-- Hero -->
         <HeroSection
+            greeting="Lista de Veículoss"
             title="Meus Veículos"
             subtitle="Gerencie seus veículos e etiquetas Identifica Trânsito."
             :showButton="true"

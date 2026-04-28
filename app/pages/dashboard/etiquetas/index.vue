@@ -119,8 +119,9 @@ const handleComprar = () => {
     <div class="space-y-10">
         <!-- Hero -->
         <HeroSection
+            greeting="Etiquetas de Identificação Veicular"
             title="Comprar Etiquetas"
-            subtitle="Compre etiquetas para seus veículos."
+            subtitle="Adquira etiquetas para seus veículos."
             :showButton="true"
             buttonLabel="Meus veículos"
             buttonLink="/dashboard/veiculos"

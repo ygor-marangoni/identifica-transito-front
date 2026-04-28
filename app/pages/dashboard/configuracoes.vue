@@ -107,6 +107,7 @@ const termsAndPolicies = [
         title: 'Política de Privacidade',
         description: 'Saiba como coletamos, usamos e protegemos seus dados pessoais.',
         link: '/politica-de-privacidade',
+        target: '_blank',
         buttonText: 'Ler Política'
     },
     {
@@ -114,6 +115,7 @@ const termsAndPolicies = [
         title: 'Termo de Consentimento LGPD',
         description: 'Informações sobre como tratamos seus dados de acordo com a Lei Geral de Proteção de Dados.',
         link: '/politica-de-privacidade#base-legal',
+        target: '_blank',
         buttonText: 'Ler Termo'
     }
 ];
