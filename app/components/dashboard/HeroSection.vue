@@ -1,5 +1,17 @@
 ﻿<script setup>
 const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
+
+const normalizedBaseURL = computed(() => {
+    const base = runtimeConfig.app.baseURL || '/';
+
+    return base.endsWith('/') ? base.slice(0, -1) : base;
+});
+
+const heroStyleVars = computed(() => ({
+    '--hero-bg-image': `url('${normalizedBaseURL.value}/images/lp/bg-hero.webp')`,
+    '--hero-texture-image': `url('${normalizedBaseURL.value}/images/lp/textura-colmeia.webp')`
+}));
 
 const props = defineProps({
     title: { type: String, required: true },
@@ -20,7 +32,11 @@ const handleGoBack = () => {
 </script>
 
 <template>
-    <section class="bg-it-primary text-white rounded-2xl px-8 py-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <section
+        id="hero-section"
+        :style="heroStyleVars"
+        class="text-white rounded-2xl px-8 py-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+    >
         <div class="flex-1">
             <p v-if="props?.greeting" class="text-sm text-white/80">{{ props.greeting }}</p>
             <h1 class="text-3xl! font-bold mt-1 text-white! mb-0!">{{ props.title }}</h1>
@@ -49,3 +65,48 @@ const handleGoBack = () => {
         </button>
     </section>
 </template>
+
+<style scoped>
+    #hero-section {
+        background: linear-gradient(135deg, var(--it-primary), #3b82f6);
+        position: relative;
+        overflow:  hidden;
+
+        & ::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-image: var(--hero-bg-image);
+            background-repeat: no-repeat;
+            background-position: center -200px;
+            background-size: 100%;
+            background-attachment: fixed;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        & ::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -180px;
+            width: 100%;
+            max-width: 600px;
+            height: 200%;
+            background-image: var(--hero-texture-image);
+            background-repeat: no-repeat;
+            background-position: right 0;
+            background-size: 190%;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0.03;
+            transform: rotate(42deg);
+            z-index: 1;
+        }
+    }
+</style>
