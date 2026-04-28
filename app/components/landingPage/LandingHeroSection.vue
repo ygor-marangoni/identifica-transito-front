@@ -39,7 +39,7 @@ defineProps<{ loginUrl: string }>();
                     <span class="hero-word">Brasil</span>
                 </h1>
                 <p class="hero-text">
-                    Etiquetas reflexivas que identificam o perfil de cada motorista, promovendo empatia, respeito
+                    Etiquetas refletivas que identificam o perfil de cada motorista, promovendo empatia, respeito
                     e prevenção de acidentes no trânsito.
                 </p>
 

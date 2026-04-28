@@ -30,7 +30,7 @@ defineProps<{
                 </div>
 
                 <ul class="pricing-list">
-                    <li><i class="pi pi-check"></i><span>Kit com etiquetas reflexivas</span></li>
+                    <li><i class="pi pi-check"></i><span>Kit com etiquetas refletivas</span></li>
                     <li><i class="pi pi-check"></i><span>Cadastro na plataforma</span></li>
                     <li><i class="pi pi-check"></i><span>Compre quantas etiquetas precisar para todos os carros da casa ou da frota</span></li>
                     <li><i class="pi pi-check"></i><span>Suporte via e-mail e WhatsApp</span></li>

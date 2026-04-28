@@ -106,14 +106,14 @@ const termsAndPolicies = [
         icon: 'pi pi-file-pdf',
         title: 'Política de Privacidade',
         description: 'Saiba como coletamos, usamos e protegemos seus dados pessoais.',
-        link: '#',
+        link: '/politica-de-privacidade',
         buttonText: 'Ler Política'
     },
     {
         icon: 'pi pi-shield',
         title: 'Termo de Consentimento LGPD',
         description: 'Informações sobre como tratamos seus dados de acordo com a Lei Geral de Proteção de Dados.',
-        link: '#',
+        link: '/politica-de-privacidade#base-legal',
         buttonText: 'Ler Termo'
     }
 ];

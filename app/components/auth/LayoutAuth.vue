@@ -90,9 +90,9 @@
 
       <!-- Rodapé -->
       <div v-if="!hiddenLinksFooter" class="absolute bottom-6 text-center text-gray-400 text-xs z-3">
-        <a href="#" class="hover:text-gray-600">Política de Privacidade</a>
+        <NuxtLink to="/politica-de-privacidade" class="hover:text-gray-600">Política de Privacidade</NuxtLink>
         <span class="mx-2">|</span>
-        <a href="#" class="hover:text-gray-600">Termos LGPD</a>
+        <NuxtLink to="/politica-de-privacidade#base-legal" class="hover:text-gray-600">Termos LGPD</NuxtLink>
       </div>
 
       <!-- Shapes -->

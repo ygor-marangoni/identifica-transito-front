@@ -61,9 +61,9 @@ const contactChannels = [
         icon: 'pi pi-envelope',
         title: 'E-mail',
         description: 'Envie sua dúvida para nosso time de suporte.',
-        contact: 'suporte@identificatransito.com.br',
+        contact: 'identificatransito@gmail.com',
         action: 'Enviar e-mail',
-        href: 'mailto:suporte@identificatransito.com.br'
+        href: 'mailto:identificatransito@gmail.com'
     },
     {
         icon: 'pi pi-whatsapp',
@@ -145,7 +145,7 @@ const contactChannels = [
                 <div>
                     <h3 class="text-lg! font-bold text-gray-900 mb-1! -mt-2!">Horário de Atendimento</h3>
                     <p class="text-gray-700 leading-6">
-                        Segunda a Sexta: <span class="font-semibold">9h00 às 18h00</span><br>
+                        Segunda a Sexta: <span class="font-semibold">10h00 às 18h00 (WhatsApp)</span><br>
                         Sábado, Domingo e Feriados: Atendimento por e-mail
                     </p>
                 </div>

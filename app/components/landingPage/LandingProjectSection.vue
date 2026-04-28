@@ -19,7 +19,7 @@ defineProps<{
                     </div>
 
                     <p class="section-text">
-                        O Identifica Trânsito é uma iniciativa que utiliza etiquetas adesivas reflexivas com códigos QR
+                        O Identifica Trânsito é uma iniciativa que utiliza etiquetas adesivas refletivas com códigos QR
                         coladas nos veículos, permitindo identificar o perfil de condução e promover uma convivência mais
                         empática e segura no trânsito.
                     </p>

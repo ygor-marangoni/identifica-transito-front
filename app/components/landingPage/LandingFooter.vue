@@ -20,7 +20,7 @@ defineProps<{
             </nav>
 
             <div class="lp-footer__social">
-                <a href="mailto:suporte@identificatransito.com.br" aria-label="Enviar e-mail para o suporte">
+                <a href="mailto:identificatransito@gmail.com" aria-label="Enviar e-mail para o suporte">
                     <i class="pi pi-envelope"></i>
                 </a>
                 <a href="https://wa.me/5511984971689" target="_blank" rel="noopener noreferrer" aria-label="Falar com o suporte no WhatsApp">

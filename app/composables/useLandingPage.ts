@@ -34,10 +34,10 @@ const impactStats: LandingImpactStat[] = [
     },
     {
         icon: 'pi pi-users',
-        value: '1ª causa',
+        value: '1ª causa de morte',
         counterTarget: 1,
         counterFormat: 'ordinal',
-        description: 'de morte entre jovens e crianças em diversas realidades urbanas.'
+        description: 'acidentes de trânsito lideram as mortes de crianças e adolescentes (0 a 14 anos) no Brasil.'
     }
 ];
 
@@ -57,7 +57,7 @@ const projectPillars: LandingProjectPillar[] = [
     {
         icon: 'pi pi-moon',
         title: 'Alta visibilidade dia e noite',
-        description: 'Material reflexivo pensado para continuar legível em cenários de baixa luminosidade.',
+        description: 'Material refletivo pensado para continuar legível em cenários de baixa luminosidade.',
         tone: 'pillar-card--emerald'
     }
 ];
@@ -106,7 +106,7 @@ const benefits = [
     'Redução de acidentes causados por interpretações erradas no trânsito.',
     'Mais empatia e paciência nas interações entre motoristas.',
     'Identificação mais rápida do perfil em situações críticas e de apoio.',
-    'Etiquetas reflexivas com boa leitura à noite e sob chuva.',
+    'Etiquetas refletivas com boa leitura à noite e sob chuva.',
     'Contribuição prática para uma cultura de trânsito mais humana.'
 ];
 
@@ -148,7 +148,7 @@ const fallbackFaqItems: LandingFaqItem[] = [
     },
     {
         question: 'As etiquetas funcionam à noite e em dias de chuva?',
-        answer: 'Sim. As etiquetas são reflexivas, o que amplia sua visibilidade em cenários de menor luminosidade e ajuda na leitura visual em condições adversas.'
+        answer: 'Sim. As etiquetas são refletivas, o que amplia sua visibilidade em cenários de menor luminosidade e ajuda na leitura visual em condições adversas.'
     },
     {
         question: 'Existe mensalidade para usar a plataforma?',
@@ -175,7 +175,7 @@ const formatCounterValue = (value: number, format: string) => {
     }
 
     if (format === 'ordinal') {
-        return `${Math.round(value)}ª causa`;
+        return `${Math.round(value)}ª causa de morte`;
     }
 
     return Math.round(value).toString();
@@ -408,10 +408,10 @@ export const useLandingPage = () => {
     });
 
     useSeoMeta({
-        title: 'Identifica Trânsito | Etiquetas reflexivas com QR Code para um trânsito mais seguro',
-        description: 'Conheça o Identifica Trânsito: etiquetas reflexivas com QR Code que comunicam o perfil de condução, promovem empatia e ajudam a construir um trânsito mais seguro e humano.',
-        ogTitle: 'Identifica Trânsito | Etiquetas reflexivas com QR Code',
-        ogDescription: 'Etiquetas reflexivas que identificam o perfil de condução e incentivam um trânsito mais seguro, humano e solidário.',
+        title: 'Identifica Trânsito | Etiquetas refletivas com QR Code para um trânsito mais seguro',
+        description: 'Conheça o Identifica Trânsito: etiquetas refletivas com QR Code que comunicam o perfil de condução, promovem empatia e ajudam a construir um trânsito mais seguro e humano.',
+        ogTitle: 'Identifica Trânsito | Etiquetas refletivas com QR Code',
+        ogDescription: 'Etiquetas refletivas que identificam o perfil de condução e incentivam um trânsito mais seguro, humano e solidário.',
         ogType: 'website',
         ogImage: '/images/logo-it.svg',
         twitterCard: 'summary_large_image'
@@ -446,7 +446,7 @@ export const useLandingPage = () => {
                     '@context': 'https://schema.org',
                     '@type': 'Organization',
                     name: 'Identifica Trânsito',
-                    description: 'Projeto de identificação de perfis de condução por meio de etiquetas reflexivas com QR Code.',
+                    description: 'Projeto de identificação de perfis de condução por meio de etiquetas refletivas com QR Code.',
                     logo: '/images/logo-it.svg'
                 })
             },
