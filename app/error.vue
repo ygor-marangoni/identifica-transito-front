@@ -6,7 +6,7 @@ import Button from '~/components/forms/Button.vue';
 const props = defineProps({
     error: Object as () => NuxtError
 });
-
+console.log('props.error', props.error);
 const router = useRouter();
 
 const is404 = computed(() => props.error?.statusCode === 404);

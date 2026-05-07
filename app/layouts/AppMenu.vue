@@ -17,6 +17,28 @@ const isAdmin = computed(() => {
     return type === 'admin' || type === 2;
 });
 
+const isClient = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'client' || type === 'cliente' || type === 3;
+});
+
+const unreadNotificationsCount = useState('driver_notifications_unread_total', () => 0);
+const { $api } = useNuxtApp();
+
+const fetchUnreadNotificationsCount = async () => {
+    if (!isClient.value) return;
+    try {
+        const res = await $api('/notifications-drivers/unread-total');
+        unreadNotificationsCount.value = Number(res?.unread_total ?? 0);
+    } catch {
+        unreadNotificationsCount.value = 0;
+    }
+};
+
+const handleUnreadChanged = () => {
+    fetchUnreadNotificationsCount();
+};
+
 const clientModel = ref([
     {
         label: 'Dashboard',
@@ -46,13 +68,6 @@ const clientModel = ref([
                 label: 'Meus Pedidos',
                 icon: 'pi pi-fw pi-list',
                 to: '/dashboard/pedidos'
-            },
-            {
-                label: 'Sobre o Projeto',
-                icon: 'pi pi-fw pi-info-circle',
-                to: '/',
-                target: '_blank',
-                class: 'rotated-icon'
             },
             {
                 label: 'Suporte',
@@ -197,6 +212,20 @@ const model = computed(() => {
 });
 
 const toast = useToast();
+
+onMounted(() => {
+    fetchUnreadNotificationsCount();
+
+    if (import.meta.client) {
+        window.addEventListener('driver-notifications-unread-changed', handleUnreadChanged);
+    }
+});
+
+onUnmounted(() => {
+    if (import.meta.client) {
+        window.removeEventListener('driver-notifications-unread-changed', handleUnreadChanged);
+    }
+});
 </script>
 
 <template>
@@ -211,6 +240,20 @@ const toast = useToast();
         
         <!-- Footer menu -->
         <div class="border-t border-gray-200 p-4 space-y-2">
+            <!-- Notificar um motorista -->
+            <NuxtLink v-if="isClient" to="/dashboard/notificacoes-motoristas" class="flex items-center gap-3 px-4 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg transition-colors shadow-sm">
+                <span class="relative inline-flex items-center justify-center">
+                    <i class="pi pi-bell text-lg"></i>
+                    <span
+                        v-if="unreadNotificationsCount > 0"
+                        class="absolute -top-5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-bold"
+                    >
+                        {{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}
+                    </span>
+                </span>
+                <span class="font-semibold">Notificar um motorista</span>
+            </NuxtLink>
+
             <!-- Meu Perfil -->
             <NuxtLink to="/dashboard/perfil" class="flex items-center gap-3 px-4 py-3 text-it-primary hover:bg-blue-50 rounded-lg transition-colors">
                 <i class="pi pi-user text-lg"></i>

@@ -668,7 +668,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
-    align-items: flex-start;
+    align-items: center;
     margin: 5.5rem 0 2.5rem 0;
 }
 
@@ -679,7 +679,7 @@ body {
 
 .tags-visual__image {
     width: 100%;
-    aspect-ratio: 3 / 3.2;
+    aspect-ratio: 3 / 3;
     object-fit: cover;
     border-radius: 1.8rem;
     border: 1px solid rgba(148, 163, 184, 0.2);

@@ -39,9 +39,10 @@ const loadSettings = async () => {
         list.forEach((s: Setting) => {
             settingsMap.value[s.type] = s;
         });
-        notifications.value.email = !!(settingsMap.value['EMAIL']?.value);
-        notifications.value.sms = !!(settingsMap.value['SMS_WHATSAPP']?.value);
-        notifications.value.alertsDrivers = !!(settingsMap.value['ALERTS_DRIVERS']?.value);
+        const toBool = (v: any) => v !== 0 && v !== '0' && !!v;
+        notifications.value.email = toBool(settingsMap.value['EMAIL']?.value);
+        notifications.value.sms = toBool(settingsMap.value['SMS_WHATSAPP']?.value);
+        notifications.value.alertsDrivers = toBool(settingsMap.value['ALERTS_DRIVERS']?.value);
     } catch (e) {
         console.error('Erro ao carregar configurações:', e);
     }
