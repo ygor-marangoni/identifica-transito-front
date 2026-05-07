@@ -20,13 +20,13 @@ export default defineNuxtConfig({
     },
     runtimeConfig: {
         public: {
-            apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api',
-            mercadoPagoPublicKey: process.env.NUXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || ''
+            apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api',
+            mercadoPagoPublicKey: import.meta.env.NUXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || ''
         }
     },
   components: true,
   app: {
-    baseURL: '/aprovacao/',
+        baseURL: import.meta.env.NUXT_APP_BASE_URL || '/',
     head: {}
   },
   modules: ['@nuxt/fonts', '@nuxt/image', '@primevue/nuxt-module'],
