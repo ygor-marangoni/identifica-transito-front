@@ -63,7 +63,7 @@ const toast = useToast();
 const { $api } = useNuxtApp();
 const loading = ref(false);
 const unreadNotificationsCount = useState<number>('driver_notifications_unread_total', () => 0);
-const activeTab = ref<NotificationsTab>('sent');
+const activeTab = ref<NotificationsTab>('received');
 
 const typeOptions = [
     { label: 'Pneu murcho/furado', value: 1 },
@@ -323,17 +323,17 @@ onMounted(() => {
             <div class="inline-flex rounded-xl border border-gray-200 dark:border-surface-700 p-1 bg-gray-50 dark:bg-surface-800">
                 <button
                     class="px-4 py-2 text-sm font-semibold rounded-lg transition"
-                    :class="activeTab === 'sent' ? 'bg-white dark:bg-surface-700 text-it-primary shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-it-primary'"
-                    @click="activeTab = 'sent'"
-                >
-                    Notificações enviadas
-                </button>
-                <button
-                    class="px-4 py-2 text-sm font-semibold rounded-lg transition"
                     :class="activeTab === 'received' ? 'bg-white dark:bg-surface-700 text-it-primary shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-it-primary'"
                     @click="activeTab = 'received'"
                 >
                     Notificações recebidas
+                </button>
+                <button
+                    class="px-4 py-2 text-sm font-semibold rounded-lg transition"
+                    :class="activeTab === 'sent' ? 'bg-white dark:bg-surface-700 text-it-primary shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-it-primary'"
+                    @click="activeTab = 'sent'"
+                >
+                    Notificações enviadas
                 </button>
             </div>
 

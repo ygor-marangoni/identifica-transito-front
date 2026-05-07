@@ -241,7 +241,7 @@ onUnmounted(() => {
         <!-- Footer menu -->
         <div class="border-t border-gray-200 p-4 space-y-2">
             <!-- Notificar um motorista -->
-            <NuxtLink v-if="isClient" to="/dashboard/notificacoes-motoristas" class="flex items-center gap-3 px-4 py-3 bg-orange-500 text-white hover:bg-orange-600 rounded-lg transition-colors shadow-sm">
+            <NuxtLink v-if="isClient" to="/dashboard/notificacoes-motoristas" class="flex items-center gap-3 px-4 py-3 bg-orange-100 border border-orange-300 text-orange-900 hover:bg-orange-200 rounded-lg transition-colors shadow-sm">
                 <span class="relative inline-flex items-center justify-center">
                     <i class="pi pi-bell text-lg"></i>
                     <span
