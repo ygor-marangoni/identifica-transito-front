@@ -86,6 +86,8 @@ const quantities = ref<Record<number, number>>({});
 
 const getQty = (id: number) => quantities.value[id] ?? 1;
 
+const getTotalUnits = () => selectedVehicles.value.reduce((sum, v) => sum + getQty(v.id), 0);
+
 const changeQty = (id: number, delta: number) => {
     const current = getQty(id);
     const next = Math.max(1, current + delta);
@@ -849,24 +851,27 @@ const handlePagar = async () => {
                                             <div class="flex-1 space-y-1 min-w-0">
                                                 <p class="font-bold truncate">{{ vehicle.name }}</p>
                                                 <p class="text-gray-500 capitalize">Placa: {{ vehicle.plate?.toUpperCase() }} • {{ vehicle.usage_profile_label }} • Etiqueta {{ vehicle.tag_color }}</p>
-                                                <!-- Controle de quantidade -->
-                                                <div class="flex items-center gap-2 mt-2">
-                                                    <button
-                                                        type="button"
-                                                        class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-40"
-                                                        :disabled="getQty(vehicle.id) <= 1"
-                                                        @click="changeQty(vehicle.id, -1)"
-                                                    >
-                                                        <i class="pi pi-minus text-xs"></i>
-                                                    </button>
-                                                    <span class="w-6 text-center font-semibold tabular-nums">{{ getQty(vehicle.id) }}</span>
-                                                    <button
-                                                        type="button"
-                                                        class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition"
-                                                        @click="changeQty(vehicle.id, 1)"
-                                                    >
-                                                        <i class="pi pi-plus text-xs"></i>
-                                                    </button>
+                                                <div class="flex items-center gap-4 justify-between">
+                                                    <!-- Controle de quantidade -->
+                                                    <div class="w-full flex items-center gap-2 mt-2">
+                                                        <button
+                                                            type="button"
+                                                            class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-40"
+                                                            :disabled="getQty(vehicle.id) <= 1"
+                                                            @click="changeQty(vehicle.id, -1)"
+                                                        >
+                                                            <i class="pi pi-minus text-xs"></i>
+                                                        </button>
+                                                        <span class="w-6 text-center font-semibold tabular-nums">{{ getQty(vehicle.id) }}</span>
+                                                        <button
+                                                            type="button"
+                                                            class="w-7 h-7 rounded-md border border-gray-300 bg-white text-gray-700 flex items-center justify-center hover:bg-gray-100 transition"
+                                                            @click="changeQty(vehicle.id, 1)"
+                                                        >
+                                                            <i class="pi pi-plus text-xs"></i>
+                                                        </button>
+                                                    </div>
+                                                    
                                                 </div>
                                             </div>
                                             <div class="flex flex-col items-end gap-2 shrink-0">
@@ -879,11 +884,12 @@ const handlePagar = async () => {
                                                     <i class="pi pi-times text-sm"></i>
                                                 </button>
                                                 <span class="font-semibold whitespace-nowrap">R$ {{ (parseFloat(vehicle.tag_price) * getQty(vehicle.id)).toFixed(2) }}</span>
+                                                <p>{{ getQty(vehicle.id) }} unidade{{ getQty(vehicle.id) > 1 ? 's' : '' }}</p>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="border-t border-gray-200 mt-4 pt-3 text-sm font-semibold text-gray-900">
-                                        Subtotal ({{ selectedVehicles.length }} item{{ selectedVehicles.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
+                                        Subtotal ({{ selectedVehicles.length }} kit{{ selectedVehicles.length > 1 ? 's' : '' }}): R$ {{ subtotalKits.toFixed(2) }}
                                     </div>
                                 </div>
 
@@ -893,7 +899,7 @@ const handlePagar = async () => {
 
                                     <!-- Cupom de desconto -->
                                     <div class="space-y-2">
-                                        <label class="text-sm font-semibold text-gray-700">Cupom de desconto</label>
+                                        <label class="text-sm font-semibold text-gray-700 mb-2 block">Cupom de desconto</label>
                                         <div v-if="couponData" class="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm">
                                             <i class="pi pi-tag text-green-600"></i>
                                             <span class="font-semibold text-green-700 flex-1">{{ couponData.coupon.code }}</span>
@@ -929,6 +935,11 @@ const handlePagar = async () => {
 
                                     <!-- Valores -->
                                     <div class="space-y-3 text-sm text-gray-700">
+                                        <div class="flex justify-between">
+                                            <span>Qtd. de unidades</span>
+                                            <!-- soma da quantidae de itens por kit -->
+                                            <span class="font-semibold">{{ getTotalUnits() }}x</span>
+                                        </div>
                                         <div class="flex justify-between">
                                             <span>Subtotal ({{ selectedVehicles.length }}x)</span>
                                             <span class="font-semibold">R$ {{ subtotalKits.toFixed(2) }}</span>
