@@ -16,3 +16,13 @@ export const formatBirthDate = (value: string, format = 'YYYY-MM-DD') => {
 
   return value;
 };
+
+export const parseDateForInput = (value?: string | null): string => {
+  if (!value) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+
+  return value;
+};

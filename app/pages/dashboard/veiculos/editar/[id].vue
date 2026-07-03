@@ -4,8 +4,10 @@ import { onBeforeRouteUpdate } from 'vue-router';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import VehicleForm from '~/components/forms/VehicleForm.vue';
 import { useToast } from 'primevue/usetoast';
-import { getStateUF } from '~/utils/vehicleEnums';
+import { getStateUF, USAGE_PROFILE } from '~/utils/vehicleEnums';
 import { createEmptyFormData } from '~/utils/vehicleFormData';
+import { normalizePlate } from '~/utils/plate';
+import { formatBirthDate, parseDateForInput } from '~/utils/date';
 
 
 definePageMeta({
@@ -140,7 +142,8 @@ const fetchVehicleData = async (id: string) => {
       tipoVeiculo: Number(vehicle?.type) || null,
       estadoRegistro: stateUF,
       cidadeRegistro: '',
-      perfilUso: Number(vehicle?.usage_profile) || null
+      perfilUso: Number(vehicle?.usage_profile) || null,
+      babyDateOfBirth: parseDateForInput(vehicle?.usage_profile_baby_date_of_birth)
     };
 
     if (formData.value.estadoRegistro) {
@@ -197,36 +200,26 @@ watch(
 */
 
 const handleSubmit = async () => {
-  if (
-    !formData.value.placa ||
-    !formData.value.tipoVeiculo ||
-    !formData.value.estadoRegistro ||
-    !formData.value.cidadeRegistro ||
-    !formData.value.perfilUso
-  ) {
-    toast.add({
-      severity: 'error',
-      summary: 'Erro ao salvar',
-      detail: 'Por favor, preencha todos os campos obrigatórios.',
-      life: 3000
-    });
-    return;
-  }
-
   loading.value = true;
 
   try {
     const { $api } = useNuxtApp();
 
+    const body: Record<string, unknown> = {
+      plate: normalizePlate(formData.value.placa),
+      type: Number(formData.value.tipoVeiculo),
+      register_state: formData.value.estadoRegistro,
+      register_city: formData.value.cidadeRegistro,
+      usage_profile: Number(formData.value.perfilUso)
+    };
+
+    if (Number(formData.value.perfilUso) === USAGE_PROFILE.RECEM_NASCIDO) {
+      body.usage_profile_baby_date_of_birth = formatBirthDate(formData.value.babyDateOfBirth);
+    }
+
     await $api(`/vehicles/${route.params.id}`, {
       method: 'PUT',
-      body: {
-        plate: formData.value.placa,
-        type: Number(formData.value.tipoVeiculo),
-        register_state: formData.value.estadoRegistro,
-        register_city: formData.value.cidadeRegistro,
-        usage_profile: Number(formData.value.perfilUso)
-      }
+      body
     });
 
     toast.add({

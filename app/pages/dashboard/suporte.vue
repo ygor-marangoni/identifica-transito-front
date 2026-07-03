@@ -69,10 +69,18 @@ const contactChannels = [
         icon: 'pi pi-whatsapp',
         title: 'Telefone / WhatsApp',
         description: 'Fale conosco durante o horário comercial (Seg-Sex, 9h-18h).',
-        contact: '(11) 98497-1689',
+        contact: 'Disponível em breve',
         action: 'Chame no WhatsApp',
-        href: 'https://wa.me/5511984971689'
+        href: '#'
     },
+    // {
+    //     icon: 'pi pi-whatsapp',
+    //     title: 'Telefone / WhatsApp',
+    //     description: 'Fale conosco durante o horário comercial (Seg-Sex, 9h-18h).',
+    //     contact: '(11) 98497-1689',
+    //     action: 'Chame no WhatsApp',
+    //     href: 'https://wa.me/5511984971689'
+    // },
     {
         icon: 'pi pi-comments',
         title: 'Chat Online (Em Breve)',

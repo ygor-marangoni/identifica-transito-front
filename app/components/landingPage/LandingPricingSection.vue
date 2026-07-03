@@ -26,6 +26,11 @@ defineProps<{
                     </div>
                     <p class="pricing-card__meta">Pagamento único, sem recorrência.</p>
 
+                    <p class="pricing-card__notice">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        <span>Permitida a compra de 1 kit de etiqueta por veículo.</span>
+                    </p>
+
                     <a :href="loginUrl" class="pricing-card__cta">Criar minha conta</a>
                 </div>
 

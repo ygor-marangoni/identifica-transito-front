@@ -209,7 +209,7 @@ onMounted(() => {
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">E-mail</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Tipo</th>
                             <th class="text-center py-3 px-4 text-gray-700 font-semibold">Veículos</th>
-                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Tags</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Etiquetas</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cadastro</th>
                             <th class="text-right py-3 px-4 text-gray-700 font-semibold">Ações</th>
                         </tr>

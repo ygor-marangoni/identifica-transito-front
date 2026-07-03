@@ -18,6 +18,7 @@ interface Vehicle {
     tag_purchases: any[];
     created_at: string;
     updated_at: string;
+    can_purchase_tag: boolean;
     selected?: boolean;
 }
 
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const handleToggleSelection = (id: number) => {
+    if (!props.vehicle.can_purchase_tag) return;
     emit('toggleSelection', id);
 };
 
@@ -42,10 +44,11 @@ const handleViewDetails = (id: number) => {
 <template>
     <div
         :class="[
-            'rounded-2xl border-2 shadow-sm p-6 cursor-pointer transition',
+            'rounded-2xl border-2 shadow-sm p-6 transition',
+            vehicle.can_purchase_tag ? 'cursor-pointer' : 'cursor-default',
             vehicle.selected
                 ? 'border-it-primary bg-blue-50'
-                : 'border-gray-100 bg-white hover:border-it-primary'
+                : vehicle.can_purchase_tag ? 'border-gray-100 bg-white hover:border-it-primary' : 'border-gray-100 bg-gray-50'
         ]"
         @click="handleToggleSelection(vehicle.id)"
     >
@@ -61,6 +64,7 @@ const handleViewDetails = (id: number) => {
                 </div>
             </div>
             <input
+                v-if="vehicle.can_purchase_tag"
                 type="checkbox"
                 :checked="vehicle.selected"
                 class="w-5 h-5 text-it-primary border-gray-300 rounded cursor-pointer"
@@ -117,6 +121,10 @@ const handleViewDetails = (id: number) => {
         <div v-if="vehicle.selected" class="mt-4 flex items-center justify-center gap-2 text-it-primary font-medium text-sm">
             <i class="pi pi-check-circle"></i>
             Selecionado
+        </div>
+        <div v-else-if="!vehicle.can_purchase_tag" class="mt-4 flex items-center justify-center gap-2 text-gray-500 font-medium text-sm">
+            <i class="pi pi-lock"></i>
+            Etiqueta já adquirida para esta placa
         </div>
     </div>
 </template>

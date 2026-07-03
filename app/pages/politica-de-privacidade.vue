@@ -22,11 +22,11 @@ const contactChannels = [
     value: 'identificatransito@gmail.com',
     href: 'mailto:identificatransito@gmail.com'
   },
-  {
-    label: 'WhatsApp',
-    value: '(11) 98497-1689',
-    href: 'https://wa.me/5511984971689'
-  }
+  // {
+  //   label: 'WhatsApp',
+  //   value: '(11) 98497-1689',
+  //   href: 'https://wa.me/5511984971689'
+  // }
 ];
 </script>
 

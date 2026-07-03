@@ -48,6 +48,8 @@ const userProfile = ref({
 const isEditing = ref(false);
 const isSaving = ref(false);
 
+const isGenderLocked = computed(() => !!userProfile.value.gender);
+
 const toast = useToast();
 
 const editingData = ref({ ...userProfile.value });
@@ -99,7 +101,10 @@ const saveProfile = async () => {
         formData.append('_method', 'PUT');
         formData.append('name', editingData.value.nome);
         formData.append('email', editingData.value.email);
-        formData.append('gender', editingData.value.gender || '');
+        const genderToSend = isGenderLocked.value ? userProfile.value.gender : editingData.value.gender;
+        if (genderToSend) {
+            formData.append('gender', genderToSend);
+        }
         formData.append('phone', editingData.value.telefone.replace(/\D/g, ''));
         formData.append('birth_date', formatBirthDate(editingData.value.dataNascimento));
         
@@ -425,16 +430,24 @@ const changePassword = async () => {
                         required
                     />
 
-                    <SelectInput
-                        v-model="editingData.sexoBiologico"
-                        id="gender"
-                        label="Sexo Biológico"
-                        :options="BIOLOGICAL_SEX_OPTIONS"
-                        placeholder="Selecione"
-                        icon="pi pi-user"
-                        wrapperClass="md:col-span-2"
-                        :disabled="!isEditing"
-                        required
+                    <div class="relative md:col-span-2">
+                        <SelectInput
+                            v-model="editingData.gender"
+                            id="gender"
+                            label="Sexo Biológico"
+                            :options="BIOLOGICAL_SEX_OPTIONS"
+                            placeholder="Selecione"
+                            icon="pi pi-user"
+                            wrapperClass="w-full"
+                            :disabled="!isEditing || isGenderLocked"
+                            required
+                        />
+                        <div v-if="isGenderLocked" class="absolute top-0 right-0 pt-8 pr-3">
+                            <span class="inline-block bg-gray-100 dark:bg-surface-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded text-xs font-medium">
+                                <i class="pi pi-lock text-xs mr-1"></i> Protegido
+                            </span>
+                        </div>
+                    </div>
                     />
                 </div>
 

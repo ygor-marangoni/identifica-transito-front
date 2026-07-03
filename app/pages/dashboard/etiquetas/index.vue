@@ -34,6 +34,7 @@ interface Vehicle {
     tag_purchases: any[];
     created_at: string;
     updated_at: string;
+    can_purchase_tag: boolean;
     selected?: boolean;
 }
 
@@ -86,9 +87,11 @@ const totalPrice = computed(() =>
 
 const hasVehicles = computed(() => vehicles.value.length > 0);
 
+const purchasableVehicles = computed(() => vehicles.value.filter(v => v.can_purchase_tag));
+
 const selectAll = () => {
-    const allSelected = vehicles.value.every(v => v.selected);
-    vehicles.value.forEach(v => v.selected = !allSelected);
+    const allSelected = purchasableVehicles.value.every(v => v.selected);
+    purchasableVehicles.value.forEach(v => v.selected = !allSelected);
 };
 
 const toggleSelection = (id: number) => {
@@ -160,7 +163,7 @@ const handleComprar = () => {
                     <input
                         type="checkbox"
                         id="selectAll"
-                        :checked="totalSelected === vehicles.length && totalSelected > 0"
+                        :checked="totalSelected === purchasableVehicles.length && totalSelected > 0"
                         @change="selectAll"
                         class="w-6 h-6 text-it-primary border-gray-300 rounded cursor-pointer"
                     />

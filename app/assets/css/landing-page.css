@@ -936,7 +936,7 @@ body {
 }
 
 .pricing-section::after {
-    content:"";
+    content: "";
     display: block;
     width: 100%;
     max-width: 600px;
@@ -953,7 +953,7 @@ body {
     transform: rotate(40deg);
 }
 
-.pricing-section > * {
+.pricing-section>* {
     position: relative;
     z-index: 1;
 }
@@ -1018,6 +1018,25 @@ body {
 .pricing-card__meta {
     margin: 0;
     color: rgba(255, 255, 255, 0.78);
+}
+
+.pricing-card__notice {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.14);
+    color: #fbbf24;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.pricing-card__notice i {
+    font-size: 0.9rem;
 }
 
 .pricing-card__cta {
@@ -1203,7 +1222,7 @@ body {
 }
 
 .cta-section::after {
-    content:"";
+    content: "";
     display: block;
     width: 100%;
     max-width: 600px;
@@ -1220,7 +1239,7 @@ body {
     transform: rotate(40deg);
 }
 
-.cta-section > * {
+.cta-section>* {
     position: relative;
     z-index: 1;
 }
@@ -1232,7 +1251,7 @@ body {
     gap: 2rem;
 }
 
-.cta-section__inner > div {
+.cta-section__inner>div {
     max-width: 46rem;
 }
 
@@ -1307,6 +1326,7 @@ body {
 }
 
 @media (max-width: 1199px) {
+
     .tag-grid,
     .tag-grid--profiles {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1339,12 +1359,21 @@ body {
     .hero-card {
         min-height: 31rem;
         border-radius: 1.25rem;
-        margin: 0.5rem;
+        margin: 0.5rem 0;
         background:
             linear-gradient(90deg, rgba(8, 15, 78, 0.95) 0%, rgba(8, 15, 78, 0.82) 40%, rgba(8, 15, 78, 0.36) 70%, rgba(8, 15, 78, 0.28) 100%),
             url('/images/lp/bg-hero.webp');
         background-size: cover;
         background-position: 200% center;
+    }
+
+    @media all and (max-width: 580px) {
+        .hero-card {
+            background:
+                linear-gradient(90deg, rgba(8, 15, 78, 0.35) 0%, rgba(8, 15, 78, 0.32) 40%, rgba(8, 15, 78, 0.36) 70%, rgba(8, 15, 78, 0.28) 100%),
+                url('/images/lp/bg-hero-mobile.webp');
+            background-position: center bottom;
+        }
     }
 
     .pricing-card {
@@ -1365,6 +1394,7 @@ body {
 }
 
 @media (max-width: 767px) {
+
     .content-section,
     .pricing-section,
     .cta-section {
@@ -1406,6 +1436,7 @@ body {
 }
 
 @media (max-width: 520px) {
+
     .section-heading h2,
     .cta-section h2 {
         font-size: 1.5rem;

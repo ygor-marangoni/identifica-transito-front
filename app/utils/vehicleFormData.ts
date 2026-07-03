@@ -39,6 +39,7 @@ export interface VehicleFormData {
     estadoRegistro: string;
     cidadeRegistro: string;
     perfilUso: number | null;
+    babyDateOfBirth: string;
 }
 
 export const createEmptyFormData = (): VehicleFormData => ({
@@ -46,5 +47,6 @@ export const createEmptyFormData = (): VehicleFormData => ({
     tipoVeiculo: null,
     estadoRegistro: '',
     cidadeRegistro: '',
-    perfilUso: null
+    perfilUso: null,
+    babyDateOfBirth: ''
 });

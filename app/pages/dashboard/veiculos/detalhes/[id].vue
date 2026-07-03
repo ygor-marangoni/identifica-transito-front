@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { onBeforeRouteUpdate } from 'vue-router';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import ButtonLink from '~/components/ButtonLink.vue';
@@ -48,6 +48,7 @@ const vehicleData = ref({
 
 const loading = ref(false);
 const rawVehicle = ref<Record<string, any> | null>(null);
+const canPurchaseTag = computed(() => !!rawVehicle.value?.can_purchase_tag);
 
 const mapVehicleData = (vehicle: Record<string, any>) => {
     const registro = [vehicle.register_city, vehicle.register_state].filter(Boolean).join(' - ');
@@ -251,17 +252,21 @@ onBeforeRouteUpdate((to) => {
                             <p class="text-sm font-semibold text-gray-900 mb-4">
                                 Código do Kit: <span class="text-it-primary">{{ vehicleData.etiqueta.codigo }}</span>
                             </p>
-                            <p class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
+                            <p v-if="canPurchaseTag" class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
                                 Disponível para compra
+                            </p>
+                            <p v-else class="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
+                                Etiqueta já adquirida para esta placa
                             </p>
                         </div>
 
                         <!-- Botão Comprar -->
                         <Button
+                            v-if="canPurchaseTag"
                             @click="handleComprarEtiqueta"
                             variant="primary"
                             size="md"
-                            
+
                         >
                             <i class="pi pi-shopping-cart"></i>
                             Comprar Kit (2 Etiquetas)
