@@ -3,7 +3,7 @@ defineProps<{
     title: string;
     value: string | number;
     icon: string;
-    color: 'blue' | 'green' | 'orange' | 'purple';
+    color: 'blue' | 'green' | 'orange' | 'purple' | 'teal';
     loading?: boolean;
 }>();
 
@@ -12,6 +12,7 @@ const colorMap = {
     green: { bg: 'bg-green-50', icon: 'text-green-600', value: 'text-green-700', border: 'border-green-100' },
     orange: { bg: 'bg-orange-50', icon: 'text-orange-600', value: 'text-orange-700', border: 'border-orange-100' },
     purple: { bg: 'bg-purple-50', icon: 'text-purple-600', value: 'text-purple-700', border: 'border-purple-100' },
+    teal: { bg: 'bg-teal-50', icon: 'text-teal-600', value: 'text-teal-700', border: 'border-teal-100' },
 };
 </script>
 

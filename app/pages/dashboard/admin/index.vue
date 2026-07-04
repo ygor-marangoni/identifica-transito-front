@@ -23,6 +23,7 @@ interface Totals {
     vehicles: number;
     orders: number;
     revenue: number;
+    commission_amount: number;
 }
 
 interface LatestUser {
@@ -63,7 +64,7 @@ interface DashboardData {
 const loading = ref(false);
 const dashboardData = ref<DashboardData | null>(null);
 
-const totals = computed(() => dashboardData.value?.totals ?? { users: 0, vehicles: 0, orders: 0, revenue: 0 });
+const totals = computed(() => dashboardData.value?.totals ?? { users: 0, vehicles: 0, orders: 0, revenue: 0, commission_amount: 0 });
 const latestUsers = computed(() => dashboardData.value?.latest_users ?? []);
 const latestOrders = computed(() => dashboardData.value?.latest_orders ?? []);
 
@@ -159,7 +160,7 @@ onMounted(fetchDashboard);
         </section>
 
         <!-- Stats Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
             <StatsCard
                 title="Total de Usuários Ativos"
                 :value="totals.users"
@@ -186,6 +187,13 @@ onMounted(fetchDashboard);
                 :value="formatCurrency(totals.revenue)"
                 icon="pi pi-dollar"
                 color="purple"
+                :loading="loading"
+            />
+            <StatsCard
+                title="Total de Comissão"
+                :value="formatCurrency(totals.commission_amount)"
+                icon="pi pi-wallet"
+                color="teal"
                 :loading="loading"
             />
         </section>

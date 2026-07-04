@@ -255,6 +255,19 @@ const saveShipmentModal = async () => {
 };
 
 onMounted(() => fetchOrders());
+
+// ── Print label (etiqueta de embalagem) ───────────────────────────────────────
+const showPrintModal = ref(false);
+const printOrder = ref<Order | null>(null);
+
+const openPrintLabel = (order: Order) => {
+    printOrder.value = order;
+    showPrintModal.value = true;
+};
+
+const printLabel = () => {
+    window.print();
+};
 </script>
 
 <template>
@@ -300,6 +313,7 @@ onMounted(() => fetchOrders());
                     <Skeleton width="14%" height="24px" />
                     <Skeleton width="16%" height="24px" />
                     <Skeleton width="8%" height="14px" />
+                    <Skeleton width="6%" height="24px" />
                 </div>
             </div>
 
@@ -318,6 +332,7 @@ onMounted(() => fetchOrders());
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Entrega</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Data</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -448,6 +463,16 @@ onMounted(() => fetchOrders());
                             </td>
 
                             <td class="py-3 px-4 text-gray-500">{{ formatDate(order.created_at) }}</td>
+
+                            <td class="py-3 px-4 text-center">
+                                <button
+                                    @click="openPrintLabel(order)"
+                                    title="Imprimir etiqueta para embalagem"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-it-primary transition"
+                                >
+                                    <i class="pi pi-print"></i>
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -528,5 +553,174 @@ onMounted(() => fetchOrders());
                 </div>
             </template>
         </Dialog>
+
+        <!-- Print Label Modal (etiqueta para embalagem) -->
+        <Dialog
+            v-model:visible="showPrintModal"
+            header="Etiqueta para Embalagem"
+            :modal="true"
+            :closable="true"
+            :style="{ width: '420px' }"
+        >
+            <div v-if="printOrder" id="print-label-area" class="print-label">
+                <div class="print-label__header">
+                    <span class="print-label__brand">Identifica Trânsito</span>
+                    <span class="print-label__order-id">ID de pagamento: {{ getOrderDisplayId(printOrder) }}</span>
+                </div>
+
+                <div class="print-label__tag">
+                    <img
+                        v-if="printOrder.tag_slug"
+                        :src="assetWithBase(`/images/dashboard/etiquetas/${printOrder.tag_slug}.svg`)"
+                        :alt="printOrder.tag_name"
+                        class="print-label__tag-image"
+                    />
+                </div>
+
+                <div class="print-label__rows">
+                    <div class="print-label__row">
+                        <span class="print-label__label">Cliente</span>
+                        <span class="print-label__value">{{ printOrder.user_name }}</span>
+                    </div>
+                    <div class="print-label__row">
+                        <span class="print-label__label">Cor da Etiqueta</span>
+                        <span class="print-label__value">{{ printOrder.tag_name }}</span>
+                    </div>
+                    <div class="print-label__row">
+                        <span class="print-label__label">Quantidade</span>
+                        <span class="print-label__value">{{ printOrder.qty }}</span>
+                    </div>
+                    <div class="print-label__row">
+                        <span class="print-label__label">Valor Pago</span>
+                        <span class="print-label__value">{{ formatCurrency(printOrder.price_total) }}</span>
+                    </div>
+                </div>
+
+                <div class="print-label__footer">
+                    {{ formatDate(printOrder.created_at) }}
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <button
+                        @click="showPrintModal = false"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                        Fechar
+                    </button>
+                    <button
+                        @click="printLabel"
+                        class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                    >
+                        <i class="pi pi-print mr-1"></i>
+                        Imprimir
+                    </button>
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>
+
+<style scoped>
+.print-label {
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.print-label__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.print-label__brand {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #081ae7;
+}
+
+.print-label__order-id {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+}
+
+.print-label__tag {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0 1.25rem;
+}
+
+.print-label__tag-image {
+    width: 5rem;
+    height: 5rem;
+    object-fit: contain;
+}
+
+.print-label__rows {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.print-label__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.print-label__label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.print-label__value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: right;
+}
+
+.print-label__footer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #cbd5e1;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+</style>
+
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #print-label-area,
+    #print-label-area * {
+        visibility: visible;
+    }
+
+    #print-label-area {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+}
+</style>

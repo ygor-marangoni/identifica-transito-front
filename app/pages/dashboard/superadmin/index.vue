@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import StatsCard from '~/components/superadmin/StatsCard.vue';
+import PaginationControls from '~/components/PaginationControls.vue';
 
 definePageMeta({ layout: 'dashboard' });
 
@@ -59,6 +60,20 @@ interface DashboardData {
     latest_orders: LatestOrder[];
 }
 
+interface PdvCommission {
+    admin_id: number;
+    admin_name: string;
+    admin_email: string;
+    pdv_id: number | null;
+    pdv_name: string | null;
+    commission_type: 1 | 2 | null;
+    commission_type_label: string | null;
+    commission_value: number | null;
+    total_sales_qty: number;
+    total_sales_amount: number;
+    commission_amount: number;
+}
+
 // State
 const loading = ref(false);
 const dashboardData = ref<DashboardData | null>(null);
@@ -77,6 +92,48 @@ const fetchDashboard = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+// ── PDV Commissions (repasses) — SuperAdmin only, uses the same date filter above ──
+const commissions = ref<PdvCommission[]>([]);
+const loadingCommissions = ref(false);
+const commissionSearch = ref('');
+const commissionsPagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
+const commissionsExpanded = ref(false);
+
+const fetchCommissions = async (page = 1) => {
+    loadingCommissions.value = true;
+    try {
+        const params = new URLSearchParams({ page: String(page), per_page: '12' });
+        if (dateFrom.value) params.set('date_from', dateFrom.value);
+        if (dateTo.value) params.set('date_to', dateTo.value);
+        if (commissionSearch.value) params.set('q', commissionSearch.value);
+        const res = await $api(`/admin/pdv-commissions?${params}`) as any;
+        commissions.value = Array.isArray(res?.data) ? res.data : [];
+        commissionsPagination.value.currentPage = Number(res?.meta?.current_page ?? page);
+        commissionsPagination.value.lastPage = Number(res?.meta?.last_page ?? 1);
+        commissionsPagination.value.total = Number(res?.meta?.total ?? commissions.value.length);
+    } catch (e) {
+        console.error('Erro ao carregar repasses de PDV:', e);
+    } finally {
+        loadingCommissions.value = false;
+    }
+};
+
+const goToCommissionsPage = (page: number) => {
+    if (page < 1 || page > commissionsPagination.value.lastPage || page === commissionsPagination.value.currentPage || loadingCommissions.value) return;
+    fetchCommissions(page);
+};
+
+const onCommissionSearch = () => {
+    commissionsPagination.value.currentPage = 1;
+    fetchCommissions(1);
+};
+
+const applyFilters = () => {
+    fetchDashboard();
+    commissionsPagination.value.currentPage = 1;
+    fetchCommissions(1);
 };
 
 // Helpers
@@ -117,7 +174,10 @@ const paymentStatusBadge = (status: string) => {
     return map[status] ?? { label: status, classes: 'bg-gray-100 text-gray-600' };
 };
 
-onMounted(fetchDashboard);
+onMounted(() => {
+    fetchDashboard();
+    fetchCommissions();
+});
 </script>
 
 <template>
@@ -149,7 +209,7 @@ onMounted(fetchDashboard);
                     />
                 </div>
                 <button
-                    @click="fetchDashboard"
+                    @click="applyFilters"
                     :disabled="loading"
                     class="px-5 py-2 bg-it-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-60"
                 >
@@ -188,6 +248,112 @@ onMounted(fetchDashboard);
                 color="purple"
                 :loading="loading"
             />
+        </section>
+
+        <!-- Repasses de PDV -->
+        <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <button
+                type="button"
+                @click="commissionsExpanded = !commissionsExpanded"
+                class="w-full flex items-center justify-between gap-4 text-left"
+            >
+                <div>
+                    <h2 class="text-lg! font-semibold text-gray-900 mb-1! flex items-center gap-2">
+                        <i class="pi pi-wallet text-it-primary"></i>
+                        Repasses de PDV
+                    </h2>
+                    <p class="text-sm text-gray-500">Valores a repassar aos donos de ponto de venda no período selecionado acima.</p>
+                </div>
+                <i :class="['pi', commissionsExpanded ? 'pi-chevron-up' : 'pi-chevron-down', 'text-gray-400 text-lg shrink-0']"></i>
+            </button>
+
+            <div v-show="commissionsExpanded" class="mt-6">
+                <div class="flex flex-wrap items-end justify-end gap-3 mb-6">
+                    <div>
+                        <label for="commissionSearch" class="block text-xs font-semibold text-gray-600 mb-1">Buscar PDV</label>
+                        <input
+                            id="commissionSearch"
+                            v-model="commissionSearch"
+                            type="text"
+                            placeholder="Nome ou e-mail"
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            @keyup.enter="onCommissionSearch"
+                        />
+                    </div>
+                    <button
+                        @click="onCommissionSearch"
+                        class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                    >
+                        Buscar
+                    </button>
+                </div>
+
+                <!-- Skeleton -->
+                <div v-if="loadingCommissions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Skeleton v-for="n in 3" :key="n" height="180px" class="rounded-xl!" />
+                </div>
+
+                <!-- Cards -->
+                <div v-else-if="commissions.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div
+                        v-for="item in commissions"
+                        :key="item.admin_id"
+                        class="border border-gray-100 rounded-xl p-5 bg-gray-50/60 hover:border-it-primary transition"
+                    >
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-gray-900 truncate">{{ item.pdv_name || item.admin_name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ item.admin_email }}</p>
+                            </div>
+                            <span
+                                v-if="item.commission_type_label"
+                                class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+                            >
+                                {{ item.commission_type_label }}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+                            <div>
+                                <p class="text-gray-500 text-xs">Etiquetas vendidas</p>
+                                <p class="font-semibold text-gray-900">{{ item.total_sales_qty }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">Total vendido</p>
+                                <p class="font-semibold text-gray-900">{{ formatCurrency(item.total_sales_amount) }}</p>
+                            </div>
+                        </div>
+
+                        <div v-if="item.commission_value !== null" class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                            <span>Taxa configurada</span>
+                            <span class="font-medium text-gray-700">
+                                {{ item.commission_type === 2 ? `${item.commission_value}%` : formatCurrency(item.commission_value) }}
+                            </span>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+                            <span class="text-sm text-gray-600">A repassar</span>
+                            <span class="text-xl font-bold text-it-primary">{{ formatCurrency(item.commission_amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty -->
+                <div v-else class="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
+                    <i class="pi pi-wallet text-4xl"></i>
+                    <p>Nenhum repasse de PDV no período selecionado</p>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="commissions.length > 0 && commissionsPagination.lastPage > 1" class="mt-5 pt-4 border-t border-gray-100">
+                    <PaginationControls
+                        :current-page="commissionsPagination.currentPage"
+                        :last-page="commissionsPagination.lastPage"
+                        :loading="loadingCommissions"
+                        @page-change="goToCommissionsPage"
+                    />
+                </div>
+            </div>
         </section>
 
         <!-- Bottom panels -->
