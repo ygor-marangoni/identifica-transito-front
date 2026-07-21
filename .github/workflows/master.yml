@@ -47,4 +47,4 @@ jobs:
           rsync ${{ steps.rsync_switches.outputs.switches }} \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             ./.output/public/ \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/identificatransito/htdocs/www.identificatransito.com.br/public/aprovacao/
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/identificatransito/htdocs/www.identificatransito.com.br/public/
