@@ -39,7 +39,7 @@ export default defineNuxtConfig({
         style: [
             {
                 key: 'landing-startup-critical',
-                innerHTML: `.landing-startup-loader{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;overflow:hidden;background:#070b1f;color:#fff;pointer-events:auto}.landing-startup-loader__content{display:grid;width:min(360px,100%);justify-items:center;gap:32px}.landing-startup-loader__logo{display:block;width:172px;height:auto;max-width:100%;filter:brightness(0) invert(1)}.landing-startup-loader__progress{display:grid;width:100%;gap:10px}.landing-startup-loader__track{height:6px;overflow:hidden;border:1px solid #3069ff;border-radius:999px;background:#0b102a}.landing-startup-loader__fill{display:block;width:100%;height:100%;transform-origin:left;background:#2864ec;animation:landing-startup-fill 1.1s cubic-bezier(.22,1,.36,1) both}.landing-startup-loader__percent{font:600 12px/1 Figtree,Arial,sans-serif;letter-spacing:.1em;text-align:center;color:#dbe5ff}@keyframes landing-startup-fill{from{transform:scaleX(.08)}to{transform:scaleX(1)}}html:has(.landing-startup-loader),body:has(.landing-startup-loader){height:100%;overflow:hidden;overscroll-behavior:none}@media(prefers-reduced-motion:reduce){.landing-startup-loader__fill{animation:none}}`
+                innerHTML: `.landing-startup-loader{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;overflow:hidden;background:#070b1f;color:#fff;pointer-events:auto}.landing-startup-loader__content{display:grid;width:min(360px,100%);justify-items:center;gap:32px}.landing-startup-loader__logo{display:block;width:172px;height:auto;max-width:100%;filter:brightness(0) invert(1)}.landing-startup-loader__progress{display:grid;width:100%;gap:10px}.landing-startup-loader__track{height:6px;overflow:hidden;border:1px solid #3069ff;border-radius:999px;background:#0b102a}.landing-startup-loader__fill{display:block;width:100%;height:100%;transform-origin:left;background:#2864ec;animation:landing-startup-fill 1.1s cubic-bezier(.22,1,.36,1) both}.landing-startup-loader__percent{font:600 12px/1 Figtree,Arial,sans-serif;letter-spacing:.1em;text-align:center;color:#dbe5ff}@keyframes landing-startup-fill{from{transform:scaleX(.08)}to{transform:scaleX(1)}}html:has(.landing-startup-loader:not(.landing-startup-loader--hidden)),body:has(.landing-startup-loader:not(.landing-startup-loader--hidden)){height:100%;overflow:hidden;overscroll-behavior:none}@media(prefers-reduced-motion:reduce){.landing-startup-loader__fill{animation:none}}`
             }
         ]
     }
@@ -66,7 +66,7 @@ export default defineNuxtConfig({
             theme: {
                 preset: Aura,
                 options: {
-                    darkModeSelector: '.app-dark'
+                    darkModeSelector: false
                 }
             }
         }

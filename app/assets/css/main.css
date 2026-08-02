@@ -25,6 +25,7 @@ form label {
 }
 
 html {
+  color-scheme: light;
   scrollbar-color: #aab5c1 transparent;
   scrollbar-width: thin;
 }

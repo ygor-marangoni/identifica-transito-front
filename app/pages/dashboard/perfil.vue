@@ -562,7 +562,7 @@ const confirmLogout = async () => {
                     id="senha-atual"
                     autocomplete="current-password"
                     wrapper-class="w-full"
-                    inputClass="w-full"
+                    inputClass="w-full h-[52px]"
                 />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -574,7 +574,7 @@ const confirmLogout = async () => {
                             id="nova-senha"
                             autocomplete="new-password"
                             wrapper-class="w-full"
-                            inputClass="w-full"
+                            inputClass="w-full h-[52px]"
                         />
                         <PasswordStrengthIndicator :password="securityData.novaSenha" />
                     </div>
@@ -587,7 +587,7 @@ const confirmLogout = async () => {
                             id="confirmar-senha"
                             autocomplete="new-password"
                             wrapper-class="w-full"
-                            inputClass="w-full"
+                            inputClass="w-full h-[52px]"
                         />
                         <div v-if="securityData.confirmarSenha" class="mt-2">
                             <div class="flex items-center gap-2">

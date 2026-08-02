@@ -89,6 +89,6 @@ const handleToggle = () => emit('toggle-menu');
 
     <nav class="landing-bottom-nav" :class="{ 'landing-bottom-nav--visible': isBottomNavVisible }" aria-label="Navegação rápida">
         <a v-for="item in bottomNavigationItems" :key="`bottom-${item.href}`" :href="item.href" :class="{ 'landing-bottom-nav__link--active': isActive(item.href) }">{{ item.label }}</a>
-        <a :href="loginUrl" class="landing-bottom-nav__cta"><span>Criar minha conta</span><span class="landing-bottom-nav__cta-arrow"><i class="pi pi-arrow-right" aria-hidden="true"></i></span></a>
+        <a href="/auth/register" class="landing-bottom-nav__cta"><span>Criar minha conta</span><span class="landing-bottom-nav__cta-arrow"><i class="pi pi-arrow-right" aria-hidden="true"></i></span></a>
     </nav>
 </template>

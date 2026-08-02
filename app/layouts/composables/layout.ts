@@ -4,7 +4,6 @@ const layoutConfig = reactive({
     preset: 'Aura',
     primary: 'emerald',
     surface: null,
-    darkTheme: false,
     menuMode: 'static'
 });
 
@@ -21,21 +20,6 @@ const layoutState = reactive({
 });
 
 export function useLayout() {
-    const toggleDarkMode = () => {
-        if (!document.startViewTransition) {
-            executeDarkModeToggle();
-
-            return;
-        }
-
-        document.startViewTransition(() => executeDarkModeToggle(event));
-    };
-
-    const executeDarkModeToggle = () => {
-        layoutConfig.darkTheme = !layoutConfig.darkTheme;
-        document.documentElement.classList.toggle('app-dark');
-    };
-
     const toggleMenu = () => {
         if (isDesktop()) {
             if (layoutConfig.menuMode === 'static') {
@@ -67,7 +51,7 @@ export function useLayout() {
         layoutState.anchored = false;
     };
 
-    const isDarkTheme = computed(() => layoutConfig.darkTheme);
+    const isDarkTheme = computed(() => false);
     const isDesktop = () => window.innerWidth > 1000;
 
     const hasOpenOverlay = computed(() => layoutState.overlayMenuActive);
@@ -76,7 +60,6 @@ export function useLayout() {
         layoutConfig,
         layoutState,
         isDarkTheme,
-        toggleDarkMode,
         toggleConfigSidebar,
         toggleMenu,
         hideMobileMenu,

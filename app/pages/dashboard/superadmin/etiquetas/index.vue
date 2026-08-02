@@ -66,7 +66,7 @@ onMounted(() => fetchTags());
         <section class="tag-catalog bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <header class="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h2 class="m-0 text-[25px] font-semibold leading-[1.1] text-[#172b4d]">Catálogo de etiquetas</h2>
+                    <h2 class="text-[#172b4d]" style="margin:0 0 6px;font-size:25px;font-weight:600;line-height:1.1;">Catálogo de etiquetas</h2>
                     <p class="mt-1.5 mb-0 text-[15px] leading-[1.35] text-[#52667f]">Visualize e mantenha os modelos disponíveis para compra.</p>
                 </div>
                 <div class="flex items-center gap-4 text-xs font-semibold uppercase tracking-wide text-[#52667f]"><span class="inline-flex items-center gap-1.5"><Tag :size="15" class="text-[#1f46ee]" />{{ pagination.total }} modelos</span><span class="inline-flex items-center gap-1.5"><BadgeCheck :size="15" class="text-[#16803c]" />Catálogo ativo</span></div>
@@ -103,5 +103,9 @@ onMounted(() => fetchTags());
 </template>
 
 <style scoped>
-@media (max-width: 639px) { .tag-catalog { padding: 1.1rem !important; } }
+@media (max-width: 639px) {
+    .tag-catalog { padding: 1.5rem !important; }
+    .tag-catalog h2 { font-size: 22px !important; margin-top: 12px !important; margin-bottom: 0 !important; }
+    .tag-catalog-card h3 { font-size: 22px !important; font-weight: 600 !important; }
+}
 </style>

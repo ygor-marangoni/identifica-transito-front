@@ -76,42 +76,10 @@ const saveNotification = async (type: string, value: boolean) => {
     }
 };
 
-// Tema
-const isDarkMode = ref(false);
-
-// Inicializar tema do localStorage
 onMounted(() => {
-    const savedTheme = localStorage.getItem('app-theme');
-    if (savedTheme === 'dark') {
-        isDarkMode.value = true;
-        applyTheme('dark');
-    } else if (savedTheme === 'light') {
-        isDarkMode.value = false;
-        applyTheme('light');
-    } else {
-        // Se não tem preferência salva, verifica preferência do sistema
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        isDarkMode.value = prefersDark;
-        applyTheme(prefersDark ? 'dark' : 'light');
-    }
-
+    document.documentElement.classList.remove('app-dark');
+    localStorage.removeItem('app-theme');
     loadSettings();
-});
-
-// Aplicar tema
-const applyTheme = (theme: 'dark' | 'light') => {
-    const html = document.documentElement;
-    if (theme === 'dark') {
-        html.classList.add('app-dark');
-    } else {
-        html.classList.remove('app-dark');
-    }
-    localStorage.setItem('app-theme', theme);
-};
-
-// Watcher para mudança de tema
-watch(isDarkMode, (newValue) => {
-    applyTheme(newValue ? 'dark' : 'light');
 });
 
 const termsAndPolicies = [
