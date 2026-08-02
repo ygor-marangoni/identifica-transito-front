@@ -58,9 +58,11 @@ const handleClose = () => {
           Ajustar Foto de Perfil
         </h3>
         <button
+          type="button"
           @click="handleClose"
           :disabled="isProcessing"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition disabled:opacity-50"
+          aria-label="Fechar modal de ajuste da foto"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-it-primary dark:hover:bg-surface-700 dark:hover:text-gray-200 disabled:opacity-50"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

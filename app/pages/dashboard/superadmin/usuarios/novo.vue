@@ -85,8 +85,8 @@ const validatePdvCommission = (): string | null => {
 };
 
 const handleSubmit = async () => {
-    if (!form.value.name || !form.value.email || !form.value.password || !form.value.type) {
-        toast.add({ severity: 'error', summary: 'Campos obrigatórios', detail: 'Preencha nome, e-mail, senha e tipo.', life: 3000 });
+    if (!form.value.name || !form.value.email || !form.value.password || !form.value.gender || !form.value.type) {
+        toast.add({ severity: 'error', summary: 'Campos obrigatórios', detail: 'Preencha nome, e-mail, senha, sexo biológico e tipo.', life: 3000 });
         return;
     }
 
@@ -128,11 +128,11 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Novo Usuário"
-            subtitle="Cadastre um novo usuário na plataforma."
-            greeting="SuperAdmin"
+            subtitle="Crie um novo acesso e defina o perfil adequado para a operação."
+            greeting="Novo acesso"
             :showButton="true"
             buttonLabel="Voltar para Usuários"
             buttonLink="/dashboard/superadmin/usuarios"

@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { CarFront } from '@lucide/vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
-import ButtonLink from '~/components/ButtonLink.vue';
 import VehicleCard from '~/components/dashboard/VehicleCard.vue';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { useToast } from 'primevue/usetoast';
 import Skeleton from 'primevue/skeleton';
 
@@ -56,27 +55,27 @@ onMounted(fetchVehicles);
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="space-y-6 md:space-y-7">
         <!-- Hero -->
         <HeroSection
-            greeting="Lista de Veículoss"
+            greeting="Lista de veículos"
             title="Meus Veículos"
             subtitle="Gerencie seus veículos e etiquetas Identifica Trânsito."
             :showButton="true"
-            buttonLabel="Cadastrar Novo Veículo"
+            :greeting-icon="CarFront"
+            buttonLabel="Cadastrar veículo"
             buttonLink="/dashboard/veiculos/novo"
         />
 
         <!-- Lista de Veículos ou Empty State -->
-        <section>
-
+        <section class="space-y-4">
             <!-- Loading -->
             <div v-if="loading" class="space-y-4">
                 <Skeleton v-for="n in 3" :key="n" width="100%" height="5rem" class="w-full h-50 rounded-lg" />
             </div>
 
             <!-- Com veículos -->
-            <div v-if="vehicles.length > 0" class="space-y-4">
+            <div v-if="vehicles.length > 0" class="space-y-3">
                 <VehicleCard
                     v-for="vehicle in vehicles"
                     :key="vehicle.id"
@@ -86,22 +85,19 @@ onMounted(fetchVehicles);
             </div>
 
             <!-- Sem veículos -->
-            <div v-if="!loading && vehicles.length === 0" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center">
-                <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-it-primary text-4xl mb-4">
-                    <i class="pi pi-car"></i>
+            <div v-if="!loading && vehicles.length === 0" class="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center sm:p-12">
+                <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eef2ff] text-[#1f46ee]">
+                    <CarFront :size="31" :stroke-width="1.8" aria-hidden="true" />
                 </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mb-2">Nenhum veículo cadastrado</h3>
-                <p class="text-gray-600 text-center max-w-md mb-12! leading-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#1f46ee]">Sua garagem está vazia</p>
+                <h3 class="mt-2 text-2xl! font-semibold text-[#0c0f1a] mb-0!">Nenhum veículo cadastrado</h3>
+                <p class="mt-3 max-w-md text-gray-600 leading-6">
                     Você ainda não cadastrou nenhum veículo. Adicione seu primeiro veículo para gerar sua etiqueta Identifica Trânsito.
                 </p>
-                <ButtonLink
-                    to="/dashboard/veiculos/novo"
-                    variant="primary"
-                    size="md"
-                >
-                    <i class="pi pi-plus"></i>
+                <NuxtLink to="/dashboard/veiculos/novo" class="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-[#1f46ee] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f46ee]">
+                    <Plus :size="18" :stroke-width="2.2" aria-hidden="true" />
                     Cadastrar meu primeiro veículo
-                </ButtonLink>
+                </NuxtLink>
             </div>
         </section>
     </div>

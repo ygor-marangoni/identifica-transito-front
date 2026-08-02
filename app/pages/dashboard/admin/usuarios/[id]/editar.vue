@@ -9,11 +9,14 @@ import { useToast } from 'primevue/usetoast';
 import { BIOLOGICAL_SEX_OPTIONS, getBiologicalSexFromUser } from '~/utils/userBiologicalSex';
 
 definePageMeta({ layout: 'dashboard' });
-useHead({ title: 'Editar Usuário - Admin | Identifica Trânsito' });
+const route = useRoute();
+const isSuperAdminView = computed(() => route.path.startsWith('/dashboard/superadmin'));
+const usersBaseRoute = computed(() => isSuperAdminView.value ? '/dashboard/superadmin/usuarios' : '/dashboard/admin/usuarios');
+const usersApiBase = computed(() => isSuperAdminView.value ? '/admin/users' : '/admin-pdv/users');
+useHead({ title: computed(() => isSuperAdminView.value ? 'Editar Usuário - SuperAdmin | Identifica Trânsito' : 'Editar Usuário - Admin | Identifica Trânsito') });
 
 const { $api } = useNuxtApp();
 const toast = useToast();
-const route = useRoute();
 const userId = Number(route.params.id);
 
 const loading = ref(false);
@@ -41,7 +44,7 @@ const parseBirthDate = (date: string | null | undefined): string => {
 const fetchUser = async () => {
     loadingUser.value = true;
     try {
-        const res = await $api(`/admin-pdv/users/${userId}`) as any;
+        const res = await $api(`${usersApiBase.value}/${userId}`) as any;
         const user = res?.data ?? res;
         form.value.name = user.name ?? '';
         form.value.email = user.email ?? '';
@@ -51,7 +54,7 @@ const fetchUser = async () => {
         form.value.gender = getBiologicalSexFromUser(user);
     } catch (e) {
         toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os dados do usuário.', life: 5000 });
-        navigateTo('/dashboard/admin/usuarios');
+        navigateTo(usersBaseRoute.value);
     } finally {
         loadingUser.value = false;
     }
@@ -82,9 +85,9 @@ const handleSubmit = async () => {
             payload.password = form.value.password;
         }
 
-        await $api(`/admin-pdv/users/${userId}`, { method: 'PUT', body: payload });
+        await $api(`${usersApiBase.value}/${userId}`, { method: 'PUT', body: payload });
         toast.add({ severity: 'success', summary: 'Usuário atualizado!', detail: 'Os dados foram salvos com sucesso.', life: 3000 });
-        navigateTo('/dashboard/admin/usuarios');
+        navigateTo(usersBaseRoute.value);
     } catch (error: any) {
         const msg = error?.data?.message || error?.data?.error || 'Não foi possível salvar as alterações.';
         toast.add({ severity: 'error', summary: 'Erro ao salvar', detail: msg, life: 5000 });
@@ -95,18 +98,18 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Editar Usuário"
-            subtitle="Atualize as informações do usuário."
-            greeting="Admin"
+            subtitle="Revise os dados e as permissões deste usuário vinculado ao seu PDV."
+            greeting="Gestão de acesso"
             :showButton="true"
             buttonLabel="Voltar para Usuários"
-            buttonLink="/dashboard/admin/usuarios"
+            :buttonLink="usersBaseRoute"
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="max-w-3xl mx-auto">
+        <div class="w-full">
             <!-- Skeleton -->
             <div v-if="loadingUser" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
                 <Skeleton width="40%" height="2rem" class="mb-4" />
@@ -120,16 +123,16 @@ const handleSubmit = async () => {
                 </div>
             </div>
 
-            <div v-else class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <div v-else class="admin-user-form-shell bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                 <div class="mb-8">
-                    <h1 class="text-3xl! font-bold text-it-primary mb-2">Editar Usuário</h1>
+                    <h1 class="text-3xl! font-bold text-it-primary mb-2">Preencha o formulário</h1>
                     <p class="text-gray-600">Atualize os campos desejados. A senha só será alterada se preenchida.</p>
                 </div>
 
-                <form @submit.prevent="handleSubmit" class="space-y-8">
+                <form @submit.prevent="handleSubmit" class="admin-user-form-grid space-y-8">
                     <!-- Dados Pessoais -->
                     <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Dados Pessoais</h2>
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-user"></i></span>Dados Pessoais</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
@@ -221,7 +224,7 @@ const handleSubmit = async () => {
 
                     <!-- Acesso -->
                     <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Acesso</h2>
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-key"></i></span>Acesso</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>

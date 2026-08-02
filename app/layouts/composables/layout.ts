@@ -10,6 +10,7 @@ const layoutConfig = reactive({
 
 const layoutState = reactive({
     staticMenuInactive: false,
+    clientSidebarCompact: false,
     overlayMenuActive: false,
     profileSidebarVisible: false,
     configSidebarVisible: false,
@@ -67,7 +68,7 @@ export function useLayout() {
     };
 
     const isDarkTheme = computed(() => layoutConfig.darkTheme);
-    const isDesktop = () => window.innerWidth > 991;
+    const isDesktop = () => window.innerWidth > 1000;
 
     const hasOpenOverlay = computed(() => layoutState.overlayMenuActive);
 

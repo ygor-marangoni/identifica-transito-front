@@ -14,3 +14,7 @@ useHead({
         <NuxtPage />
     </NuxtLayout>
 </template>
+
+<!--
+/* Evita que uma página renderize estilos transitórios antes da hidratação do Vue. */
+-->

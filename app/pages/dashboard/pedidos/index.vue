@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue';
+import { Check, CircleAlert, ClipboardList, Clock3, CreditCard, ExternalLink, MapPin, PackageCheck, QrCode, ReceiptText, Search, ShoppingBag, SlidersHorizontal, Truck, X } from '@lucide/vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import Button from '~/components/forms/Button.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
@@ -123,6 +125,46 @@ const getOrderShipmentStatus = (order: Order) => {
 // Filtros e estado
 const selectedStatus = ref('todos');
 const searchQuery = ref('');
+const showFilters = ref(false);
+const draftStatus = ref(selectedStatus.value);
+const draftSearchQuery = ref(searchQuery.value);
+const filterToggle = ref<HTMLButtonElement | null>(null);
+const filterPopover = ref<HTMLElement | null>(null);
+
+const openFilters = () => {
+    draftStatus.value = selectedStatus.value;
+    draftSearchQuery.value = searchQuery.value;
+    showFilters.value = true;
+};
+
+const closeFilters = () => {
+    showFilters.value = false;
+};
+
+const applyFilters = () => {
+    selectedStatus.value = draftStatus.value;
+    searchQuery.value = draftSearchQuery.value;
+    closeFilters();
+};
+
+const clearDraftFilters = () => {
+    draftStatus.value = 'todos';
+    draftSearchQuery.value = '';
+};
+
+const closeFiltersOnOutsideClick = (event: MouseEvent) => {
+    if (!showFilters.value) return;
+
+    const target = event.target;
+    const isSelectOverlay = target instanceof Element && Boolean(target.closest('.p-select-overlay'));
+
+    if (!isSelectOverlay && target instanceof Node && !filterPopover.value?.contains(target) && !filterToggle.value?.contains(target)) {
+        closeFilters();
+    }
+};
+
+onMounted(() => document.addEventListener('mousedown', closeFiltersOnOutsideClick));
+onBeforeUnmount(() => document.removeEventListener('mousedown', closeFiltersOnOutsideClick));
 const confirm = useConfirm();
 const toast = useToast();
 
@@ -334,6 +376,13 @@ const defaultStatusConfig = {
 };
 
 const getStatusConfig = (order: Order) => statusConfig[getOrderShipmentStatus(order)] ?? defaultStatusConfig;
+const getStatusIcon = (order: Order) => {
+    const status = getOrderShipmentStatus(order);
+    if (['4', 'pickup_completed'].includes(status)) return Check;
+    if (['2', '3'].includes(status)) return Truck;
+    if (['5', '6'].includes(status)) return CircleAlert;
+    return Clock3;
+};
 
 const paymentStatusConfig: Record<string, { bgLight: string; textColor: string; darkBgLight: string; darkTextColor: string }> = {
     approved: {
@@ -434,7 +483,26 @@ const statusFilters = computed(() => [
 
 // Pedidos filtrados
 const filteredOrders = computed(() => {
-    return allOrders.value;
+    const statusGroups: Record<string, string[]> = {
+        pending: ['0'],
+        processing: ['1'],
+        shipped: ['2', '3'],
+        delivered: ['4'],
+        cancelled: ['5', '6']
+    };
+    const query = searchQuery.value.trim().toLowerCase();
+
+    return allOrders.value.filter((order) => {
+        const statusMatches = selectedStatus.value === 'todos' || statusGroups[selectedStatus.value]?.includes(getOrderShipmentStatus(order));
+        const searchMatches = !query || [
+            order.mp_payment_id,
+            order.vehicle?.name,
+            order.vehicle?.plate_number,
+            order.tag_name
+        ].some((value) => String(value ?? '').toLowerCase().includes(query));
+
+        return Boolean(statusMatches && searchMatches);
+    });
 });
 
 // Agrupa pedidos pelo mesmo mp_payment_id (compras feitas juntas)
@@ -462,13 +530,23 @@ const groupedOrders = computed((): OrderGroup[] => {
 // Estatísticas via API
 const stats = ref({ total: 0, in_progress: 0, completed: 0, failed: 0 });
 const loadingStats = ref(false);
+const orderHeroStats = computed(() => ({
+    inProgress: { label: 'Em andamento', count: stats.value.in_progress },
+    completed: { label: 'Concluídos', count: stats.value.completed }
+}));
 
 const fetchResume = async () => {
     loadingStats.value = true;
     try {
         const { $api } = useNuxtApp();
-        const response = await $api('/orders/resume') as typeof stats.value;
-        stats.value = response;
+        const response = await $api('/orders/resume') as any;
+        const resume = response?.data || response || {};
+        stats.value = {
+            total: Number(resume.total || 0),
+            in_progress: Number(resume.in_progress ?? 0) + Number(resume.pending ?? 0) + Number(resume.processing ?? 0),
+            completed: Number(resume.completed ?? resume.delivered ?? 0),
+            failed: Number(resume.failed ?? resume.cancelled ?? 0)
+        };
     } catch (error) {
         console.error('Erro ao carregar resumo de pedidos:', error);
     } finally {
@@ -515,6 +593,7 @@ const confirmReceiveProduct = (shipmentId?: number) => {
         message: 'Confirma que você recebeu este produto?',
         header: 'Confirmar Recebimento',
         icon: 'pi pi-check-circle',
+        dismissableMask: true,
         rejectLabel: 'Não',
         acceptLabel: 'Sim, recebi',
         rejectClass: 'p-button-danger',
@@ -585,15 +664,28 @@ const displayTypePayment = (type: string | undefined) => {
     if (typeKey === 'free') return 'Grátis';
     return type;
 };
+
+const getPaymentIcon = (type: string | undefined) => {
+    const icons = {
+        credit_card: CreditCard,
+        pix: QrCode,
+        boleto: ReceiptText
+    };
+    return icons[type?.toLowerCase() as keyof typeof icons] ?? CreditCard;
+};
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6 md:space-y-7">
+        <section v-if="false">
         <!-- Hero Section -->
         <HeroSection
             title="Meus Pedidos"
             subtitle="Acompanhe o status de todos os seus pedidos de etiquetas"
             greeting="Rastreamento"
+            :greeting-icon="ClipboardList"
+            :showStats="true"
+            :stats="orderHeroStats"
             :showButton="true"
             buttonLabel="Fazer Novo Pedido"
             buttonLink="/dashboard/veiculos"
@@ -963,5 +1055,255 @@ const displayTypePayment = (type: string | undefined) => {
                 />
             </div>
         </div>
+        </section>
+
+        <HeroSection
+            greeting="Rastreamento"
+            :greeting-icon="ClipboardList"
+            title="Meus pedidos"
+            subtitle="Acompanhe o status e a entrega de todas as suas etiquetas."
+            :showStats="true"
+            :stats="orderHeroStats"
+            :showButton="false"
+        />
+
+        <section v-if="false" class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#1f46ee]">Visão geral</p>
+                <h2 class="mt-3 text-2xl! font-semibold leading-tight text-[#172b4d] mb-2!">Seu acompanhamento começa aqui.</h2>
+                <p class="max-w-md text-sm leading-6 text-slate-600 mb-0!">Consulte o andamento das entregas, localize pedidos e acompanhe cada etapa até a chegada das etiquetas.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+            <article v-for="item in [
+                { label: 'Total de pedidos', value: stats.total, icon: ShoppingBag },
+                { label: 'Em andamento', value: stats.in_progress, icon: Clock3 },
+                { label: 'Concluídos', value: stats.completed, icon: PackageCheck },
+                { label: 'Com pendência', value: stats.failed, icon: CircleAlert }
+            ]" :key="item.label" class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
+                <div>
+                    <Skeleton v-if="loadingStats" width="2.5rem" height="1.5rem" />
+                    <p v-else class="text-2xl font-semibold leading-none text-[#172b4d] mb-1">{{ item.value }}</p>
+                    <p class="text-xs font-medium text-slate-500 mb-0!">{{ item.label }}</p>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eaf0ff] text-[#1f46ee]"><component :is="item.icon" :size="17" :stroke-width="1.9" aria-hidden="true" /></div>
+            </article>
+            </div>
+        </section>
+
+        <section class="mb-7 flex items-center justify-between gap-3">
+            <h2 class="relative top-2 text-2xl! font-semibold text-[#172b4d] mb-0!">Pedidos realizados</h2>
+            <div class="relative z-20 shrink-0">
+                <button ref="filterToggle" type="button" :class="showFilters ? 'bg-[#1739d4]' : 'bg-[#1f46ee]'" class="inline-flex !h-[42px] !min-h-[42px] !w-[42px] items-center justify-center rounded-lg text-white transition-colors hover:bg-[#1739d4] sm:!h-12 sm:!min-h-12 sm:!w-auto sm:gap-2 sm:px-5 sm:text-base sm:font-semibold" aria-label="Filtrar pedidos" @click="showFilters ? closeFilters() : openFilters()">
+                    <SlidersHorizontal :size="17" :stroke-width="2" aria-hidden="true" />
+                    <span class="hidden sm:inline">Filtrar pedidos</span>
+                </button>
+
+                <Transition name="filter-popover">
+                    <section v-if="showFilters" ref="filterPopover" class="absolute right-0 top-full mt-2 w-[min(19rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white" role="dialog" aria-modal="false" aria-labelledby="filter-popover-title">
+                        <header class="flex items-center justify-between border-b border-slate-200 px-3.5 py-3">
+                            <h3 id="filter-popover-title" class="orders-filter-title relative -top-0.5 font-semibold leading-none text-[#172b4d] mb-0!">Filtrar pedidos</h3>
+                            <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#172b4d]" aria-label="Fechar filtros" @click="closeFilters"><X :size="18" :stroke-width="2" aria-hidden="true" /></button>
+                        </header>
+                        <div class="space-y-4 px-4 py-4">
+                            <SelectInput
+                                v-model="draftStatus"
+                                label="Status do pedido"
+                                :options="statusFilters.map((filter) => ({ label: `${filter.label} (${filter.count})`, value: filter.value }))"
+                                list-class="orders-status-options"
+                                label-class="mb-2 block text-sm font-semibold text-[#172b4d]"
+                                select-class="!h-11 !rounded-lg !border-slate-300 !bg-[#fafafa] !text-sm !font-medium focus:!border-slate-500 focus:!ring-1 focus:!ring-slate-400"
+                            />
+                            <label class="block">
+                                <span class="mb-2 block text-sm font-semibold text-[#172b4d]">Buscar pedido</span>
+                                <span class="relative block"><Search :size="17" :stroke-width="1.8" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" /><input v-model="draftSearchQuery" type="search" class="h-11 w-full rounded-lg border border-slate-300 bg-[#fafafa] pl-11 pr-3.5 text-sm font-medium text-[#172b4d] outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-400" placeholder="Número do pedido ou placa" /></span>
+                            </label>
+                        </div>
+                        <footer class="grid grid-cols-2 gap-2 border-t border-slate-200 px-3.5 py-3">
+                            <button type="button" class="inline-flex h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-[#172b4d] transition-colors hover:border-slate-400 hover:bg-slate-50" @click="clearDraftFilters">Limpar</button>
+                            <button type="button" class="inline-flex h-11 w-full items-center justify-center rounded-full bg-[#1f46ee] px-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4]" @click="applyFilters">Aplicar</button>
+                        </footer>
+                    </section>
+                </Transition>
+            </div>
+        </section>
+
+        <section v-if="false" class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label class="text-sm font-semibold text-[#172b4d]" for="order-status-filter">Status</label>
+                <select id="order-status-filter" v-model="selectedStatus" class="h-11 min-w-52 rounded-lg border border-slate-300 bg-[#fafafa] px-3 text-sm font-medium text-[#172b4d] outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400">
+                    <option v-for="filter in statusFilters" :key="filter.value" :value="filter.value">{{ filter.label }} ({{ filter.count }})</option>
+                </select>
+            </div>
+            <label class="relative w-full sm:w-80">
+                <Search :size="18" :stroke-width="1.8" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                <input v-model="searchQuery" type="search" class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 text-sm text-[#172b4d] outline-none transition-colors placeholder:text-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-400" placeholder="Buscar por pedido ou placa" />
+            </label>
+        </section>
+
+        <div v-if="loadingOrders" class="space-y-4">
+            <Skeleton v-for="index in 3" :key="index" height="13rem" class="w-full rounded-xl" />
+        </div>
+
+        <section v-else-if="groupedOrders.length" class="space-y-4">
+            <article v-for="group in groupedOrders" :key="group.mp_payment_id" class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <header class="flex flex-col gap-4 border-b border-slate-200 bg-[#fafafa] p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf0ff] text-[#1f46ee]">
+                            <component :is="getStatusIcon(group.first)" :size="20" :stroke-width="1.9" aria-hidden="true" />
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-lg! font-semibold text-[#172b4d] mb-0!">Pedido #{{ group.mp_payment_id }}</h3>
+                                <span v-if="!isPaymentCancelled(group.first)" :class="[getStatusConfig(group.first).bgLight, getStatusConfig(group.first).textColor]" class="rounded-full px-2.5 py-1 text-xs font-semibold">{{ getStatusConfig(group.first).label }}</span>
+                                <span v-if="group.first.mp_payment_status_label" :class="[getPaymentStatusConfig(getOrderPaymentStatus(group.first)).bgLight, getPaymentStatusConfig(getOrderPaymentStatus(group.first)).textColor]" class="rounded-full px-2.5 py-1 text-xs font-semibold">{{ group.first.mp_payment_status_label }}</span>
+                            </div>
+                            <p class="mt-1 text-sm text-slate-500 mb-0!">Realizado em {{ formatDate(group.first.created_at) }} · {{ group.items.length }} {{ group.items.length === 1 ? 'item' : 'itens' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 lg:block lg:text-right">
+                        <div>
+                            <p class="text-lg font-semibold text-[#172b4d] mb-1">{{ formatCurrency(group.totalPrice) }}</p>
+                            <p class="flex items-center justify-end gap-1.5 text-sm text-slate-500 mb-0!"><component :is="getPaymentIcon(group.first.payment_method)" :size="14" :stroke-width="1.8" aria-hidden="true" />{{ displayTypePayment(group.first.payment_method) }}</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                    <div>
+                        <h4 class="mb-3 text-sm! font-semibold text-[#172b4d]">Itens do pedido</h4>
+                        <div class="space-y-2">
+                            <div v-for="item in group.items" :key="item.id" class="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-[#fafafa] p-3">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <img :src="getTagImage(item.tag_slug)" :alt="item.tag_name" class="h-10 w-10 shrink-0 object-contain" />
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-[#172b4d] mb-0!">{{ item.tag_name }}<span v-if="item.qty > 1" class="ml-1 text-slate-500">×{{ item.qty }}</span></p>
+                                        <p class="mt-0.5 truncate text-sm text-slate-500 mb-0!">{{ item.vehicle?.name || 'Veículo não informado' }}<span v-if="item.vehicle?.plate_number"> · {{ item.vehicle.plate_number.toUpperCase() }}</span></p>
+                                    </div>
+                                </div>
+                                <p class="shrink-0 text-sm font-semibold text-[#172b4d] mb-0!">{{ formatCurrency(item.price) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="rounded-xl border border-slate-200 bg-[#fafafa] p-4">
+                        <div v-if="group.first.pickup_point" class="mb-4">
+                            <p class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-[#172b4d]"><MapPin :size="15" :stroke-width="1.9" aria-hidden="true" /> Retirada</p>
+                            <p class="text-sm text-slate-600 mb-1">{{ group.first.pickup_point.name }}</p>
+                            <p v-if="group.first.pickup_point.address" class="text-sm text-slate-500 mb-0!">{{ group.first.pickup_point.address }}</p>
+                        </div>
+                        <div v-else-if="group.first.shipment" class="mb-4">
+                            <p class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-[#172b4d]"><Truck :size="15" :stroke-width="1.9" aria-hidden="true" /> Entrega</p>
+                            <p v-if="group.first.shipment.tracking_code" class="font-mono text-sm font-semibold text-[#172b4d] mb-1">{{ group.first.shipment.tracking_code }}</p>
+                            <p v-if="group.first.shipment.estimated_delivery_at" class="text-sm text-slate-500 mb-0!">Previsão: {{ formatDate(group.first.shipment.estimated_delivery_at) }}</p>
+                            <p v-else-if="group.first.shipment.delivered_at" class="text-sm text-slate-500 mb-0!">Entregue em {{ formatDate(group.first.shipment.delivered_at) }}</p>
+                        </div>
+                        <div v-else class="mb-4">
+                            <p class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-[#172b4d]"><Clock3 :size="15" :stroke-width="1.9" aria-hidden="true" /> Aguardando</p>
+                            <p class="text-sm text-slate-500 mb-0!">Informações de entrega serão exibidas quando o pedido for preparado.</p>
+                        </div>
+
+                        <button v-if="group.first.shipment?.tracking_code && !isDeliveredStatus(group.first)" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-[#172b4d] transition-colors hover:border-[#1f46ee] hover:bg-[#eef2ff]" @click="openTracking(group.first.shipment.tracking_code)">
+                            <ExternalLink :size="16" :stroke-width="2" aria-hidden="true" /> Rastrear pedido
+                        </button>
+                        <button v-if="group.first.shipment?.id && !group.first.pickup_point && !isDeliveredStatus(group.first) && !isAwaitingShipmentStatus(group.first)" type="button" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1f46ee] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4] disabled:cursor-not-allowed disabled:bg-slate-300" :disabled="deliveringShipmentIds.includes(group.first.shipment.id)" @click="confirmReceiveProduct(group.first.shipment.id)">
+                            <Check :size="16" :stroke-width="2.2" aria-hidden="true" /> Recebi meu pedido
+                        </button>
+                    </aside>
+                </div>
+
+                <div v-if="!isPaymentCancelled(group.first)" class="border-t border-slate-200 px-5 py-4 sm:px-6">
+                    <div class="mb-2 flex items-center justify-between text-sm">
+                        <span class="font-medium text-slate-600">Andamento do pedido</span>
+                        <span class="font-semibold text-[#172b4d]">{{ getStatusProgress(group.first) }}%</span>
+                    </div>
+                    <div class="h-1.5 overflow-hidden rounded-full bg-slate-200"><div class="h-full rounded-full bg-[#1f46ee] transition-all duration-500" :style="{ width: `${getStatusProgress(group.first)}%` }"></div></div>
+                </div>
+            </article>
+
+            <PaginationControls :current-page="pagination.currentPage" :last-page="pagination.lastPage" :loading="loadingOrders" @page-change="goToPage" />
+        </section>
+
+        <section v-else class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center sm:p-12">
+            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eaf0ff] text-[#1f46ee]"><ShoppingBag :size="30" :stroke-width="1.8" aria-hidden="true" /></div>
+            <h2 class="text-2xl! font-semibold text-[#172b4d] mb-2!">{{ searchQuery ? 'Nenhum pedido encontrado' : 'Você ainda não tem pedidos' }}</h2>
+            <p class="max-w-md text-slate-600">{{ searchQuery ? 'Tente ajustar a busca ou os filtros selecionados.' : 'Escolha um veículo e compre seu primeiro kit de etiquetas.' }}</p>
+            <NuxtLink v-if="!searchQuery" to="/dashboard/veiculos" class="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#1f46ee] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4]"><PackageCheck :size="18" :stroke-width="2.1" aria-hidden="true" /> Ver meus veículos</NuxtLink>
+        </section>
+
+        <Teleport v-if="false" to="body">
+            <div v-if="showFilters" class="fixed inset-0 z-[1100] flex items-center justify-center p-4 sm:p-6" role="presentation">
+                <button type="button" class="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px]" aria-label="Fechar filtros" @click="showFilters = false"></button>
+                <section role="dialog" aria-modal="true" aria-labelledby="filter-modal-title" class="relative z-1 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf0ff] text-[#1f46ee]">
+                                <SlidersHorizontal :size="19" :stroke-width="1.9" aria-hidden="true" />
+                            </div>
+                            <h2 id="filter-modal-title" class="relative -top-1 text-xl! font-semibold leading-none text-[#172b4d] mb-0!">Filtrar pedidos</h2>
+                        </div>
+                        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#172b4d]" aria-label="Fechar filtros" @click="showFilters = false">
+                            <X :size="19" :stroke-width="2" aria-hidden="true" />
+                        </button>
+                    </header>
+
+                    <div class="space-y-5 px-5 py-5">
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-semibold text-[#172b4d]">Status do pedido</span>
+                            <select v-model="selectedStatus" class="h-12 w-full rounded-lg border border-slate-300 bg-[#fafafa] px-3 text-sm font-medium text-[#172b4d] outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-400">
+                                <option v-for="filter in statusFilters" :key="filter.value" :value="filter.value">{{ filter.label }} ({{ filter.count }})</option>
+                            </select>
+                        </label>
+                        <label class="block">
+                            <span class="mb-2 block text-sm font-semibold text-[#172b4d]">Buscar pedido</span>
+                            <span class="relative block">
+                                <Search :size="18" :stroke-width="1.8" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                <input v-model="searchQuery" type="search" class="h-12 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 text-sm text-[#172b4d] outline-none transition-colors placeholder:text-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-400" placeholder="Número do pedido ou placa" />
+                            </span>
+                        </label>
+                    </div>
+
+                    <footer class="flex flex-col-reverse gap-2 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end">
+                        <button type="button" class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100" @click="selectedStatus = 'todos'; searchQuery = ''">Limpar filtros</button>
+                        <button type="button" class="rounded-lg bg-[#1f46ee] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4]" @click="showFilters = false">Aplicar filtros</button>
+                    </footer>
+                </section>
+            </div>
+        </Teleport>
     </div>
 </template>
+
+<style>
+.orders-filter-title {
+    font-size: 1rem !important;
+}
+
+.filter-popover-enter-active,
+.filter-popover-leave-active {
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.filter-popover-enter-from,
+.filter-popover-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.orders-status-options {
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-width: none;
+}
+
+.orders-status-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.orders-status-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.orders-status-options::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #aeb8c7;
+}
+</style>

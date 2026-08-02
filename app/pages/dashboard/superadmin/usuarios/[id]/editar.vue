@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
+import AdminEditUserPage from '~/pages/dashboard/admin/usuarios/[id]/editar.vue';
 import FormInputText from '~/components/forms/InputText.vue';
 import InputPassword from '~/components/forms/InputPassword.vue';
 import PasswordStrengthIndicator from '~/components/forms/PasswordStrengthIndicator.vue';
@@ -170,11 +171,12 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <AdminEditUserPage />
+    <div v-if="false" class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Editar Usuário"
-            subtitle="Atualize as informações do usuário."
-            greeting="SuperAdmin"
+            subtitle="Revise os dados, o perfil e as permissões deste usuário."
+            greeting="Gestão de acesso"
             :showButton="true"
             buttonLabel="Voltar para Usuários"
             buttonLink="/dashboard/superadmin/usuarios"

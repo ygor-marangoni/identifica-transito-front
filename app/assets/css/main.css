@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+:root {
+  --font-family: 'Figtree', sans-serif;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'Figtree', sans-serif;
+}
+
+/* Padrão único para rótulos de campos em todo o sistema. */
+label {
+  font-family: 'Figtree', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+form label {
+  color: #172b4d;
+}
+
+html {
+  scrollbar-color: #aab5c1 transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #aab5c1;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #929fad;
+  background-clip: content-box;
+}
+
+/* Diretriz visual do projeto: superfícies planas, sem sombras. */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+}
+
+/* Campos de todas as áreas internas: foco discreto e consistente. */
+.layout-wrapper .layout-main :is(input:not([type='checkbox']):not([type='radio']), select, textarea):focus,
+.layout-wrapper .layout-main .p-select:focus-within {
+  border-color: #64748b !important;
+  outline: 1px solid #94a3b8 !important;
+  outline-offset: 0;
+  box-shadow: none !important;
+}

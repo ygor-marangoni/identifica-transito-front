@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
-import StatsCard from '~/components/superadmin/StatsCard.vue';
+import AdminVehiclesPage from '~/pages/dashboard/admin/veiculos/index.vue';
+import StatsCard from '~/components/dashboard/StatsCard.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
+import { Car, CarFront, Trash2 } from '@lucide/vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 
@@ -111,18 +113,16 @@ const handleDelete = (vehicle: Vehicle) => {
     });
 };
 
-onMounted(() => {
-    fetchVehicleStats();
-    fetchVehicles();
-});
+// A listagem visível reutiliza a implementação validada do Admin.
 </script>
 
 <template>
-    <div class="space-y-6">
+    <AdminVehiclesPage />
+    <div v-if="false" class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Veículos"
-            subtitle="Todos os veículos cadastrados na plataforma"
-            greeting="SuperAdmin"
+            subtitle="Consulte a base veicular e as identificações registradas na plataforma."
+            greeting="Base veicular"
             :showButton="false"
         />
 
@@ -131,21 +131,21 @@ onMounted(() => {
             <StatsCard
                 title="Veículos Cadastrados"
                 :value="vehicleStats.registered"
-                icon="pi pi-car"
+                :icon="CarFront"
                 color="blue"
                 :loading="loadingStats"
             />
             <StatsCard
                 title="Automóveis Cadastrados"
                 :value="vehicleStats.automobiles"
-                icon="pi pi-car"
+                :icon="Car"
                 color="green"
                 :loading="loadingStats"
             />
             <StatsCard
                 title="Veículos Excluídos"
                 :value="vehicleStats.deleted"
-                icon="pi pi-trash"
+                :icon="Trash2"
                 color="orange"
                 :loading="loadingStats"
             />
@@ -160,7 +160,7 @@ onMounted(() => {
                         v-model="search"
                         type="text"
                         placeholder="Buscar por placa ou nome..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
                         @keyup.enter="onSearch"
                     />
                 </div>

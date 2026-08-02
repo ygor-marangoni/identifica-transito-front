@@ -1,0 +1,994 @@
+.layout-admin .admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.4rem, 2vw, 1.75rem);
+    color: #52667f;
+}
+
+.layout-admin .admin-page > * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.layout-admin * {
+    box-shadow: none !important;
+}
+
+.layout-admin .layout-sidebar:not(.client-sidebar-compact) .layout-root-menuitem + .layout-root-menuitem {
+    margin-top: 1.15rem;
+}
+
+.layout-admin .admin-page :is(section, div).bg-white.rounded-2xl {
+    border-color: #e1e6ee !important;
+}
+
+.layout-admin .admin-page input:not([type='checkbox']):not([type='radio']),
+.layout-admin .admin-page select,
+.layout-admin .admin-page textarea,
+.admin-dialog :is(input, select) {
+    min-height: 2.75rem;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 0.65rem !important;
+    background: #fff;
+    color: #172b4d;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.layout-admin .admin-page input:not([type='checkbox']):not([type='radio']):focus,
+.layout-admin .admin-page select:focus,
+.layout-admin .admin-page textarea:focus,
+.admin-dialog :is(input, select):focus {
+    border-color: var(--client-brand) !important;
+    outline: 3px solid rgba(31, 70, 238, 0.13) !important;
+    outline-offset: 1px;
+}
+
+.layout-admin .admin-page input.admin-orders-search:not([type='checkbox']):not([type='radio']):focus {
+    border-color: #64748b !important;
+    outline: 1px solid #94a3b8 !important;
+    outline-offset: 0;
+}
+
+.layout-admin .admin-page .admin-orders-filter-select .p-select-label {
+    position: relative;
+    top: 2px;
+}
+
+.layout-admin .admin-user-form-shell {
+    padding: 1.75rem !important;
+}
+
+.layout-admin .admin-user-form-shell > div > h1,
+.layout-admin .admin-user-form-shell > h1 {
+    color: #172b4d !important;
+}
+
+.layout-admin .admin-user-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.layout-admin .admin-user-form-grid > .space-y-5 {
+    padding: 1.25rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 0.9rem;
+    background: #fbfcfe;
+}
+
+.layout-admin .admin-user-form-grid > .border-t {
+    display: none;
+}
+
+.layout-admin .admin-user-form-grid > button {
+    grid-column: 1 / -1;
+    justify-self: end;
+    width: min(25rem, 100%);
+}
+
+@media (max-width: 900px) {
+    .layout-admin .admin-user-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 639px) {
+    .layout-admin .admin-user-form-shell :is(.p-inputtext, .p-inputmask, .p-password-input, .p-select) {
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+}
+
+.admin-orders-sort-panel {
+    padding: 0.25rem !important;
+}
+
+.admin-orders-sort-panel .p-select-option {
+    margin: 0.1rem 0;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    color: #52667f;
+    font-size: 0.88rem;
+}
+
+.admin-orders-sort-panel .p-select-option.p-select-option-selected {
+    background: #e8edff;
+    color: #1f46ee;
+    font-weight: 600;
+}
+
+@media (max-width: 639px) {
+    .layout-admin .admin-page .admin-orders-page h2 {
+        font-size: 22px !important;
+        margin-top: 12px !important;
+        margin-bottom: 0 !important;
+    }
+
+    .layout-admin .admin-page .admin-orders-page h2 + p {
+        margin-top: 6px !important;
+        font-size: 14px !important;
+    }
+
+    .layout-admin .admin-page .admin-orders-filters {
+        margin-bottom: 1rem;
+    }
+
+    .layout-admin .admin-page .admin-orders-filters > button {
+        width: 100%;
+    }
+}
+
+.layout-admin .admin-page input:disabled,
+.layout-admin .admin-page select:disabled,
+.layout-admin .admin-page textarea:disabled,
+.layout-admin .admin-page button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.layout-admin .admin-page :is(button, a)[class*='bg-it-primary'] {
+    min-height: 2.75rem;
+    border-radius: 0.65rem;
+    background: var(--client-brand);
+    color: #fff;
+    font-weight: 650;
+    transition: background-color 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+
+.layout-admin .admin-page :is(button, a)[class*='bg-it-primary']:not(:disabled):hover {
+    background: #1739d4;
+}
+
+.layout-admin .admin-page :is(button, a)[class*='bg-it-primary']:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.layout-admin .admin-page form {
+    color: #52667f;
+}
+
+.layout-admin .admin-page form h1 {
+    color: #172b4d !important;
+    font-size: clamp(1.55rem, 3vw, 2rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+.layout-admin .admin-page form h2 {
+    color: #172b4d !important;
+    font-weight: 650 !important;
+}
+
+.layout-admin .admin-page form label {
+    font-family: 'Figtree', sans-serif;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.layout-admin .admin-page table {
+    min-width: 760px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.layout-admin .admin-page .dashboard-recent-users-table table {
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.layout-admin .admin-page .admin-orders-table table {
+    min-width: 70rem;
+}
+
+.layout-admin .admin-page .admin-orders-table tbody td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.layout-admin .admin-page .admin-orders-table .admin-order-shipment-edit {
+    width: auto;
+    height: auto;
+}
+
+.layout-admin .admin-page thead tr {
+    border: 0 !important;
+    background: #f7f9fc !important;
+}
+
+.layout-admin .admin-page th {
+    padding-top: 0.85rem !important;
+    padding-bottom: 0.85rem !important;
+    border-top: 1px solid #edf1f6;
+    border-bottom: 1px solid #e5eaf1;
+    color: #52667f !important;
+    font-size: 0.75rem;
+    font-weight: 700 !important;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.layout-admin .admin-page th:first-child {
+    border-left: 1px solid #edf1f6;
+    border-radius: 0.75rem 0 0 0.75rem;
+}
+
+.layout-admin .admin-page th:last-child {
+    border-right: 1px solid #edf1f6;
+    border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.layout-admin .admin-page tbody tr {
+    transition: background-color 150ms ease;
+}
+
+.layout-admin .admin-page tbody tr:hover {
+    background: #f7f9fc !important;
+}
+
+.layout-admin .admin-page td {
+    border-bottom-color: #edf1f5 !important;
+    vertical-align: middle;
+}
+
+.layout-admin .admin-page td button,
+.layout-admin .admin-page td a[title] {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.65rem;
+}
+
+.layout-admin .admin-page td :is(.rounded-full, [class*='rounded-full']) {
+    border: 1px solid currentColor;
+    border-color: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.layout-admin .admin-page a:focus-visible,
+.layout-admin .admin-page button:focus-visible {
+    outline: 2px solid var(--client-brand);
+    outline-offset: 2px;
+}
+
+.admin-dialog {
+    width: min(32rem, calc(100vw - 2rem)) !important;
+    overflow: hidden;
+    border: 1px solid #e1e6ee;
+    border-radius: 1.25rem !important;
+    background: #fff;
+    box-shadow: none !important;
+}
+
+.admin-dialog .p-dialog-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5eaf1;
+}
+
+.admin-dialog .p-dialog-title {
+    color: #172b4d;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.admin-dialog .p-dialog-content {
+    padding: 1.25rem 1.5rem;
+    color: #52667f;
+}
+
+.admin-dialog .p-dialog-footer {
+    padding: 0 1.5rem 1.5rem;
+}
+
+.admin-dialog .p-select {
+    min-height: 3rem !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+}
+
+.admin-dialog .p-select:focus-within {
+    border-color: #64748b !important;
+    outline: 1px solid #94a3b8 !important;
+    outline-offset: 0;
+}
+
+.admin-dialog-wide {
+    width: min(52rem, calc(100vw - 2rem)) !important;
+}
+
+.p-dialog-mask:has(.admin-dialog) {
+    background: rgba(12, 15, 26, 0.48) !important;
+}
+
+.management-period-toolbar {
+    display: flex;
+    min-height: 5.9rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 1rem;
+    background: #fff;
+}
+
+.management-period-summary {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.management-period-icon {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.8rem;
+    background: #eef2ff;
+    color: var(--client-brand);
+}
+
+.management-period-summary p,
+.management-period-summary strong {
+    display: block;
+    margin: 0;
+}
+
+.management-period-summary p {
+    color: #64748b;
+    font-size: 0.77rem;
+    font-weight: 650;
+}
+
+.management-period-summary strong {
+    margin-top: 0.2rem;
+    color: #172b4d;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.management-filter-trigger,
+.management-button-primary,
+.management-button-secondary {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.7rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.management-filter-trigger,
+.management-button-primary {
+    border: 1px solid var(--client-brand);
+    background: var(--client-brand);
+    color: #fff;
+}
+
+.management-filter-trigger:not(:disabled):hover,
+.management-button-primary:not(:disabled):hover {
+    border-color: #1739d4;
+    background: #1739d4;
+}
+
+.management-button-secondary {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+}
+
+.management-button-secondary:hover {
+    border-color: #aeb9c8;
+    background: #f7f9fc;
+    color: #172b4d;
+}
+
+.management-filter-trigger:disabled,
+.management-button-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.management-filter-copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.95rem;
+    border: 1px solid #dce5ff;
+    border-radius: 0.85rem;
+    background: #f6f8ff;
+}
+
+.management-filter-copy > span {
+    display: inline-flex;
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.7rem;
+    background: #e8edff;
+    color: var(--client-brand);
+}
+
+.management-filter-copy strong {
+    color: #172b4d;
+    font-size: 0.9rem;
+}
+
+.management-filter-copy p {
+    margin: 0.18rem 0 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.management-filter-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.2rem;
+}
+
+.management-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.45rem;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.management-date-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.management-select-shell,
+.management-date-shell {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.management-select-shell select,
+.management-date-shell input {
+    width: 100%;
+    min-height: 3rem;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 0.7rem !important;
+    background: #fff;
+    color: #172b4d;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 550;
+}
+
+.management-select-shell select {
+    appearance: none;
+    padding: 0.7rem 2.65rem 0.7rem 0.9rem;
+}
+
+.management-select-shell svg {
+    position: absolute;
+    right: 0.9rem;
+    color: #64748b;
+    pointer-events: none;
+}
+
+.management-date-shell > svg {
+    position: absolute;
+    left: 0.9rem;
+    z-index: 1;
+    color: #64748b;
+    pointer-events: none;
+}
+
+.management-date-shell input {
+    padding: 0.7rem 0.85rem 0.7rem 2.65rem;
+}
+
+.management-select-shell select:focus,
+.management-date-shell input:focus {
+    border-color: var(--client-brand) !important;
+    outline: 3px solid rgba(31, 70, 238, 0.13);
+    outline-offset: 1px;
+}
+
+.management-field-error {
+    margin: -0.25rem 0 0;
+    color: #c24141;
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+.management-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.7rem;
+    width: 100%;
+}
+
+.management-filter-dialog {
+    width: min(25rem, calc(100vw - 2rem)) !important;
+}
+
+.management-filter-popover {
+    --management-brand: var(--client-brand, #1f46ee);
+    --management-range: #e3eaf4;
+    width: 22rem;
+    max-width: calc(100vw - 2rem);
+    overflow: hidden;
+    border: 1px solid #e1e6ee;
+    border-radius: 1.25rem;
+    background: #fff;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+}
+
+.management-filter-popover .p-popover-content {
+    padding: 0;
+}
+
+.management-filter-dialog .p-dialog-content {
+    padding: 1.25rem;
+}
+
+.management-calendar-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.management-calendar-icon {
+    display: inline-flex;
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.7rem;
+    background: #eef2ff;
+    color: var(--client-brand);
+}
+
+.management-calendar-header strong {
+    display: block;
+    color: #172b4d;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.management-calendar-header p {
+    margin: 0.2rem 0 0;
+    color: #64748b;
+    font-size: 0.79rem;
+    line-height: 1.4;
+}
+
+.management-calendar {
+    display: block;
+    width: 100%;
+}
+
+.management-calendar .p-datepicker {
+    width: 100%;
+    padding: 0.7rem 0.75rem 0.45rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.management-filter-popover :is(.p-datepicker, .p-datepicker-panel) {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.management-calendar .p-datepicker-header {
+    padding: 0.4rem 0 0.8rem;
+    border-bottom: 0;
+}
+
+.management-calendar .p-datepicker-title {
+    color: #172b4d;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.management-calendar .p-datepicker-prev,
+.management-calendar .p-datepicker-next {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    color: #172b4d;
+    background: #f4f6fb;
+}
+
+.management-calendar .p-datepicker-weekday {
+    padding: 0.45rem 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.management-calendar .p-datepicker-day-view {
+    width: 90%;
+    margin-inline: auto;
+}
+
+.management-calendar .p-datepicker-month {
+    display: inline-flex;
+    width: calc(33.333% - 3px);
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5px;
+}
+
+.management-calendar .p-datepicker-year {
+    display: inline-flex;
+    width: calc(50% - 3px);
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5px;
+}
+
+.management-calendar .p-datepicker-day {
+    width: 2.45rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    color: #172b4d;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.management-filter-popover .management-calendar .p-datepicker-day.p-datepicker-day-selected,
+.management-filter-popover .management-calendar .p-datepicker-day.p-datepicker-day-selected-start,
+.management-filter-popover .management-calendar .p-datepicker-day.p-datepicker-day-selected-end {
+    background: var(--management-brand);
+    color: #fff;
+    border-radius: 0;
+    box-shadow: 0 0 0 5px var(--management-brand);
+}
+
+.management-filter-popover .management-calendar .p-datepicker-day.p-datepicker-day-selected-range {
+    border-radius: 0;
+    background: var(--management-range);
+    color: #334155;
+    box-shadow: 0 0 0 5px var(--management-range);
+}
+
+.management-filter-popover .management-calendar .p-datepicker-day-cell:has(.p-datepicker-day-selected):has(+ .p-datepicker-day-cell .p-datepicker-day-selected-range) .p-datepicker-day-selected {
+    border-radius: 6px 0 0 6px;
+}
+
+.management-filter-popover .management-calendar .p-datepicker-day-cell:has(.p-datepicker-day-selected-range) + .p-datepicker-day-cell:has(.p-datepicker-day-selected) .p-datepicker-day-selected {
+    border-radius: 0 6px 6px 0;
+}
+
+.management-filter-popover .management-calendar :is(.p-datepicker-month, .p-datepicker-year).p-datepicker-month-selected,
+.management-filter-popover .management-calendar :is(.p-datepicker-month, .p-datepicker-year).p-datepicker-year-selected {
+    border-radius: 3px;
+    background: var(--management-brand);
+    color: #fff;
+}
+
+.management-calendar-actions {
+    width: 90%;
+    box-sizing: border-box;
+    justify-content: space-between;
+    margin-top: 0.7rem;
+    margin-inline: auto;
+    padding: 0.7rem 0 0.8rem;
+    border-top: 1px solid #e5eaf1;
+}
+
+.management-calendar-actions > button {
+    min-height: 2.75rem;
+    border-radius: 999px;
+    padding-inline: 1.3rem;
+}
+
+.management-calendar-actions .management-button-primary {
+    min-width: 6.8rem;
+    border-color: var(--management-brand);
+    background-color: var(--management-brand);
+    color: #fff;
+}
+
+.management-calendar-actions .management-button-primary:not(:disabled):hover {
+    border-color: #1739d4;
+    background: #1739d4;
+}
+
+.management-analytics-grid {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
+    gap: 1.25rem;
+}
+
+.management-chart-card {
+    min-width: 0;
+    padding: 1.35rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 1rem;
+    background: #fff;
+}
+
+.management-chart-card > header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.management-chart-card > header > span {
+    display: inline-flex;
+    width: 2.4rem;
+    height: 2.4rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.7rem;
+    background: #eef2ff;
+    color: var(--client-brand);
+}
+
+.management-chart-card h2 {
+    margin: 0 !important;
+    color: #172b4d;
+    font-size: 1rem !important;
+    font-weight: 700;
+}
+
+.management-chart-card header p {
+    margin: 0.18rem 0 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    transform: translateY(-1px);
+}
+
+.management-chart-canvas {
+    position: relative;
+    height: 17rem;
+}
+
+.management-chart,
+.management-chart canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.management-chart-canvas--doughnut {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+}
+
+.management-chart-empty {
+    display: flex;
+    min-height: 17rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 1rem;
+    border-radius: 0.85rem;
+    background: #f8fafc;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.management-chart-empty strong {
+    margin-top: 0.25rem;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.management-chart-empty p {
+    max-width: 20rem;
+    margin: 0;
+    color: #64748b;
+    font-size: 0.78rem;
+}
+
+@media (max-width: 1180px) {
+    .management-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1000px) {
+    .layout-admin .admin-page table {
+        min-width: 720px;
+    }
+}
+
+@media (max-width: 639px) {
+    .layout-admin .admin-page input:not([type='checkbox']):not([type='radio']),
+    .layout-admin .admin-page select,
+    .layout-admin .admin-page textarea,
+    .layout-admin .admin-page .p-select {
+        min-height: 52px;
+    }
+
+    .layout-admin .admin-page {
+        padding-bottom: 0.5rem;
+    }
+
+    .layout-admin .admin-page :is(section, div).bg-white.rounded-2xl {
+        padding: 1.1rem !important;
+    }
+
+    .layout-admin .admin-page form {
+        gap: 1.35rem;
+    }
+
+    .layout-admin .admin-page :is(button, a)[class*='bg-it-primary'] {
+        width: 100%;
+    }
+
+    .management-period-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .management-filter-trigger {
+        width: 100%;
+    }
+
+    .management-date-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .management-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .management-dialog-actions > button {
+        width: 100%;
+    }
+
+    .management-filter-popover {
+        max-width: calc(100vw - 2rem);
+        border-radius: 1rem;
+    }
+
+    .management-calendar .p-datepicker {
+        padding: 0.6rem 0.55rem 0.4rem;
+    }
+
+    .management-calendar .p-datepicker-day-view,
+    .management-calendar-actions {
+        width: 94%;
+    }
+
+    .management-calendar .p-datepicker-day {
+        width: 2.15rem;
+        height: 2.1rem;
+        font-size: 0.84rem;
+    }
+
+    .management-calendar .p-datepicker-weekday {
+        font-size: 0.72rem;
+    }
+
+    .management-calendar-actions {
+        flex-direction: row !important;
+        padding-top: 0.65rem;
+    }
+
+    .management-calendar-actions > button {
+        width: auto !important;
+        min-height: 2.55rem;
+        padding-inline: 1.1rem;
+    }
+
+    .management-chart-card {
+        padding: 1.1rem;
+    }
+
+    .management-chart-canvas {
+        height: 14rem;
+    }
+
+    .management-chart-card > header {
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.85rem;
+        border-bottom: 1px solid #edf1f6;
+    }
+
+    .management-chart-card > header > span {
+        width: 2.45rem;
+        height: 2.45rem;
+    }
+
+    .management-chart-card h2 {
+        font-size: 1rem !important;
+    }
+
+    .management-chart-card header p {
+        margin-top: 0.22rem;
+        font-size: 0.76rem;
+        line-height: 1.35;
+    }
+
+    .management-chart-empty {
+        min-height: 14rem;
+    }
+
+    .dashboard-recent-users-table th,
+    .dashboard-recent-users-table td {
+        padding-right: 0.6rem !important;
+        padding-left: 0.6rem !important;
+    }
+
+    .dashboard-recent-orders {
+        padding: 1.1rem !important;
+    }
+
+    .dashboard-order-status {
+        padding: 0.75rem;
+    }
+
+    .dashboard-order-status .truncate {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
+@media (max-width: 385px) {
+    .management-calendar .p-datepicker-day {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.8rem;
+    }
+
+    .management-calendar .p-datepicker-weekday {
+        font-size: 0.68rem;
+    }
+
+    .dashboard-recent-users-table th,
+    .dashboard-recent-users-table td {
+        font-size: 0.78rem;
+    }
+}

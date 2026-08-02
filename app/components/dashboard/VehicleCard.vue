@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ButtonLink from '~/components/ButtonLink.vue';
+import { CarFront, Check, CircleAlert, Hash, MapPin, Pencil, ShoppingBag, Trash2, UserRound } from '@lucide/vue';
 import { useVehicleActions } from '~/composables/useVehicleActions';
 import { useRuntimeConfig } from '#imports';
 import { getVehicleTypeLabel, getUsageProfileLabel } from '~/utils/vehicleEnums';
@@ -85,21 +85,49 @@ const getVehicleSubtitle = (vehicle: Vehicle) => {
     }
     return pieces.join(' • ');
 };
+
+const getVehicleType = (vehicle: Vehicle) => vehicle.type
+    ? vehicle.type_label || getVehicleTypeLabel(vehicle.type) || String(vehicle.type)
+    : '';
+
+const getUsageProfile = (vehicle: Vehicle) => vehicle.usage_profile
+    ? getUsageProfileLabel(vehicle.usage_profile) || String(vehicle.usage_profile)
+    : '';
+
+const getRegistrationLocation = (vehicle: Vehicle) => [vehicle.register_city, vehicle.register_state].filter(Boolean).join(' - ');
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-it-primary text-xl">
-                <i class="pi pi-car"></i>
+    <article class="rounded-2xl border border-gray-200 bg-white p-5 transition-colors hover:border-[#c7d2fe] hover:bg-[#fafbff]">
+        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]">
+                <CarFront :size="23" :stroke-width="1.9" aria-hidden="true" />
             </div>
-            <div>
-                <h3 class="font-semibold text-gray-900 text-2xl! mb-0!">{{ getVehicleTitle(vehicle) }}</h3>
-                <p class="text-sm text-gray-500 capitalize">{{ getVehicleSubtitle(vehicle) }}</p>
+            <div class="min-w-0">
+                <h3 class="truncate text-xl! font-semibold text-[#0c0f1a] mb-0!">{{ getVehicleTitle(vehicle) }}</h3>
+                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
+                    <span v-if="vehicle.plate" class="inline-flex items-center gap-1.5 font-medium uppercase">
+                        <Hash :size="13" :stroke-width="1.9" aria-hidden="true" />
+                        {{ vehicle.plate }}
+                    </span>
+                    <span v-if="getVehicleType(vehicle)" class="inline-flex items-center gap-1.5 capitalize">
+                        <CarFront :size="13" :stroke-width="1.9" aria-hidden="true" />
+                        {{ getVehicleType(vehicle) }}
+                    </span>
+                    <span v-if="getUsageProfile(vehicle)" class="inline-flex items-center gap-1.5 capitalize">
+                        <UserRound :size="13" :stroke-width="1.9" aria-hidden="true" />
+                        {{ getUsageProfile(vehicle) }}
+                    </span>
+                    <span v-if="getRegistrationLocation(vehicle)" class="inline-flex items-center gap-1.5">
+                        <MapPin :size="13" :stroke-width="1.9" aria-hidden="true" />
+                        {{ getRegistrationLocation(vehicle) }}
+                    </span>
+                </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center md:justify-end">
             <!-- Etiqueta com indicador de compra -->
             <div v-if="vehicle.etiqueta" class="flex flex-col items-center gap-2 relative">
                 <img
@@ -114,39 +142,48 @@ const getVehicleSubtitle = (vehicle: Vehicle) => {
                         vehicle.comprada ? 'bg-green-500' : 'bg-yellow-500'
                     ]"
                 >
-                    <i :class="[
-                        'pi text-xs',
-                        vehicle.comprada ? 'pi-check' : 'pi-exclamation-circle'
-                    ]"></i>
+                    <Check v-if="vehicle.comprada" :size="11" :stroke-width="2.5" aria-hidden="true" />
+                    <CircleAlert v-else :size="11" :stroke-width="2.2" aria-hidden="true" />
                 </div>
-                <p class="text-xs text-gray-500 capitalize">{{ vehicle.etiqueta }}</p>
+                <p class="text-xs font-medium text-gray-600 capitalize">{{ vehicle.etiqueta }}</p>
             </div>
             <div class="w-px h-12 bg-gray-200 hidden md:block"></div>
             <!-- Botão de compra ou ações -->
-            <div class="flex gap-2">
+            <div class="flex w-full items-center gap-2 md:w-auto">
                 <NuxtLink
                     :to="`/dashboard/veiculos/editar/${vehicle.id}`"
-                    class="px-3 py-2 flex items-center gap-2 justify-center rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:border-it-primary hover:text-it-primary transition hover:bg-gray-50"
+                    class="order-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-[#1f46ee] hover:bg-[#eef2ff] hover:text-[#1f46ee]"
                 >
-                    <i class="pi pi-pencil"></i>
+                    <Pencil :size="16" :stroke-width="2" aria-hidden="true" />
                     <span class="hidden sm:block">Editar</span>
                 </NuxtLink>
                 <button 
                     @click="handleDelete(vehicle)"
-                    class="px-3 py-2 flex items-center gap-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition"
+                    class="order-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
                 >
-                    <i class="pi pi-trash"></i>
+                    <Trash2 :size="16" :stroke-width="2" aria-hidden="true" />
                     <span class="hidden sm:block">Excluir</span>
                 </button>
-                <ButtonLink
+                <NuxtLink
                     to="/dashboard/etiquetas"
-                    variant="secondary"
-                    size="sm"
+                    class="order-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#1f46ee] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4]"
                 >
-                    <i class="pi pi-shopping-cart"></i>
+                    <ShoppingBag :size="16" :stroke-width="2" aria-hidden="true" />
                     {{ vehicle.comprada ? 'Comprar novamente' : 'Comprar Etiqueta' }}
-                </ButtonLink>
+                </NuxtLink>
+                <span class="order-2 flex-1 md:hidden" aria-hidden="true"></span>
             </div>
         </div>
-    </div>
+        </div>
+    </article>
 </template>
+
+<style scoped>
+@media (max-width: 639px) {
+    .order-1,
+    .order-3,
+    .order-4 {
+        min-height: 2.75rem !important;
+    }
+}
+</style>

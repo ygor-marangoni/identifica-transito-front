@@ -5,7 +5,7 @@ import Select from 'primevue/select';
 interface SelectOption {
     label: string;
     value: any;
-    icon?: string;
+    icon?: string | object | Function;
 }
 
 const props = withDefaults(defineProps<{
@@ -20,12 +20,14 @@ const props = withDefaults(defineProps<{
     disabled?: boolean;
     showIcon?: boolean;
     icon?: string;
+    iconOffsetY?: number;
     filter?: boolean;
     filterPlaceholder?: string;
     showClear?: boolean;
     wrapperClass?: string;
     labelClass?: string;
     selectClass?: string;
+    listClass?: string;
 }>(), {
     modelValue: null,
     placeholder: '',
@@ -35,12 +37,14 @@ const props = withDefaults(defineProps<{
     disabled: false,
     showIcon: false,
     icon: '',
+    iconOffsetY: 0,
     filter: false,
     filterPlaceholder: 'Buscar...',
     showClear: false,
     wrapperClass: '',
-    labelClass: 'block text-sm font-semibold text-gray-900 mb-2',
-    selectClass: ''
+    labelClass: 'block mb-2 text-sm font-semibold text-[#172b4d]',
+    selectClass: '',
+    listClass: ''
 });
 
 const emit = defineEmits<{
@@ -57,8 +61,8 @@ const modelValueProxy = computed({
 
 const computedSelectClass = computed(() => {
     const classes = [
-        'w-full h-[60px] px-4 py-3 border border-gray-300 rounded-lg',
-        'focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent',
+        'w-full h-14 sm:h-12 px-4 py-2 border border-gray-300 rounded-lg',
+        'focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-500',
         'text-gray-700 font-medium bg-white',
         'disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed',
         props.selectClass
@@ -103,8 +107,12 @@ const selectedOptionIcon = computed(() => props.icon || null);
 
         <!-- Select com Icon no lado esquerdo -->
         <div v-if="selectedOptionIcon" class="relative">
-            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#94a3b8] pointer-events-none z-10">
-                <i :class="selectedOptionIcon"></i>
+            <div
+                class="absolute left-3 top-1/2 text-[#94a3b8] pointer-events-none z-10"
+                :style="{ transform: `translateY(calc(-50% + ${props.iconOffsetY}px))` }"
+            >
+                <i v-if="typeof selectedOptionIcon === 'string'" :class="selectedOptionIcon"></i>
+                <component v-else :is="selectedOptionIcon" :size="18" :stroke-width="1.8" class="text-slate-400" aria-hidden="true" />
             </div>
             <Select
                 v-model="modelValueProxy"
@@ -116,6 +124,7 @@ const selectedOptionIcon = computed(() => props.icon || null);
                 :filter="filter"
                 :filterPlaceholder="filterPlaceholder"
                 :showClear="showClear"
+                :pt="{ list: { class: listClass } }"
                 :class="[computedSelectClass, '!pl-10']"
                 @change="handleChange"
             />
@@ -133,6 +142,7 @@ const selectedOptionIcon = computed(() => props.icon || null);
             :filter="filter"
             :filterPlaceholder="filterPlaceholder"
             :showClear="showClear"
+                :pt="{ list: { class: listClass } }"
             :class="computedSelectClass"
             @change="handleChange"
         />
@@ -142,12 +152,18 @@ const selectedOptionIcon = computed(() => props.icon || null);
 <style lang="scss" scoped>
 /* Estilos adicionais se necessário */
 :deep(.p-select) {
-    height: 60px !important;
+    height: 56px !important;
     
     .p-select-label {
         height: 100%;
         display: flex;
         align-items: center;
+    }
+}
+
+@media (min-width: 640px) {
+    :deep(.p-select) {
+        height: 48px !important;
     }
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue';
+import { LogOut, UserRound, X } from '@lucide/vue';
 import { useToast } from 'primevue/usetoast';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import InputText from '~/components/forms/InputText.vue';
@@ -120,7 +121,7 @@ const saveProfile = async () => {
 
         // Atualizar dados locais
         const updatedUser = response?.data || response;
-        auth.setSession(auth.getToken() || '', updatedUser);
+        auth.setSession(auth.getToken() || '', { ...auth.user.value, ...updatedUser });
         
         userProfile.value = { ...editingData.value };
         isEditing.value = false;
@@ -218,6 +219,8 @@ const securityData = ref({
 
 const showSecurityForm = ref(false);
 const isChangingPassword = ref(false);
+const showLogoutModal = ref(false);
+const isLoggingOut = ref(false);
 
 const cancelPasswordChange = () => {
     securityData.value = {
@@ -312,23 +315,59 @@ const changePassword = async () => {
         isChangingPassword.value = false;
     }
 };
+
+const openLogoutModal = () => {
+    showLogoutModal.value = true;
+};
+
+const closeLogoutModal = () => {
+    if (!isLoggingOut.value) showLogoutModal.value = false;
+};
+
+const confirmLogout = async () => {
+    if (isLoggingOut.value) return;
+
+    isLoggingOut.value = true;
+    const result = await auth.logout();
+
+    if (!result?.ok) {
+        const apiMessage = (result as any)?.error?.data?.message || (result as any)?.error?.data?.error;
+        toast.add({
+            severity: 'error',
+            summary: 'Erro ao sair',
+            detail: apiMessage || 'Não foi possível encerrar sua sessão. Tente novamente.',
+            life: 5000
+        });
+        isLoggingOut.value = false;
+        return;
+    }
+
+    showLogoutModal.value = false;
+    isLoggingOut.value = false;
+};
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6 md:space-y-7">
         <!-- Hero Section -->
         <HeroSection
-            title="Meu Perfil"
-            subtitle="Gerencie suas informações pessoais"
-            greeting="Bem-vindo"
+            title="Meu perfil"
+            subtitle="Mantenha suas informações pessoais atualizadas."
+            greeting="Dados da conta"
+            :greeting-icon="UserRound"
             :showButton="false"
         />
 
         <!-- Informações do Usuário -->
-        <section class="bg-white dark:bg-surface-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-surface-700">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-                <h2 class="text-2xl! font-bold text-gray-900 dark:text-white">Informações Pessoais</h2>
-                <div class="flex gap-2">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+            <div class="mb-6 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eaf0ff] text-[#1f46ee]"><UserRound :size="18" :stroke-width="1.9" aria-hidden="true" /></div>
+                    <div>
+                        <h2 class="relative top-0.5 text-lg! font-semibold text-[#172b4d] mb-1!">Informações pessoais</h2>
+                    </div>
+                </div>
+                <div class="hidden gap-2 md:flex">
                     <Button
                         v-if="!isEditing"
                         label="Editar Perfil"
@@ -356,17 +395,17 @@ const changePassword = async () => {
             </div>
 
             <!-- Avatar Section -->
-            <div class="mb-8 flex flex-col items-center">
-                <div class="relative mb-4">
+            <div class="mb-7 flex flex-col items-center md:flex-row md:text-left">
+                <div class="relative mb-3 md:mb-0 md:mr-3.5">
                     <img
                         :src="assetWithBase(isEditing ? editingData.avatar : userProfile.avatar)"
                         :alt="userProfile.nome"
-                        class="w-32 h-32 rounded-full object-cover border-4 border-it-primary shadow-lg"
+                        class="h-20 w-20 rounded-full border-2 border-slate-200 object-cover"
                     />
                     <label
                         v-if="isEditing"
                         for="avatar-upload"
-                        class="absolute bottom-0 right-0 w-10 h-10 bg-it-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-600 transition shadow-md"
+                        class="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-[#1f46ee] text-white transition-colors hover:bg-[#1739d4] cursor-pointer"
                     >
                         <i class="pi pi-camera text-lg"></i>
                     </label>
@@ -378,13 +417,29 @@ const changePassword = async () => {
                         @change="uploadAvatar"
                     />
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ userProfile.nome }}</p>
+                <div class="flex flex-col items-center md:items-start">
+                    <p class="relative -top-0.5 text-base font-semibold text-[#172b4d] mb-0!">{{ userProfile.nome }}</p>
+                    <p class="mt-1 text-sm text-slate-600 mb-0!">{{ userProfile.email }}</p>
+                    <div class="mt-4 flex gap-2 md:hidden">
+                        <Button
+                            v-if="!isEditing"
+                            label="Editar perfil"
+                            icon="pi pi-pencil"
+                            @click="startEditing"
+                            size="sm"
+                        />
+                        <template v-else>
+                            <Button label="Cancelar" icon="pi pi-times" @click="cancelEditing" size="sm" variant="danger" />
+                            <Button label="Salvar" :icon="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'" @click="saveProfile" :disabled="isSaving" size="sm" />
+                        </template>
+                    </div>
+                </div>
             </div>
 
             <!-- Form Grid -->
-            <div class="space-y-6">
+            <div class="profile-details-fields space-y-5">
                 <!-- Nome Completo + CPF na mesma linha -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <InputText
                         v-model="editingData.nome"
                         label="Nome Completo"
@@ -392,12 +447,12 @@ const changePassword = async () => {
                         icon="pi pi-user"
                         :readonly="!isEditing"
                         :disabled="!isEditing"
-                        wrapper-class="md:col-span-3"
+                        wrapper-class="w-full"
                         inputClass="w-full"
                         required
                     />
 
-                    <div class="relative md:col-span-2">
+                    <div class="relative">
                         <InputText
                             v-model="userProfile.cpf"
                             label="CPF"
@@ -416,7 +471,7 @@ const changePassword = async () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <InputText
                         v-model="editingData.email"
                         label="E-mail"
@@ -425,12 +480,12 @@ const changePassword = async () => {
                         type="email"
                         :readonly="!isEditing"
                         :disabled="!isEditing"
-                        wrapper-class="md:col-span-3"
+                        wrapper-class="w-full"
                         inputClass="w-full"
                         required
                     />
 
-                    <div class="relative md:col-span-2">
+                    <div class="relative">
                         <SelectInput
                             v-model="editingData.gender"
                             id="gender"
@@ -448,10 +503,9 @@ const changePassword = async () => {
                             </span>
                         </div>
                     </div>
-                    />
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <InputText
                         v-model="editingData.telefone"
                         label="Telefone"
@@ -483,11 +537,11 @@ const changePassword = async () => {
         </section>
 
         <!-- Segurança -->
-        <section class="bg-white dark:bg-surface-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-surface-700">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <section id="alterar-senha" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+            <div class="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                 <div>
-                    <h2 class="text-2xl! font-bold text-gray-900 dark:text-white mb-1!">Segurança</h2>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">Altere a segurança da sua conta. Preferir uma senha mais segura.</p>
+                    <h2 class="relative top-0.5 text-xl! font-semibold text-[#172b4d] mb-1!">Segurança</h2>
+                    <p class="mt-1 text-sm font-medium text-slate-600 mb-0!">Mantenha sua conta protegida com uma senha segura.</p>
                 </div>
                 <Button
                     v-if="!showSecurityForm"
@@ -495,6 +549,7 @@ const changePassword = async () => {
                     icon="pi pi-key"
                     @click="showSecurityForm = true"
                     size="sm"
+                    button-class="password-action-button"
                 />
             </div>
 
@@ -503,7 +558,6 @@ const changePassword = async () => {
                 <InputPassword
                     v-model="securityData.senhaAtual"
                     label="Senha Atual"
-                    labelClass="font-bold!"
                     placeholder="Digite sua senha atual"
                     id="senha-atual"
                     autocomplete="current-password"
@@ -516,7 +570,6 @@ const changePassword = async () => {
                         <InputPassword
                             v-model="securityData.novaSenha"
                             label="Nova Senha"
-                            labelClass="font-bold!"
                             placeholder="Digite uma nova senha"
                             id="nova-senha"
                             autocomplete="new-password"
@@ -530,7 +583,6 @@ const changePassword = async () => {
                         <InputPassword
                             v-model="securityData.confirmarSenha"
                             label="Confirmar Nova Senha"
-                            labelClass="font-bold!"
                             placeholder="Confirme a nova senha"
                             id="confirmar-senha"
                             autocomplete="new-password"
@@ -565,9 +617,9 @@ const changePassword = async () => {
                     </div>
                 </div>
 
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mt-4">
-                    <p class="text-sm text-blue-800 dark:text-blue-200">
-                        <i class="pi pi-info-circle mr-2"></i>
+                <div class="mt-4 flex items-start gap-2 text-sm font-medium leading-6 text-slate-600" role="note">
+                    <i class="pi pi-info-circle mt-1 text-[#1f46ee]" aria-hidden="true"></i>
+                    <p>
                         Sua senha deve ter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.
                     </p>
                 </div>
@@ -588,25 +640,172 @@ const changePassword = async () => {
                         :disabled="isChangingPassword || !!passwordError || !securityData.senhaAtual || securityData.novaSenha.length < 8"
                         :loading="isChangingPassword"
                         size="sm"
+                        button-class="password-action-button"
                     />
                 </div>
             </div>
 
             <!-- Info Box -->
-            <div v-else class="bg-gray-50 dark:bg-surface-700 rounded-lg p-4">
-                <p class="text-sm text-gray-700 dark:text-gray-300">
-                    <i class="pi pi-shield text-it-primary mr-2"></i>
+            <div v-else class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-[#fafafa] p-4">
+                <i class="pi pi-shield mt-0.5 text-[#1f46ee]" aria-hidden="true"></i>
+                <p class="text-sm font-medium leading-6 text-slate-600 mb-0!">
                     Altere a senha periodicamente para maior segurança. Nunca utilize senhas fracas.
                 </p>
             </div>
         </section>
 
+        <!-- Encerramento da conta -->
+        <section class="logout-card rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-xl! font-semibold text-[#172b4d] mb-1!">Sair da conta</h2>
+                    <p class="max-w-2xl text-sm font-medium leading-6 text-slate-600 mb-0!">
+                        Encerre sua sessão com segurança neste dispositivo. Você poderá entrar novamente quando quiser.
+                    </p>
+                </div>
+                <button type="button" class="logout-card-button inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition-colors sm:w-auto" @click="openLogoutModal">
+                    <LogOut :size="18" :stroke-width="1.9" aria-hidden="true" />
+                    <span>Sair da conta</span>
+                </button>
+            </div>
+        </section>
+
         <!-- Modal de Crop de Avatar -->
-        <AvatarCropModal 
+        <AvatarCropModal
             :show="showCropModal"
             :imageUrl="imageToCrop"
             @close="handleCropCancel"
             @confirm="handleCropConfirm"
         />
+
+        <!-- Confirmação de logout -->
+        <Teleport to="body">
+            <Transition name="logout-modal-fade">
+                <div v-if="showLogoutModal" class="logout-modal-backdrop" role="presentation" @click.self="closeLogoutModal">
+                    <section class="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+                        <button type="button" class="logout-modal-close" aria-label="Fechar confirmação" :disabled="isLoggingOut" @click="closeLogoutModal">
+                            <X :size="20" :stroke-width="1.9" />
+                        </button>
+                        <div class="logout-modal-mark" aria-hidden="true"><LogOut :size="24" :stroke-width="1.9" /></div>
+                        <h2 id="logout-modal-title">Deseja sair da sua conta?</h2>
+                        <p>Sua sessão será encerrada neste dispositivo. Será necessário fazer login novamente para acessar o painel.</p>
+                        <div class="logout-modal-actions">
+                            <button type="button" class="logout-modal-cancel" :disabled="isLoggingOut" @click="closeLogoutModal">Cancelar</button>
+                            <button type="button" class="logout-modal-confirm" :disabled="isLoggingOut" @click="confirmLogout">
+                                <i v-if="isLoggingOut" class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                                <LogOut v-else :size="17" :stroke-width="1.9" aria-hidden="true" />
+                                <span>{{ isLoggingOut ? 'Saindo...' : 'Sim, sair' }}</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
+
+<style scoped>
+:deep(.password-action-button) {
+    background: #1f46ee !important;
+}
+
+:deep(.password-action-button:hover) {
+    background: #1739d4 !important;
+}
+
+:deep(.password-action-button:focus-visible) {
+    outline: 2px solid #1f46ee;
+    outline-offset: 2px;
+}
+
+.logout-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fcfdff 100%);
+}
+
+.logout-card-button {
+    color: #c93662;
+    background: #fff5f7;
+    border: 1px solid #ffd6e0;
+}
+
+.logout-card-button:hover,
+.logout-card-button:focus-visible {
+    color: #a9254d;
+    background: #ffe8ee;
+    border-color: #ffb9ca;
+}
+
+.logout-card-button:focus-visible,
+.logout-modal button:focus-visible {
+    outline: 2px solid #1f46ee;
+    outline-offset: 2px;
+}
+
+.logout-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+.logout-modal {
+    position: relative;
+    width: min(100%, 440px);
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+    text-align: center;
+}
+
+.logout-modal-close {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: #64748b;
+    border-radius: 0.65rem;
+}
+
+.logout-modal-close:hover { color: #172b4d; background: #f1f5f9; }
+.logout-modal-mark { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1rem; color: #c93662; background: #fff1f4; border: 1px solid #ffd6e0; border-radius: 1rem; }
+.logout-modal h2 { margin: 0 0 0.55rem; color: #172b4d; font-size: 1.22rem; font-weight: 700; }
+.logout-modal p { margin: 0 auto; max-width: 340px; color: #64748b; font-size: 0.92rem; line-height: 1.6; }
+.logout-modal-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.6rem; }
+.logout-modal-actions button { min-height: 2.75rem; padding: 0.65rem 1.15rem; border-radius: 0.65rem; font-size: 0.9rem; font-weight: 650; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+.logout-modal-cancel { color: #475569; background: #fff; border: 1px solid #cbd5e1; }
+.logout-modal-cancel:hover { background: #f8fafc; border-color: #94a3b8; }
+.logout-modal-confirm { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; color: #fff; background: #c93662; border: 1px solid #c93662; }
+.logout-modal-confirm:hover { background: #a9254d; border-color: #a9254d; }
+.logout-modal-confirm:disabled, .logout-modal-cancel:disabled, .logout-modal-close:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.logout-modal-fade-enter-active, .logout-modal-fade-leave-active { transition: opacity 180ms ease; }
+.logout-modal-fade-enter-active .logout-modal, .logout-modal-fade-leave-active .logout-modal { transition: transform 180ms ease, opacity 180ms ease; }
+.logout-modal-fade-enter-from, .logout-modal-fade-leave-to { opacity: 0; }
+.logout-modal-fade-enter-from .logout-modal, .logout-modal-fade-leave-to .logout-modal { opacity: 0; transform: translateY(10px) scale(0.98); }
+
+@media (max-width: 639px) {
+    .logout-modal { padding: 1.65rem 1.25rem 1.35rem; }
+    .logout-modal-actions { flex-direction: column-reverse; }
+    .logout-modal-actions button { width: 100%; }
+    .logout-card-button { min-height: 52px; }
+}
+
+@media (max-width: 639px) {
+    .profile-details-fields :deep(input),
+    .profile-details-fields :deep(.p-select) {
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+}
+</style>

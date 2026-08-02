@@ -126,22 +126,22 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="space-y-6 md:space-y-7">
         <!-- Hero -->
         <HeroSection
-            title="Novo Veículo"
-            subtitle="Cadastre seu veículo para gerar a etiqueta Identifica Trânsito."
+            title="Cadastrar veículo"
+            subtitle="Informe os dados do seu veículo para gerar a etiqueta Identifica Trânsito."
             :showButton="true"
             buttonLabel="Voltar para Meus Veículos"
             buttonLink="/dashboard/veiculos"
             buttonIcon="pi pi-arrow-left"
         />
-        <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 relative">
-                <div>
-                    <h1 class="text-3xl! font-bold text-it-primary mb-2">{{ pageTitle }}</h1>
-                    <p class="text-gray-600 mb-8!">
-                        Preencha as informações do seu veículo para gerar a etiqueta de identificação Identifica Trânsito.
+        <div class="w-full">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-8">
+                <div class="mb-5 pb-0">
+                    <h1 class="text-2xl! font-bold text-[#172b4d] mb-2 sm:text-3xl!">Preencha o formulário</h1>
+                    <p class="text-slate-600 mb-0!">
+                        Cadastre os dados do veículo para emitir sua etiqueta de identificação.
                     </p>
                 </div>
 

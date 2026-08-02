@@ -93,8 +93,8 @@
 
 <template>
   <LayoutAuth hiddenLinksFooter>
-    <h1 class="text-[24px]! font-bold text-it-primary mb-2!">Crie sua Conta</h1>
-    <p class="text-it-gray text-sm mb-8!">Preencha todos os dados abaixo para se registrar na plataforma</p>
+    <h1 class="w-full font-bold text-center text-it-primary mb-2">Criar Conta</h1>
+    <p class="register-description w-full text-it-gray text-md text-center mb-8">Preencher os dados abaixo para criar sua conta.</p>
 
     <form ref="formRef" @submit.prevent="handleRegister" class="space-y-4">
       <InputText
@@ -181,6 +181,8 @@
           label="Senha"
           placeholder="••••••••••••••••"
           required
+          showIcon
+          icon="pi pi-lock"
           minlength="8"
           inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
         >
@@ -206,8 +208,9 @@
       </div>
 
       <!-- Botão Cadastrar -->
-      <Button type="submit" fullWidth :loading="loading" size="lg">
-        Cadastrar
+      <Button type="submit" fullWidth :loading="loading" size="md" buttonClass="auth-primary-button">
+        <span>Cadastrar</span>
+        <i class="pi pi-arrow-right text-base" aria-hidden="true"></i>
       </Button>
     </form>
 
@@ -215,12 +218,41 @@
     <p class="text-center text-gray-600 text-sm mt-6">
       Já tem uma conta? 
       <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-700 font-medium">
-        Faça seu Login
+        Fazer Login
       </NuxtLink>
     </p>
   </LayoutAuth>
 </template>
 
 <style scoped>
-/* Estilos herdados do LayoutAuth */
+  h1 {
+    color: var(--color-gray-800);
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .register-description {
+    color: #666;
+    text-align: center;
+  }
+
+  form + p {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  :deep(label .text-red-500) {
+    display: none;
+  }
+
+  :deep(.auth-primary-button) {
+    height: 52px;
+    transition: background-color 180ms ease;
+  }
+
+  :deep(button.auth-primary-button:hover:not(:disabled)) {
+    background-color: #1739d4;
+  }
+
 </style>

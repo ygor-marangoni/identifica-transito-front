@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
+import { BadgeCheck, Package } from '@lucide/vue';
 import { useToast } from 'primevue/usetoast';
 
 definePageMeta({ layout: 'dashboard' });
-useHead({ title: 'Pedidos - Admin | Identifica Trânsito' });
+const route = useRoute();
+const isSuperAdminView = computed(() => route.path.startsWith('/dashboard/superadmin'));
+useHead({ title: computed(() => isSuperAdminView.value ? 'Pedidos - SuperAdmin | Identifica Trânsito' : 'Pedidos - Admin | Identifica Trânsito') });
 
 const { $api } = useNuxtApp();
 const toast = useToast();
+const ordersApiBase = computed(() => isSuperAdminView.value ? '/admin/orders' : '/admin-pdv/orders');
 
 const config = useRuntimeConfig();
 const assetWithBase = (path: string) => {
@@ -35,6 +40,7 @@ interface Order {
     vehicle_plate: string;
     user_id: number;
     user_name: string;
+    user_photo?: string | null;
     tag_id: number;
     tag_name: string;
     tag_slug: string | null;
@@ -63,6 +69,11 @@ const PAYMENT_STATUS = [
     { label: 'Rejeitado', value: 3 },
 ];
 
+const paymentFilterOptions = [
+    { label: 'Todos pagamentos', value: 'all' },
+    ...PAYMENT_STATUS.map((status) => ({ label: status.label, value: String(status.value) }))
+];
+
 const SHIPMENT_STATUS = [
     { label: 'Aguardando postagem', value: 0 },
     { label: 'Postado', value: 1 },
@@ -71,6 +82,13 @@ const SHIPMENT_STATUS = [
     { label: 'Entregue', value: 4 },
     { label: 'Tentativa falhou', value: 5 },
     { label: 'Devolvido', value: 6 },
+];
+
+const shipmentStatusOptions = SHIPMENT_STATUS.map((status) => ({ label: status.label, value: status.value }));
+
+const shipmentFilterOptions = [
+    { label: 'Todas entregas', value: 'all' },
+    ...SHIPMENT_STATUS.map((status) => ({ label: status.label, value: String(status.value) }))
 ];
 
 const PICKUP_STATUS = [
@@ -115,14 +133,26 @@ const getOrderDisplayId = (order: Order) => order.mp_payment_id ?? String(order.
 const orders = ref<Order[]>([]);
 const loading = ref(false);
 const search = ref('');
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+const paymentFilter = ref<'all' | string>('all');
+const shipmentFilter = ref<'all' | string>('all');
+const filtersOpen = ref(false);
 const pagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
+
+const filteredOrders = computed(() => orders.value.filter((order) => {
+    const paymentMatches = paymentFilter.value === 'all' || String(order.status) === paymentFilter.value;
+    const shipmentMatches = shipmentFilter.value === 'all' || String(order.shipment?.status ?? 0) === shipmentFilter.value;
+    return paymentMatches && shipmentMatches;
+}));
+
+const approvedOrders = computed(() => orders.value.filter((order) => order.status === 1).length);
 
 const fetchOrders = async (page = 1) => {
     loading.value = true;
     try {
         const params = new URLSearchParams({ page: String(page), per_page: '15' });
         if (search.value) params.set('q', search.value);
-        const res = await $api(`/admin-pdv/orders?${params}`) as any;
+        const res = await $api(`${ordersApiBase.value}?${params}`) as any;
         orders.value = Array.isArray(res?.data) ? res.data : [];
         pagination.value.currentPage = Number(res?.meta?.current_page ?? page);
         pagination.value.lastPage = Number(res?.meta?.last_page ?? 1);
@@ -144,6 +174,18 @@ const onSearch = () => {
     fetchOrders(1);
 };
 
+const scheduleSearch = () => {
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(onSearch, 280);
+};
+
+const clearFilters = () => {
+    search.value = '';
+    paymentFilter.value = 'all';
+    shipmentFilter.value = 'all';
+    onSearch();
+};
+
 const formatDate = (d: string) => {
     if (!d) return '-';
     if (d.includes('/')) return d.split(' ')[0];
@@ -152,6 +194,9 @@ const formatDate = (d: string) => {
 
 const formatCurrency = (v: string | number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v));
+
+const getUserPhoto = (photo?: string | null) =>
+    assetWithBase(photo || '/images/dashboard/avatar.jpg');
 
 // ── Shipment inline edit (pickup) ─────────────────────────────────────────────
 const editingShipmentId = ref<number | null>(null);
@@ -163,7 +208,7 @@ const cancelShipmentEdit = () => { editingShipmentId.value = null; };
 const saveShipmentInline = async (order: Order) => {
     savingShipmentInline.value = true;
     try {
-        await $api(`/admin-pdv/orders/${order.id}`, {
+        await $api(`${ordersApiBase.value}/${order.id}`, {
             method: 'PATCH',
             body: { status: editShipmentStatusInline.value },
         });
@@ -203,7 +248,7 @@ const saveShipmentModal = async () => {
     if (!modalOrder.value) return;
     savingShipment.value = true;
     try {
-        await $api(`/admin-pdv/orders/${modalOrder.value.id}`, {
+        await $api(`${ordersApiBase.value}/${modalOrder.value.id}`, {
             method: 'PATCH',
             body: {
                 status: editShipmentStatus.value,
@@ -228,34 +273,55 @@ onMounted(() => fetchOrders());
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Pedidos"
-            subtitle="Gerencie todos os pedidos da plataforma"
-            greeting="Admin"
+            :subtitle="isSuperAdminView ? 'Acompanhe pagamentos, entregas e atualizações de todos os pedidos da plataforma.' : 'Acompanhe pagamentos, entregas e atualizações dos pedidos vinculados ao seu PDV.'"
+            :greeting="isSuperAdminView ? 'Operação global de pedidos' : 'Operação de pedidos'"
             :showButton="false"
         />
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <!-- Search -->
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-                <div class="relative flex-1 min-w-60">
+        <div class="admin-orders-page bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div class="mb-4 flex flex-col gap-4 border-b border-gray-100 pb-5 lg:flex-row lg:justify-between">
+                <div>
+                    <h2 class="text-[#172b4d]" style="margin: 0 0 6px; font-size: 25px; font-weight: 600; line-height: 1.1;">Gerenciamento de pedidos</h2>
+                    <p class="text-[#52667f]" style="margin: 0; font-size: 15px; line-height: 1.35;">Acompanhe pagamentos, entregas e solicitações da plataforma.</p>
+                </div>
+                <div class="flex items-center gap-4 self-start text-xs font-semibold uppercase tracking-wide text-[#52667f] lg:self-end">
+                    <span class="inline-flex items-center gap-1.5"><Package :size="15" :stroke-width="1.9" class="text-[#1f46ee]" aria-hidden="true" /><span>{{ pagination.total }} pedidos</span></span>
+                    <span class="inline-flex items-center gap-1.5"><BadgeCheck :size="15" :stroke-width="1.9" class="text-[#16803c]" aria-hidden="true" /><span>{{ approvedOrders }} aprovados</span></span>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                class="mb-4 flex w-full items-center justify-between border-b border-gray-100 pb-4 text-[15px] font-medium text-[#52667f] md:hidden"
+                :aria-expanded="filtersOpen"
+                @click="filtersOpen = !filtersOpen"
+            >
+                <span class="inline-flex items-center gap-2"><i class="pi pi-filter text-xs text-[#8291a7]"></i>Filtros</span>
+                <i :class="filtersOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs text-[#8291a7]"></i>
+            </button>
+
+            <div :class="[
+                filtersOpen ? 'max-h-[32rem] mb-6 border-b border-gray-100 pb-5 opacity-100' : 'max-h-0 overflow-hidden opacity-0 pointer-events-none',
+                'admin-orders-filters grid gap-3 transition-[max-height,opacity,margin,padding] duration-300 ease-in-out md:max-h-none md:overflow-visible md:pointer-events-auto md:mb-6 md:border-b md:border-gray-100 md:pb-5 md:opacity-100 md:grid-cols-2 xl:grid-cols-[minmax(25rem,1.45fr)_minmax(18rem,1fr)_minmax(18rem,1fr)_auto] xl:items-center'
+            ]">
+                <div class="relative min-w-0">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                     <input
                         v-model="search"
                         type="text"
                         placeholder="Buscar por cliente, placa..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        @keyup.enter="onSearch"
+                        class="admin-orders-search h-12 w-full pl-9 pr-4 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                        @input="scheduleSearch"
                     />
                 </div>
-                <button
-                    @click="onSearch"
-                    class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                >
-                    Buscar
+                <SelectInput v-model="paymentFilter" :options="paymentFilterOptions" show-icon icon="pi pi-credit-card" :icon-offset-y="2" wrapper-class="admin-orders-filter-select" select-class="!h-12 !bg-[#fafafa]" />
+                <SelectInput v-model="shipmentFilter" :options="shipmentFilterOptions" show-icon icon="pi pi-truck" :icon-offset-y="2" wrapper-class="admin-orders-filter-select" select-class="!h-12 !bg-[#fafafa]" />
+                <button @click="clearFilters" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#d8dee8] px-4 text-sm font-semibold text-[#52667f] transition-colors hover:bg-[#f7f9fc]">
+                    <i class="pi pi-filter-slash text-xs"></i> Limpar
                 </button>
-                <span class="text-sm text-gray-500 ml-auto">{{ pagination.total }} pedido(s)</span>
             </div>
 
             <!-- Skeleton -->
@@ -274,41 +340,44 @@ onMounted(() => fetchOrders());
             </div>
 
             <!-- Table -->
-            <div v-else-if="orders.length > 0" class="overflow-x-auto">
+            <template v-else-if="filteredOrders.length > 0">
+            <div class="admin-orders-table hidden overflow-x-auto rounded-xl border border-[#e8edf5] md:block">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-gray-200 bg-gray-50">
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">#</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Id Pedido</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cliente</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Veículo</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Etiqueta</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Qty</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Total</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Entrega</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Data</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">ID pedido</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Veículo</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Etiqueta</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">QTD</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Total</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Entrega</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Data</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr
-                            v-for="(order, index) in orders"
+                            v-for="order in filteredOrders"
                             :key="order.id"
                             class="border-b border-gray-100 hover:bg-gray-50 transition"
                         >
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 15 }}</td>
-
-                            <td class="py-3 px-4 text-gray-700 font-mono text-xs">{{ getOrderDisplayId(order) }}</td>
-
-                            <td class="py-3 px-4 text-gray-700">{{ order.user_name }}</td>
-
                             <td class="py-3 px-4">
+                                <div class="flex items-center gap-2.5">
+                                    <img :src="getUserPhoto(order.user_photo)" :alt="`Foto de ${order.user_name}`" class="h-8 w-8 rounded-full object-cover ring-2 ring-white" />
+                                    <span class="font-medium text-gray-700">{{ order.user_name }}</span>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-4 text-center text-gray-700 font-mono text-xs">{{ getOrderDisplayId(order) }}</td>
+
+                            <td class="py-3 px-4 text-center">
                                 <p class="font-medium text-gray-900">{{ order.vehicle_name }}</p>
                                 <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 text-xs uppercase">{{ order.vehicle_plate }}</span>
                             </td>
 
                             <td class="py-3 px-4">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     <img
                                         v-if="order.tag_slug"
                                         :src="assetWithBase(`/images/dashboard/etiquetas/${order.tag_slug}.svg`)"
@@ -319,31 +388,28 @@ onMounted(() => fetchOrders());
                                 </div>
                             </td>
 
-                            <td class="py-3 px-4 text-gray-700">{{ order.qty }}</td>
+                            <td class="py-3 px-4 text-center text-gray-700">{{ order.qty }}</td>
 
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 text-center">
                                 <p class="font-medium text-gray-900">{{ formatCurrency(order.price_total) }}</p>
-                                <span v-if="order.coupon_info" class="text-xs text-green-600">
-                                    {{ order.coupon_info.code }}
-                                </span>
                             </td>
 
                             <!-- Payment Status -->
                             <td class="py-3 px-4">
-                                <div class="flex flex-col gap-1">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium w-fit', paymentStatusClass(order.status)]">
+                                <div class="flex w-full flex-col items-center gap-1">
+                                    <span :class="['inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium', paymentStatusClass(order.status)]">
                                         {{ PAYMENT_STATUS.find(s => s.value === order.status)?.label ?? '-' }}
                                     </span>
-                                    <span class="text-xs text-gray-400">{{ PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method }}</span>
+                                    <span class="text-xs font-medium text-[#52667f]">{{ PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method }}</span>
                                 </div>
                             </td>
 
                             <!-- Shipment Status -->
-                            <td class="py-3 px-4">
-                                <div v-if="editingShipmentId === order.id" class="flex flex-col gap-2 min-w-38">
+                            <td class="py-3 px-4 text-center">
+                                <div v-if="editingShipmentId === order.id" class="mx-auto flex max-w-44 flex-col gap-2 min-w-38">
                                     <select
                                         v-model="editShipmentStatusInline"
-                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
                                     >
                                         <option v-for="opt in PICKUP_STATUS" :key="opt.value" :value="opt.value">
                                             {{ opt.label }}
@@ -365,31 +431,104 @@ onMounted(() => fetchOrders());
                                         </button>
                                     </div>
                                 </div>
-                                <div v-else class="flex flex-col gap-1">
+                                <div v-else class="flex w-full flex-col items-center gap-1">
                                     <button
                                         @click="openShipmentEdit(order)"
-                                        class="group flex items-center gap-1.5 w-fit"
+                                        class="admin-order-shipment-edit flex items-center gap-1.5"
                                         title="Clique para editar"
                                     >
-                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', shipmentStatusClass(order.shipment?.status ?? 0)]">
+                                        <span :class="['inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium', shipmentStatusClass(order.shipment?.status ?? 0)]">
                                             {{ getShipmentStatusLabel(order) }}
                                         </span>
-                                        <i class="pi pi-pencil text-gray-400 text-xs opacity-0 group-hover:opacity-100 transition"></i>
+                                        <i class="pi pi-pencil rounded-md p-1 text-[10px] text-[#94a3b8] transition-colors hover:text-[#1f46ee]"></i>
                                     </button>
-                                    <span class="text-xs text-gray-400">
+                                    <span class="max-w-40 text-center text-xs font-medium leading-snug text-[#52667f]">
                                         {{ order.pickup_point ? order.pickup_point.label : 'Entrega em domicílio' }}
                                     </span>
-                                    <span v-if="order.shipment?.tracking_code" class="text-xs text-blue-500 font-mono">
+                                    <span v-if="order.shipment?.tracking_code" class="text-xs text-blue-500 font-mono whitespace-nowrap">
                                         {{ order.shipment.tracking_code }}
                                     </span>
                                 </div>
                             </td>
 
-                            <td class="py-3 px-4 text-gray-500">{{ formatDate(order.created_at) }}</td>
+                            <td class="py-3 px-4 text-center text-gray-500 whitespace-nowrap">{{ formatDate(order.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <!-- Cards: mobile -->
+            <div class="grid gap-3 md:hidden">
+                <article v-for="order in filteredOrders" :key="order.id" class="rounded-2xl border border-[#e4eaf2] bg-white p-4">
+                    <header class="flex items-start justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f2f5ff]">
+                                <img
+                                    v-if="order.tag_slug"
+                                    :src="assetWithBase(`/images/dashboard/etiquetas/${order.tag_slug}.svg`)"
+                                    :alt="order.tag_name"
+                                    class="h-8 w-8 object-contain"
+                                />
+                                <i v-else class="pi pi-tag text-[#1f46ee]"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="mb-0 truncate text-sm font-bold text-[#172b4d]">{{ order.tag_name }}</p>
+                                <p class="mt-0.5 mb-0 font-mono text-[11px] text-[#64748b]">{{ getOrderDisplayId(order) }}</p>
+                            </div>
+                        </div>
+                        <span class="shrink-0 text-xs text-[#64748b]">{{ formatDate(order.created_at) }}</span>
+                    </header>
+
+                    <div class="mt-4 flex items-center gap-2.5 border-y border-[#edf1f6] py-3">
+                        <img :src="getUserPhoto(order.user_photo)" :alt="`Foto de ${order.user_name}`" class="h-9 w-9 rounded-full object-cover ring-2 ring-white" />
+                        <div class="min-w-0">
+                            <span class="block text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Cliente</span>
+                            <span class="block truncate text-sm font-semibold text-[#172b4d]">{{ order.user_name }}</span>
+                        </div>
+                    </div>
+
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 text-sm">
+                        <div class="min-w-0">
+                            <dt class="text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Veículo</dt>
+                            <dd class="mt-0.5 truncate font-semibold text-[#172b4d]">{{ order.vehicle_name }}</dd>
+                            <span class="inline-block rounded bg-[#f1f5f9] px-1.5 py-0.5 font-mono text-[10px] text-[#52667f]">{{ order.vehicle_plate }}</span>
+                        </div>
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Total</dt>
+                            <dd class="mt-0.5 font-bold text-[#172b4d]">{{ formatCurrency(order.price_total) }}</dd>
+                            <span class="text-xs text-[#64748b]">{{ order.qty }} {{ order.qty === 1 ? 'unidade' : 'unidades' }}</span>
+                        </div>
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Pagamento</dt>
+                            <dd class="mt-1">
+                                <span :class="['inline-flex rounded-full px-2 py-0.5 text-xs font-medium', paymentStatusClass(order.status)]">
+                                    {{ PAYMENT_STATUS.find(s => s.value === order.status)?.label ?? '-' }}
+                                </span>
+                            </dd>
+                            <span class="mt-1 block text-xs text-[#64748b]">{{ PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <dt class="text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Entrega</dt>
+                            <dd v-if="editingShipmentId !== order.id" class="mt-1">
+                                <button @click="openShipmentEdit(order)" class="inline-flex max-w-full items-center gap-1.5 text-left" title="Clique para editar">
+                                    <span :class="['rounded-full px-2 py-0.5 text-xs font-medium', shipmentStatusClass(order.shipment?.status ?? 0)]">{{ getShipmentStatusLabel(order) }}</span>
+                                    <i class="pi pi-pencil text-[10px] text-[#8291a7]"></i>
+                                </button>
+                            </dd>
+                            <div v-else class="mt-1 flex gap-1.5">
+                                <select v-model="editShipmentStatusInline" class="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-1 text-xs">
+                                    <option v-for="opt in PICKUP_STATUS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                                </select>
+                                <button @click="saveShipmentInline(order)" :disabled="savingShipmentInline" class="rounded-lg bg-it-primary px-2 text-xs text-white"><i class="pi pi-check"></i></button>
+                            </div>
+                            <span class="mt-1 block truncate text-xs text-[#64748b]">{{ order.pickup_point ? order.pickup_point.label : 'Entrega em domicílio' }}</span>
+                        </div>
+                    </dl>
+
+                    <p v-if="order.shipment?.tracking_code" class="mt-3 border-t border-[#edf1f6] pt-3 font-mono text-[11px] text-[#1f46ee]">{{ order.shipment.tracking_code }}</p>
+                </article>
+            </div>
+            </template>
 
             <!-- Empty -->
             <div v-else class="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
@@ -398,7 +537,7 @@ onMounted(() => fetchOrders());
             </div>
 
             <!-- Pagination -->
-            <div class="mt-5 pt-4 border-t border-gray-100">
+            <div v-if="pagination.total >= 26" class="mt-5">
                 <PaginationControls
                     :current-page="pagination.currentPage"
                     :last-page="pagination.lastPage"
@@ -414,6 +553,7 @@ onMounted(() => fetchOrders());
             header="Atualizar Entrega"
             :modal="true"
             :closable="true"
+            class="admin-dialog"
             :style="{ width: '440px' }"
         >
             <div v-if="modalOrder" class="space-y-5 pt-2">
@@ -425,14 +565,14 @@ onMounted(() => fetchOrders());
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-900 mb-2">Status de Entrega</label>
-                    <select
+                    <SelectInput
                         v-model="editShipmentStatus"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option v-for="opt in SHIPMENT_STATUS" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                        </option>
-                    </select>
+                        :options="shipmentStatusOptions"
+                        show-icon
+                        icon="pi pi-truck"
+                        select-class="!h-12 !bg-[#fafafa]"
+                        list-class="admin-orders-sort-panel"
+                    />
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-900 mb-2">Código de Rastreio</label>
@@ -440,7 +580,7 @@ onMounted(() => fetchOrders());
                         v-model="editTrackingCode"
                         type="text"
                         placeholder="Ex: BR123456789BR"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        class="w-full border border-[#cbd5e1] rounded-lg px-3 py-2.5 text-sm font-mono focus:border-[#64748b] focus:outline-none focus:ring-1 focus:ring-[#94a3b8]"
                     />
                     <p class="text-xs text-gray-400 mt-1">Opcional. Informe o código de rastreio da transportadora.</p>
                 </div>
@@ -450,14 +590,14 @@ onMounted(() => fetchOrders());
                 <div class="flex justify-end gap-3">
                     <button
                         @click="showShipmentModal = false"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition"
+                        class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#cbd5e1] px-4 text-sm font-semibold text-[#52667f] transition-colors hover:bg-[#f7f9fc]"
                     >
                         Cancelar
                     </button>
                     <button
                         @click="saveShipmentModal"
                         :disabled="savingShipment"
-                        class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                        class="inline-flex min-h-10 items-center justify-center rounded-lg bg-it-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-[#1f3fd8] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <i v-if="!savingShipment" class="pi pi-check mr-1"></i>
                         <i v-else class="pi pi-spin pi-spinner mr-1"></i>

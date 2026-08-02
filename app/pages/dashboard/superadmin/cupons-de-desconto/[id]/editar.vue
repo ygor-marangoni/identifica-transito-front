@@ -25,7 +25,7 @@ const form = ref({
     code: '',
     type: 1,
     value: '',
-    qty: '0',
+    qty: '',
     expiration_date: '',
 });
 
@@ -59,7 +59,7 @@ const fetchCoupon = async () => {
         form.value.code = coupon?.code ?? '';
         form.value.type = Number(coupon?.type ?? 1);
         form.value.value = String(coupon?.value ?? '');
-        form.value.qty = String(coupon?.qty ?? 0);
+        form.value.qty = coupon?.qty == null ? '' : String(coupon.qty);
         form.value.expiration_date = toInputDateTime(coupon?.expiration_date ?? null);
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível carregar os dados do cupom.', life: 5000 });
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
                 code: form.value.code.trim(),
                 type: Number(form.value.type),
                 value: Number(form.value.value),
-                qty: Number(form.value.qty || 0),
+                qty: form.value.qty === '' ? null : Number(form.value.qty),
                 expiration_date: normalizeDateTime(form.value.expiration_date),
             },
         });
@@ -102,18 +102,18 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Editar Cupom de Desconto"
-            subtitle="Atualize as informações do cupom selecionado."
-            greeting="SuperAdmin"
+            subtitle="Ajuste as regras, a validade e a disponibilidade desta campanha."
+            greeting="Campanha promocional"
             :showButton="true"
             buttonLabel="Voltar para Cupons"
             buttonLink="/dashboard/superadmin/cupons-de-desconto"
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="max-w-3xl mx-auto">
+        <div class="w-full">
             <div v-if="loadingCoupon" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
                 <Skeleton width="45%" height="2rem" class="mb-4" />
                 <div class="grid grid-cols-2 gap-6">
@@ -125,15 +125,15 @@ const handleSubmit = async () => {
                 <Skeleton height="60px" />
             </div>
 
-            <div v-else class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <div v-else class="admin-user-form-shell catalog-form-shell bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                 <div class="mb-8">
                     <h1 class="text-3xl! font-bold text-it-primary mb-2">Editar Cupom de Desconto</h1>
                     <p class="text-gray-600">Atualize os campos desejados.</p>
                 </div>
 
-                <form @submit.prevent="handleSubmit" class="space-y-8">
-                    <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Informações do Cupom</h2>
+                <form @submit.prevent="handleSubmit" class="admin-user-form-grid space-y-8">
+                    <div class="space-y-5 col-span-full">
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-ticket"></i></span>Informações do Cupom</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
@@ -195,7 +195,7 @@ const handleSubmit = async () => {
                                 id="expiration_date"
                                 v-model="form.expiration_date"
                                 type="datetime-local"
-                                class="w-full h-15 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-gray-700 font-medium bg-white"
+                                class="w-full h-12 rounded-lg border border-gray-300 bg-white px-4 text-gray-700"
                                 :disabled="loading"
                             />
                             <p class="text-xs text-gray-500 mt-2">Deixe em branco para cupom sem data limite.</p>
@@ -213,3 +213,28 @@ const handleSubmit = async () => {
         </div>
     </div>
 </template>
+
+<style scoped>
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell input:not([type='checkbox']):not([type='radio']):focus),
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell textarea:focus),
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell .p-select:focus-within) {
+    border: 1px solid #64748b !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell input:not([type='checkbox']):not([type='radio'])),
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell .p-select) {
+    height: 48px !important;
+    min-height: 48px !important;
+}
+
+@media (max-width: 639px) {
+    :global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell input:not([type='checkbox']):not([type='radio'])),
+    :global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell .p-select) {
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+}
+
+</style>

@@ -20,6 +20,21 @@ const assetWithBase = (path: string) => {
     return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
 };
 
+const getTagImage = (tagColor: string) => {
+    const color = String(tagColor || '').toLowerCase();
+    const colorMap: Record<string, string> = {
+        amarela: 'amarelo',
+        amarelo: 'amarelo',
+        azul: 'azul',
+        verde: 'verde',
+        vermelha: 'vermelho',
+        vermelho: 'vermelho',
+        laranja: 'azul'
+    };
+
+    return assetWithBase(`/images/dashboard/etiquetas/${colorMap[color] || 'azul'}.svg`);
+};
+
 useHead({
     title: 'Pagamento - Identifica Trânsito',
     meta: [
@@ -653,10 +668,10 @@ const handlePagar = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="checkout-page space-y-8">
         <HeroSection
-            title="Checkout"
-            subtitle="Revise sua compra, escolha entrega e pague suas etiquetas."
+            title="Finalizar compra"
+            subtitle="Revise seu pedido, escolha a entrega e conclua o pagamento com segurança."
             :showButton="true"
             buttonLabel="Voltar"
             buttonLinkBack
@@ -701,9 +716,9 @@ const handlePagar = async () => {
             </NuxtLink>
         </div>
 
-        <div v-else class="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div v-else class="checkout-shell relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <!-- Badge de Valor Total -->
-            <div class="absolute -top-4 right-6 bg-emerald-500 text-white rounded-full shadow-lg px-5 py-2.5 z-10">
+            <div class="checkout-total-summary bg-emerald-500 text-white rounded-full shadow-lg px-5 py-2.5 z-10">
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col">
                         <span class="text-xs font-medium opacity-90">Total</span>
@@ -729,7 +744,7 @@ const handlePagar = async () => {
                                 <button
                                     type="button"
                                     :class="[
-                                        'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                        'checkout-option-button px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         entrega === 'casa' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
                                     @click="entrega = 'casa'"
@@ -742,7 +757,7 @@ const handlePagar = async () => {
                                         type="button"
                                         :disabled="pontosColetaOptions.length === 0"
                                         :class="[
-                                            'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                            'checkout-option-button px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                             pontosColetaOptions.length === 0
                                                 ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed opacity-60'
                                                 : entrega === 'ponto' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
@@ -756,7 +771,7 @@ const handlePagar = async () => {
                             </div>
 
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                                <div class="lg:col-span-3 space-y-4">
+                                <div class="checkout-delivery-form lg:col-span-3 space-y-4">
                                     <div v-if="entrega === 'casa'">
                                         <div v-if="cepError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-4">
                                             {{ cepError }}
@@ -773,7 +788,7 @@ const handlePagar = async () => {
                                                 wrapper-class="lg:col-span-3"
                                                 inputClass="w-full"
                                             />
-                                            <InputText v-model="endereco.rua" label="Logradouro" placeholder="Av. Paulista" icon="pi pi-road" :readonly="true" wrapper-class="md:col-span-2 lg:col-span-7" inputClass="w-full" />
+                                            <InputText v-model="endereco.rua" label="Logradouro" placeholder="Av. Paulista" icon="pi pi-road" wrapper-class="md:col-span-2 lg:col-span-7" inputClass="w-full" />
                                             <InputText v-model="endereco.numero" label="Número" placeholder="1000" type="number" icon="pi pi-hashtag" wrapper-class="lg:col-span-5" inputClass="w-full" />
                                             <InputText v-model="endereco.complemento" label="Complemento" placeholder="Apto 101" icon="pi pi-building" wrapper-class="lg:col-span-5" inputClass="w-full" />
                                             <InputText v-model="endereco.bairro" label="Bairro" placeholder="Bela Vista" icon="pi pi-map" :readonly="true" wrapper-class="lg:col-span-5" inputClass="w-full" />
@@ -781,7 +796,7 @@ const handlePagar = async () => {
                                             <SelectInput v-model="endereco.estado" label="Estado" :options="estados" placeholder="Selecione o estado" icon="pi pi-map-marker" :readonly="true" wrapper-class="lg:col-span-5" inputClass="w-full" />
                                             <div class="lg:col-span-5 flex flex-col justify-end">
                                                 <label class="block text-sm font-semibold text-gray-900 mb-2">Frete</label>
-                                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-4 h-[60px] flex items-center justify-between">
+                                                <div class="checkout-shipping-field border rounded-lg px-4 flex items-center justify-between">
                                                     <div class="flex items-center gap-2 text-gray-700">
                                                         <i class="pi pi-truck text-it-primary"></i>
                                                         <span class="text-sm font-medium">Custo de Entrega</span>
@@ -818,7 +833,7 @@ const handlePagar = async () => {
                                     </div>
                                 </div>
 
-                                <div class="lg:col-span-2 hidden md:block">
+                                <div class="checkout-delivery-visual lg:col-span-2 hidden md:block">
                                     <div class="bg-gray-100 gap-4 rounded-2xl overflow-hidden h-full flex items-center justify-center min-h-75">
                                         <img :src="assetWithBase('/images/dashboard/post-01.jpg')" alt="Entrega e Retirada" class="w-75" />
                                         <img :src="assetWithBase('/images/dashboard/post-02.jpg')" alt="Entrega e Retirada" class="w-75" />
@@ -827,7 +842,7 @@ const handlePagar = async () => {
                             </div>
                             </div>
                             <div class="flex justify-end pt-6">
-                                <Button variant="secondary" label="Continuar" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                                <Button variant="secondary" label="Continuar" size="sm" icon="pi pi-chevron-right" buttonClass="checkout-step-next" @click="activateCallback(2)" />
                             </div>
                         </template>
                     </StepPanel>
@@ -848,6 +863,7 @@ const handlePagar = async () => {
                                             :key="vehicle.id"
                                             class="flex items-start justify-between gap-3 text-sm text-gray-700 p-3 bg-gray-50 rounded-lg"
                                         >
+                                            <img :src="getTagImage(vehicle.tag_color)" :alt="`Etiqueta ${vehicle.tag_color}`" class="checkout-summary-tag" />
                                             <div class="flex-1 space-y-1 min-w-0">
                                                 <p class="font-bold truncate">{{ vehicle.name }}</p>
                                                 <p class="text-gray-500 capitalize">Placa: {{ vehicle.plate?.toUpperCase() }} • {{ vehicle.usage_profile_label }} • Etiqueta {{ vehicle.tag_color }}</p>
@@ -913,7 +929,7 @@ const handlePagar = async () => {
                                                 v-model="couponCode"
                                                 type="text"
                                                 placeholder="Digite seu cupom"
-                                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase tracking-wider focus:outline-none"
                                                 :disabled="couponLoading"
                                                 @keyup.enter="applyCoupon"
                                             />
@@ -961,8 +977,8 @@ const handlePagar = async () => {
                                 </div>
                             </div>
                             <div class="flex justify-between pt-6 gap-3">
-                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback('1')" />
-                                <Button label="Continuar" variant="secondary" size="sm" icon="pi pi-chevron-right color-it-primary" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(3)" />
+                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left" size="sm" buttonClass="checkout-step-back" @click="activateCallback('1')" />
+                                <Button label="Continuar" variant="secondary" size="sm" icon="pi pi-chevron-right" buttonClass="checkout-step-next" @click="activateCallback(3)" />
                             </div>
                         </template>
                     </StepPanel>
@@ -989,7 +1005,7 @@ const handlePagar = async () => {
                                 <button
                                     type="button"
                                     :class="[
-                                        'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                        'checkout-option-button px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         paymentMethod === 'credito' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
                                     @click="paymentMethod = 'credito'; pixData = null"
@@ -1000,7 +1016,7 @@ const handlePagar = async () => {
                                 <button
                                     type="button"
                                     :class="[
-                                        'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                        'checkout-option-button px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         paymentMethod === 'pix' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
                                     @click="paymentMethod = 'pix'"
@@ -1011,7 +1027,7 @@ const handlePagar = async () => {
                                 <button
                                     type="button"
                                     :class="[
-                                        'px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
+                                        'checkout-option-button px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition',
                                         paymentMethod === 'boleto' ? 'border-it-primary text-it-primary bg-blue-50' : 'border-gray-200 text-gray-700 hover:border-it-primary'
                                     ]"
                                     @click="paymentMethod = 'boleto'; pixData = null"
@@ -1197,7 +1213,7 @@ const handlePagar = async () => {
                             </div>
 
                             <div class="flex justify-start pt-6 gap-3">
-                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left color-it-primary" size="sm" labelClass="color-it-primary" buttonClass="bg-[#dfe1ff]!" @click="activateCallback(2)" />
+                                <Button label="Voltar" variant="secondary" icon="pi pi-chevron-left" size="sm" buttonClass="checkout-payment-back" @click="activateCallback(2)" />
                                 <span
                                     v-if="(paymentMethod !== 'pix' || !pixData) && (paymentMethod !== 'boleto' || !boletoData)"
                                     v-tooltip.top="paymentButtonTooltip"
@@ -1207,6 +1223,7 @@ const handlePagar = async () => {
                                         :label="isFree ? 'Confirmar Pedido' : paymentMethod === 'pix' ? 'Gerar PIX para Pagamento' : paymentMethod === 'boleto' ? 'Gerar Boleto para Pagamento' : 'Realizar Pagamento'"
                                         :icon="isFree ? 'pi pi-check-circle' : paymentMethod === 'pix' ? 'pi pi-qrcode' : paymentMethod === 'boleto' ? 'pi pi-bars' : 'pi pi-check'"
                                         size="sm"
+                                        buttonClass="checkout-payment-action"
                                         :loading="loadingPayment"
                                         :disabled="isPaymentButtonDisabled"
                                         @click="handlePagar"
@@ -1222,5 +1239,172 @@ const handlePagar = async () => {
 </template>
 
 <style scoped>
-/* Estilos se necessário */
+.checkout-page {
+    --checkout-blue: #1f46ee;
+    --checkout-ink: #172b4d;
+}
+
+.checkout-shell {
+    padding: 2rem !important;
+    border-color: #e0e7f0 !important;
+    border-radius: 1.15rem !important;
+    box-shadow: none !important;
+}
+
+.checkout-total-summary {
+    position: static;
+    display: inline-flex;
+    margin: 0 0 1.75rem auto;
+    border: 1px solid #3159ee;
+    border-radius: 0.85rem;
+    background: #1f46ee !important;
+    box-shadow: none !important;
+}
+
+.checkout-total-summary > div { min-height: 3.15rem; }
+.checkout-page :deep(.p-stepper) { width: 100%; }
+
+.checkout-page :deep(.p-stepper-nav),
+.checkout-page :deep(.p-steplist) {
+    margin-bottom: 1.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e4e9f1;
+}
+
+.checkout-page :deep(.p-stepper-action),
+.checkout-page :deep(.p-step-header) {
+    gap: 0.55rem;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.checkout-page :deep(.p-stepper-number),
+.checkout-page :deep(.p-step-number) {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid #d8e0eb;
+    border-radius: 50%;
+    background: #fff;
+    color: #64748b;
+}
+
+.checkout-page :deep(.p-stepper-header.p-highlight .p-stepper-number),
+.checkout-page :deep(.p-step.p-highlight .p-step-number) {
+    border-color: #1f46ee;
+    background: #eaf0ff;
+    color: #1f46ee;
+}
+
+.checkout-page h3 { color: var(--checkout-ink); font-weight: 700; letter-spacing: -0.01em; }
+.checkout-page :deep(label) { color: var(--checkout-ink); font-weight: 600; }
+
+.checkout-page :deep(input),
+.checkout-page :deep(.p-select) {
+    min-height: 3rem;
+    border-color: #cbd7e8;
+    border-radius: 0.65rem;
+}
+
+.checkout-page :deep(input:focus),
+.checkout-page :deep(.p-select.p-focus) {
+    border-color: #8499bd;
+    box-shadow: 0 0 0 3px rgba(31, 70, 238, 0.08);
+}
+
+.checkout-delivery-form { grid-column: 1 / -1 !important; }
+.checkout-delivery-visual { display: none !important; }
+
+.checkout-shipping-field {
+    height: 48px;
+    min-height: 48px;
+    border-color: #cbd7e8 !important;
+    background: #fafafa;
+}
+
+.checkout-shipping-field > div { color: #52667f !important; }
+.checkout-shipping-field > span { color: #172b4d !important; font-size: 0.95rem !important; }
+.checkout-shipping-field i { color: #64748b !important; }
+
+.checkout-summary-tag {
+    width: 3.35rem;
+    height: 3.35rem;
+    flex: 0 0 auto;
+    object-fit: contain;
+    border: 1px solid #e1e7f0;
+    border-radius: 0.7rem;
+    background: #fff;
+    padding: 0.3rem;
+}
+
+.checkout-page :deep(button.checkout-step-next),
+.checkout-page :deep(button.checkout-step-back),
+.checkout-page :deep(button.checkout-payment-back),
+.checkout-page :deep(button.checkout-payment-action) {
+    min-height: 3.25rem !important;
+    height: 3.25rem !important;
+    padding: 0 1.1rem !important;
+    border-radius: 0.65rem !important;
+    box-shadow: none !important;
+    font-size: 1rem !important;
+}
+
+.checkout-page :deep(button.checkout-step-next) {
+    border: 1px solid #dce3eb !important;
+    background: #fafafa !important;
+    color: #172b4d !important;
+}
+
+.checkout-page :deep(button.checkout-step-next:hover) { background: #f2f4f7 !important; }
+.checkout-page :deep(button.checkout-step-next i) { order: 2; }
+
+.checkout-page :deep(button.checkout-step-back),
+.checkout-page :deep(button.checkout-payment-back) {
+    border: 1px solid #cdd7e3 !important;
+    background: #fafafa !important;
+    color: #172b4d !important;
+}
+
+.checkout-page :deep(button.checkout-step-back:hover),
+.checkout-page :deep(button.checkout-payment-back:hover) { background: #f5f7fa !important; }
+
+.checkout-page :deep(button.checkout-payment-action) {
+    border: 1px solid #3159ee !important;
+    background: #1f46ee !important;
+    color: #fff !important;
+}
+
+.checkout-page :deep(button.checkout-payment-action:hover) { background: #1839c9 !important; }
+
+.checkout-page :deep(.bg-gray-50) {
+    border-color: #e2e8f0 !important;
+    background: #fafafa !important;
+}
+
+.checkout-page :deep(.shadow-sm),
+.checkout-page :deep(.shadow-lg) { box-shadow: none !important; }
+
+@media (max-width: 700px) {
+    .checkout-shell { padding: 1.25rem !important; border-radius: 1rem !important; }
+    .checkout-total-summary { display: flex; width: 100%; justify-content: center; margin-bottom: 1.25rem; }
+    .checkout-page :deep(.p-stepper-nav), .checkout-page :deep(.p-steplist) { overflow-x: auto; gap: 1rem; }
+    .checkout-page :deep(.p-stepper-header), .checkout-page :deep(.p-step) { flex: 0 0 auto; }
+    .checkout-page :deep(.p-stepper-action), .checkout-page :deep(.p-step-header) { font-size: 0.8rem; white-space: nowrap; }
+    .checkout-page :deep(.checkout-option-button),
+    .checkout-page :deep(input),
+    .checkout-page :deep(.p-select),
+    .checkout-shipping-field {
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+    .checkout-page :deep(button.checkout-step-next),
+    .checkout-page :deep(button.checkout-step-back),
+    .checkout-page :deep(button.checkout-payment-back),
+    .checkout-page :deep(button.checkout-payment-action) {
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+    .checkout-page :deep(.flex.justify-end.pt-6), .checkout-page :deep(.flex.justify-between.pt-6), .checkout-page :deep(.flex.justify-start.pt-6) { flex-direction: column-reverse; }
+    .checkout-page :deep(.flex.justify-end.pt-6 button), .checkout-page :deep(.flex.justify-between.pt-6 button), .checkout-page :deep(.flex.justify-start.pt-6 button) { width: 100%; justify-content: center; }
+}
 </style>

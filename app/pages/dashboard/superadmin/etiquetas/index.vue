@@ -3,6 +3,7 @@ import HeroSection from '~/components/dashboard/HeroSection.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { BadgeCheck, Palette, Tag } from '@lucide/vue';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Etiquetas - SuperAdmin | Identifica Trânsito' });
@@ -10,81 +11,46 @@ useHead({ title: 'Etiquetas - SuperAdmin | Identifica Trânsito' });
 const { $api } = useNuxtApp();
 const confirm = useConfirm();
 const toast = useToast();
-
 const config = useRuntimeConfig();
-const assetWithBase = (path: string) => {
-    if (path.startsWith('data:') || path.startsWith('http')) return path;
-    return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
-};
+const assetWithBase = (path: string) => path.startsWith('data:') || path.startsWith('http') ? path : `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
 
-interface Tag {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    color_name: string | null;
-    price: string;
-    created_at: string;
-}
+interface TagItem { id: number; name: string; slug: string; description: string | null; color_name: string | null; price: string; created_at: string; }
 
-const tags = ref<Tag[]>([]);
+const tags = ref<TagItem[]>([]);
 const loading = ref(false);
-const search = ref('');
 const pagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
 
 const fetchTags = async (page = 1) => {
     loading.value = true;
     try {
         const params = new URLSearchParams({ page: String(page), per_page: '15' });
-        if (search.value) params.set('q', search.value);
         const res = await $api(`/admin/tags?${params}`) as any;
         tags.value = Array.isArray(res?.data) ? res.data : [];
         pagination.value.currentPage = Number(res?.meta?.current_page ?? page);
         pagination.value.lastPage = Number(res?.meta?.last_page ?? 1);
         pagination.value.total = Number(res?.meta?.total ?? tags.value.length);
-    } catch (e) {
-        console.error('Erro ao carregar etiquetas:', e);
+    } catch (error) {
+        console.error('Erro ao carregar etiquetas:', error);
     } finally {
         loading.value = false;
     }
 };
 
-const goToPage = (page: number) => {
-    if (page < 1 || page > pagination.value.lastPage || page === pagination.value.currentPage || loading.value) return;
-    fetchTags(page);
-};
+const goToPage = (page: number) => { if (page >= 1 && page <= pagination.value.lastPage && page !== pagination.value.currentPage && !loading.value) fetchTags(page); };
+const formatDate = (date: string) => !date ? '-' : date.includes('/') ? date.split(' ')[0] : new Date(date).toLocaleDateString('pt-BR');
+const formatCurrency = (value: string | number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+const colorLabel = (tag: TagItem) => tag.color_name ? tag.color_name.charAt(0).toUpperCase() + tag.color_name.slice(1) : 'Sem cor';
 
-const onSearch = () => {
-    pagination.value.currentPage = 1;
-    fetchTags(1);
-};
-
-const formatDate = (d: string) => {
-    if (!d) return '-';
-    if (d.includes('/')) return d.split(' ')[0];
-    return new Date(d).toLocaleDateString('pt-BR');
-};
-
-const formatCurrency = (v: string | number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v));
-
-const handleDelete = (tag: Tag) => {
+const handleDelete = (tag: TagItem) => {
     confirm.require({
-        message: `Tem certeza que deseja excluir a etiqueta "${tag.name}"?`,
-        header: 'Confirmar Exclusão',
-        icon: 'pi pi-exclamation-triangle',
-        rejectLabel: 'Não',
-        acceptLabel: 'Sim, excluir',
-        rejectClass: 'p-button-secondary',
-        acceptClass: 'p-button-danger',
+        message: `Tem certeza que deseja excluir a etiqueta "${tag.name}"?`, header: 'Confirmar Exclusão', icon: 'pi pi-exclamation-triangle', rejectLabel: 'Não', acceptLabel: 'Sim, excluir', rejectClass: 'p-button-secondary', acceptClass: 'p-button-danger',
         accept: async () => {
             try {
                 await $api(`/admin/tags/${tag.id}`, { method: 'DELETE' });
                 toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Etiqueta excluída com sucesso.', life: 3000 });
                 fetchTags(pagination.value.currentPage);
             } catch (error: any) {
-                const msg = error?.data?.message || error?.message || 'Não foi possível excluir a etiqueta.';
-                toast.add({ severity: 'error', summary: 'Erro ao excluir', detail: msg, life: 5000 });
+                toast.add({ severity: 'error', summary: 'Erro ao excluir', detail: error?.data?.message || error?.message || 'Não foi possível excluir a etiqueta.', life: 5000 });
             }
         },
     });
@@ -94,126 +60,48 @@ onMounted(() => fetchTags());
 </script>
 
 <template>
-    <div class="space-y-6">
-        <HeroSection
-            title="Etiquetas"
-            subtitle="Gerencie as etiquetas disponíveis na plataforma"
-            greeting="SuperAdmin"
-            :showButton="true"
-            buttonLabel="Nova Etiqueta"
-            buttonLink="/dashboard/superadmin/etiquetas/novo"
-            buttonIcon="pi pi-plus"
-        />
+    <div class="admin-page space-y-6 md:space-y-7">
+        <HeroSection title="Etiquetas" subtitle="Organize o catálogo de etiquetas disponível para identificação veicular." greeting="Catálogo de identificação" :showButton="true" buttonLabel="Nova Etiqueta" buttonLink="/dashboard/superadmin/etiquetas/novo" buttonIcon="pi pi-plus" />
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <!-- Search -->
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-                <div class="relative flex-1 min-w-[240px]">
-                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input
-                        v-model="search"
-                        type="text"
-                        placeholder="Buscar por nome ou cor..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        @keyup.enter="onSearch"
-                    />
+        <section class="tag-catalog bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <header class="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <h2 class="m-0 text-[25px] font-semibold leading-[1.1] text-[#172b4d]">Catálogo de etiquetas</h2>
+                    <p class="mt-1.5 mb-0 text-[15px] leading-[1.35] text-[#52667f]">Visualize e mantenha os modelos disponíveis para compra.</p>
                 </div>
-                <button
-                    @click="onSearch"
-                    class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                >
-                    Buscar
-                </button>
-                <span class="text-sm text-gray-500 ml-auto">{{ pagination.total }} etiqueta(s)</span>
+                <div class="flex items-center gap-4 text-xs font-semibold uppercase tracking-wide text-[#52667f]"><span class="inline-flex items-center gap-1.5"><Tag :size="15" class="text-[#1f46ee]" />{{ pagination.total }} modelos</span><span class="inline-flex items-center gap-1.5"><BadgeCheck :size="15" class="text-[#16803c]" />Catálogo ativo</span></div>
+            </header>
+
+            <div v-if="loading" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div v-for="n in 6" :key="n" class="overflow-hidden rounded-2xl border border-[#e4eaf2]"><Skeleton height="11rem" /><div class="space-y-3 p-4"><Skeleton width="55%" height="1rem" /><Skeleton width="100%" height="0.8rem" /><Skeleton width="75%" height="0.8rem" /></div></div>
             </div>
 
-            <!-- Skeleton -->
-            <div v-if="loading" class="space-y-3">
-                <div v-for="n in 8" :key="n" class="flex gap-4 items-center p-3">
-                    <Skeleton width="4%" height="14px" />
-                    <Skeleton width="20%" height="14px" />
-                    <Skeleton width="14%" height="20px" />
-                    <Skeleton width="30%" height="14px" />
-                    <Skeleton width="10%" height="14px" />
-                    <Skeleton width="10%" height="14px" />
-                    <Skeleton width="8%" height="28px" />
-                </div>
+            <div v-else-if="tags.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <article v-for="tag in tags" :key="tag.id" class="tag-catalog-card overflow-hidden rounded-2xl border border-[#e1e8f3] bg-white">
+                    <div class="relative flex h-48 items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#f4f6fd_47%,#e8eeff_100%)]">
+                        <div class="absolute inset-x-0 bottom-0 h-14 bg-[linear-gradient(180deg,transparent,rgba(31,70,238,.08))]"></div>
+                        <img v-if="tag.color_name" :src="assetWithBase(`/images/dashboard/etiquetas/${tag.color_name}.svg`)" :alt="tag.name" class="relative z-10 h-32 w-32 object-contain drop-shadow-[0_12px_14px_rgba(31,70,238,.16)]" />
+                        <span v-else class="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#1f46ee]"><Palette :size="34" /></span>
+                        <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-xs font-semibold text-[#52667f] backdrop-blur"><Palette :size="13" />{{ colorLabel(tag) }}</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-start justify-between gap-3"><div class="min-w-0"><h3 class="m-0 truncate text-base font-semibold text-[#172b4d]">{{ tag.name }}</h3><p class="mt-1 mb-0 text-[13px] text-[#64748b]">Cadastrada em {{ formatDate(tag.created_at) }}</p></div><span class="shrink-0 rounded-lg bg-[#eef2ff] px-2.5 py-1.5 text-sm font-semibold text-[#1f46ee]">{{ formatCurrency(tag.price) }}</span></div>
+                        <p class="mt-4 mb-0 min-h-11 text-[15px] leading-6 text-[#52667f]">{{ tag.description || 'Sem descrição cadastrada para esta etiqueta.' }}</p>
+                        <footer class="mt-4 flex gap-2 border-t border-[#edf1f6] pt-3">
+                            <NuxtLink :to="`/dashboard/superadmin/etiquetas/${tag.id}/editar`" class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-[#d8dee8] px-4 py-3 text-sm font-semibold text-[#52667f] transition hover:border-[#b9c7ff] hover:bg-[#eef2ff] hover:text-[#1f46ee]"><i class="pi pi-pen-to-square"></i>Editar etiqueta</NuxtLink>
+                            <button type="button" class="inline-flex !h-[52px] !w-[52px] shrink-0 items-center justify-center rounded-lg border border-red-200 text-red-500 transition hover:border-red-300 hover:bg-red-50" title="Excluir etiqueta" aria-label="Excluir etiqueta" @click="handleDelete(tag)"><i class="pi pi-trash text-sm"></i></button>
+                        </footer>
+                    </div>
+                </article>
             </div>
 
-            <!-- Table -->
-            <div v-else-if="tags.length > 0" class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b-2 border-gray-200 bg-gray-50">
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">#</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Nome</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cor</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Descrição</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Preço</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cadastro</th>
-                            <th class="text-right py-3 px-4 text-gray-700 font-semibold">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="(t, index) in tags"
-                            :key="t.id"
-                            class="border-b border-gray-100 hover:bg-gray-50 transition"
-                        >
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 15 }}</td>
-                            <td class="py-3 px-4 font-medium text-gray-900">{{ t.name }}</td>
-                            <td class="py-3 px-4">
-                                <div class="flex items-center gap-2">
-                                    <img
-                                        v-if="t.color_name"
-                                        :src="assetWithBase(`/images/dashboard/etiquetas/${t.color_name}.svg`)"
-                                        :alt="t.color_name"
-                                        class="w-7 h-7 object-contain"
-                                    />
-                                    <span class="capitalize text-gray-600">{{ t.color_name || '-' }}</span>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 text-gray-500 max-w-xs truncate">{{ t.description || '-' }}</td>
-                            <td class="py-3 px-4 font-medium text-gray-900">{{ formatCurrency(t.price) }}</td>
-                            <td class="py-3 px-4 text-gray-500">{{ formatDate(t.created_at) }}</td>
-                            <td class="py-3 px-4">
-                                <div class="flex items-center justify-end gap-1">
-                                    <NuxtLink
-                                        :to="`/dashboard/superadmin/etiquetas/${t.id}/editar`"
-                                        class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                                        title="Editar"
-                                    >
-                                        <i class="pi pi-pencil text-sm"></i>
-                                    </NuxtLink>
-                                    <button
-                                        @click="handleDelete(t)"
-                                        class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition"
-                                        title="Excluir"
-                                    >
-                                        <i class="pi pi-trash text-sm"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <div v-else class="flex flex-col items-center justify-center gap-2 py-14 text-slate-400"><i class="pi pi-tag text-4xl"></i><p class="m-0">Nenhuma etiqueta encontrada</p></div>
 
-            <!-- Empty -->
-            <div v-else class="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
-                <i class="pi pi-tag text-4xl"></i>
-                <p>Nenhuma etiqueta encontrada</p>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-5 pt-4 border-t border-gray-100">
-                <PaginationControls
-                    :current-page="pagination.currentPage"
-                    :last-page="pagination.lastPage"
-                    :loading="loading"
-                    @page-change="goToPage"
-                />
-            </div>
-        </div>
+            <div class="mt-6"><PaginationControls :current-page="pagination.currentPage" :last-page="pagination.lastPage" :loading="loading" @page-change="goToPage" /></div>
+        </section>
     </div>
 </template>
+
+<style scoped>
+@media (max-width: 639px) { .tag-catalog { padding: 1.1rem !important; } }
+</style>

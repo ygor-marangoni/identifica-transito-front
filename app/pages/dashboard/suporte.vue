@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CircleHelp, Clock3 } from '@lucide/vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
 import SupportContactCard from '~/components/dashboard/SupportContactCard.vue';
 import Accordion from 'primevue/accordion';
@@ -58,7 +59,7 @@ onMounted(() => {
 
 const contactChannels = [
     {
-        icon: 'pi pi-envelope',
+        icon: 'mail',
         title: 'E-mail',
         description: 'Envie sua dúvida para nosso time de suporte.',
         contact: 'identificatransito@gmail.com',
@@ -66,7 +67,7 @@ const contactChannels = [
         href: 'mailto:identificatransito@gmail.com'
     },
     {
-        icon: 'pi pi-whatsapp',
+        icon: 'whatsapp',
         title: 'Telefone / WhatsApp',
         description: 'Fale conosco durante o horário comercial (Seg-Sex, 9h-18h).',
         contact: 'Disponível em breve',
@@ -82,7 +83,7 @@ const contactChannels = [
     //     href: 'https://wa.me/5511984971689'
     // },
     {
-        icon: 'pi pi-comments',
+        icon: 'chat',
         title: 'Chat Online (Em Breve)',
         description: 'Uma forma rápida de tirar dúvidas diretamente pelo aplicativo ou site.',
         contact: 'Disponível em breve',
@@ -93,20 +94,20 @@ const contactChannels = [
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6 md:space-y-7">
         <!-- Hero Section -->
         <HeroSection
-            title="Central de Suporte"
-            subtitle="Encontre respostas para suas dúvidas e entre em contato com nosso time"
+            title="Central de suporte"
+            subtitle="Encontre respostas e fale com nosso time quando precisar."
             greeting="Precisa de ajuda?"
+            :greeting-icon="CircleHelp"
             :showButton="false"
         />
 
-        <!-- FAQ Accordion Section -->
-        <section class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div class="mb-6">
-                <h2 class="text-2xl! font-bold text-gray-900 mb-2!">Perguntas Frequentes (FAQ)</h2>
-                <p class="text-gray-600">Encontre as respostas para as dúvidas mais comuns</p>
+        <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+            <div class="mb-5 flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf0ff] text-[#1f46ee]"><CircleHelp :size="19" :stroke-width="1.9" aria-hidden="true" /></div>
+                <h2 class="relative -top-3 leading-none text-xl! font-semibold text-[#172b4d] mb-0!">Perguntas frequentes</h2>
             </div>
 
             <div v-if="faqLoading" class="space-y-3">
@@ -117,13 +118,13 @@ const contactChannels = [
                 {{ faqLoadError }}
             </div>
 
-            <Accordion v-else-if="faqItems.length > 0" :multiple="false" :activeIndex="0" class="w-full">
+            <Accordion v-else-if="faqItems.length > 0" :multiple="false" :activeIndex="0" class="support-faq w-full">
                 <AccordionTab
                     v-for="(item, index) in faqItems"
                     :key="item.id ?? index"
                     :header="item.question"
-                    headerClass="text-gray-900 font-semibold text-base"
-                    contentClass="text-gray-600"
+                    headerClass="text-[#172b4d] font-semibold text-sm"
+                    contentClass="text-slate-600 text-sm leading-6"
                 >
                     {{ item.answer }}
                 </AccordionTab>
@@ -135,29 +136,61 @@ const contactChannels = [
         </section>
 
         <!-- Support Channels Section -->
-        <section class="space-y-6">
+        <section class="space-y-5">
             <div>
-                <h2 class="text-2xl! font-bold text-gray-900 mb-2!">Ainda precisa de ajuda?</h2>
-                <p class="text-gray-600">Entre em contato conosco através dos canais abaixo.</p>
+                <h2 class="relative top-0.5 text-xl! font-semibold text-[#172b4d] mb-2!">Ainda precisa de ajuda?</h2>
+                <p class="text-sm text-slate-600 mb-0!">Escolha o canal mais conveniente para falar conosco.</p>
             </div>
 
             <SupportContactCard :channels="contactChannels" />
         </section>
 
-        <!-- Additional Info -->
-        <section class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-8 border border-blue-200">
-            <div class="flex gap-4">
-                <div class="flex-shrink-0">
-                    <i class="pi pi-info-circle text-it-primary text-2xl"></i>
-                </div>
+        <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div class="flex items-start gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eaf0ff] text-[#1f46ee]"><Clock3 :size="18" :stroke-width="1.9" aria-hidden="true" /></div>
                 <div>
-                    <h3 class="text-lg! font-bold text-gray-900 mb-1! -mt-2!">Horário de Atendimento</h3>
-                    <p class="text-gray-700 leading-6">
-                        Segunda a Sexta: <span class="font-semibold">10h00 às 18h00 (WhatsApp)</span><br>
-                        Sábado, Domingo e Feriados: Atendimento por e-mail
+                    <h3 class="relative top-0.5 text-base! font-semibold text-[#172b4d] mb-2!">Horário de atendimento</h3>
+                    <p class="text-sm leading-6 text-slate-600 mb-0!">
+                        Segunda a sexta, das <span class="font-semibold text-[#172b4d]">10h às 18h</span>, pelo WhatsApp.<br>
+                        Sábados, domingos e feriados: atendimento por e-mail.
                     </p>
                 </div>
             </div>
         </section>
     </div>
 </template>
+
+<style scoped>
+:deep(.support-faq .p-accordionpanel) {
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 0.625rem;
+    background: #fafafa !important;
+}
+
+:deep(.support-faq .p-accordionheader) {
+    padding: 1rem;
+    color: #172b4d !important;
+    background: #fafafa !important;
+    border: 0;
+}
+
+:deep(.support-faq .p-accordionheader *),
+:deep(.support-faq .p-accordionheader .p-accordionheader-label) {
+    color: #172b4d !important;
+}
+
+:deep(.support-faq .p-accordioncontent) {
+    background: #fafafa !important;
+}
+
+:deep(.support-faq .p-accordioncontent-content) {
+    padding: 0 1rem 1rem;
+    background: #fafafa !important;
+}
+
+:deep(.support-faq .p-accordionpanel:last-child) {
+    margin-bottom: 0;
+}
+</style>

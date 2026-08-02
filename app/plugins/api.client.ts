@@ -1,10 +1,12 @@
+import { mockApi } from '~/mocks/api';
+
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const auth = useAuth();
 
   auth.init();
 
-  const api = $fetch.create({
+  const httpApi = $fetch.create({
     baseURL: config.public.apiBase,
     headers: {
       Accept: 'application/json'
@@ -46,6 +48,10 @@ export default defineNuxtPlugin(() => {
       }
     }
   });
+
+  // Mocks ficam ativos por padrão para manter a interface estável sem API local.
+  // Para apontar ao backend real, defina NUXT_PUBLIC_USE_MOCKS=false.
+  const api = config.public.useMocks ? mockApi : httpApi;
 
   return {
     provide: {

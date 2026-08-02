@@ -1,6 +1,7 @@
 <script setup>
 import { useLayout } from '@/layouts/composables/layout';
 import { computed } from 'vue';
+import { ChevronDown } from '@lucide/vue';
 
 const { layoutState, isDesktop } = useLayout();
 
@@ -60,14 +61,16 @@ const onMouseEnter = () => {
     <li :class="{ 'layout-root-menuitem': root, 'active-menuitem': isActive }">
         <div v-if="root && item.visible !== false" class="layout-menuitem-root-text">{{ item.label }}</div>
         <a v-if="(!item.to || item.items) && item.visible !== false" :href="item.url" @click="itemClick($event, item)" :class="item.class" :target="item.target" :rel="item.target === '_blank' ? 'noopener noreferrer' : null" tabindex="0" @mouseenter="onMouseEnter">
-            <i :class="item.icon" class="layout-menuitem-icon" />
+            <component v-if="typeof item.icon !== 'string'" :is="item.icon" :size="18" class="layout-menuitem-icon" />
+            <i v-else :class="item.icon" class="layout-menuitem-icon" />
             <span class="layout-menuitem-text">{{ item.label }}</span>
-            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items" />
+            <ChevronDown v-if="item.items" :size="15" class="layout-submenu-toggler" />
         </a>
         <router-link v-if="item.to && !item.items && item.visible !== false" @click="itemClick($event, item)" exactActiveClass="active-route" :class="item.class" tabindex="0" :to="item.to" :target="item.target" :rel="item.target === '_blank' ? 'noopener noreferrer' : null" @mouseenter="onMouseEnter">
-            <i :class="item.icon" class="layout-menuitem-icon" />
+            <component v-if="typeof item.icon !== 'string'" :is="item.icon" :size="18" class="layout-menuitem-icon" />
+            <i v-else :class="item.icon" class="layout-menuitem-icon" />
             <span class="layout-menuitem-text">{{ item.label }}</span>
-            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items" />
+            <ChevronDown v-if="item.items" :size="15" class="layout-submenu-toggler" />
         </router-link>
         <Transition v-if="item.items && item.visible !== false" name="layout-submenu">
             <ul v-show="root ? true : isActive" class="layout-submenu">

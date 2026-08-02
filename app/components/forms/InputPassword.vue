@@ -1,6 +1,6 @@
 <template>
   <div :class="wrapperClass">
-    <label v-if="label" :for="id" :class="`block text-md font-bold text-gray-600 mb-2 ${labelClass}`">
+    <label v-if="label" :for="id" :class="`block mb-2 text-sm font-semibold text-[#172b4d] ${labelClass}`">
       {{ label }}<span v-if="required" class="text-red-500 ml-0.5">*</span>
     </label>
     <InputText
@@ -13,6 +13,9 @@
       :name="name"
       :id="id"
       :autocomplete="autocomplete"
+      :showIcon="showIcon"
+      :icon="icon"
+      :iconPosition="iconPosition"
       :inputClass="inputClass"
       :minlength="8"
       @input="onInput"
@@ -57,6 +60,9 @@ const props = withDefaults(defineProps<{
   id?: string;
   autocomplete?: string;
   inputClass?: string;
+  showIcon?: boolean;
+  icon?: string | object | Function;
+  iconPosition?: 'left' | 'right';
   wrapperClass?: string;
   label?: string;
   labelClass?: string;
@@ -71,6 +77,9 @@ const props = withDefaults(defineProps<{
   id: undefined,
   autocomplete: 'current-password',
   inputClass: '',
+  showIcon: false,
+  icon: '',
+  iconPosition: 'left',
   wrapperClass: '',
   label: '',
   labelClass: '',

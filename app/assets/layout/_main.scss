@@ -11,3 +11,168 @@
     flex: 1 1 auto;
     padding-bottom: 2rem;
 }
+
+.layout-wrapper.layout-client {
+    min-height: 100vh;
+    background: #eef1f5;
+}
+
+.layout-client .layout-main-container {
+    margin-left: var(--client-sidebar-width);
+    padding: 6.5rem 3rem 0;
+    background: #eef1f5;
+    min-width: 0;
+}
+
+.layout-client .layout-main {
+    width: min(100%, 1648px);
+    max-width: 1648px;
+    margin-inline: auto;
+}
+
+.layout-client .layout-footer {
+    width: min(100%, 1648px);
+    max-width: 1648px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 639px) {
+    .layout-client .layout-main :is(input:not([type='checkbox']):not([type='radio']), select, textarea, .p-select, .p-password-input) {
+        min-height: 52px;
+    }
+
+    .layout-client .layout-main :is(button, a)[class*='rounded'] {
+        min-height: 52px;
+    }
+}
+
+.client-mobile-nav {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .layout-client.client-sidebar-compact .layout-main-container {
+        margin-left: 0;
+        padding-left: calc(var(--client-sidebar-compact-width) + 2rem);
+        padding-right: 3rem;
+    }
+
+    .layout-client.client-sidebar-compact .layout-main {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .layout-client.client-sidebar-compact .layout-footer {
+        width: min(100%, 1648px);
+    }
+}
+
+@media (max-width: 1000px) {
+    .layout-client .layout-main-container {
+        margin-left: 0;
+        padding: 6.75rem 1.25rem 7.75rem;
+    }
+
+    .layout-client .layout-footer {
+        width: 100%;
+        max-width: none;
+    }
+
+    .client-mobile-nav {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 997;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
+        min-height: 6rem;
+        padding: 0.65rem 0 calc(0.65rem + env(safe-area-inset-bottom));
+        border-top: 1px solid #e5eaf1;
+        border-radius: 1.35rem 1.35rem 0 0;
+        background: #fff;
+    }
+
+    .client-mobile-nav-content {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        margin: 0 1.25rem;
+    }
+
+    .client-mobile-more-panel {
+        position: fixed;
+        right: 1.25rem;
+        bottom: calc(6rem + env(safe-area-inset-bottom) + 0.75rem);
+        left: auto;
+        z-index: 1000;
+        display: flex;
+        width: min(17rem, calc(100vw - 2.5rem));
+        flex-direction: column;
+        padding: 0.6rem;
+        border: 1px solid #e5eaf1;
+        border-radius: 1.1rem;
+        background: #fff;
+    }
+
+    .client-mobile-more-item {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-height: 3.4rem;
+        padding: 0.8rem;
+        border-radius: 0.75rem;
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 650;
+    }
+
+    .client-mobile-more-item:hover { background: #f1f4f9; color: #172554; }
+    .client-mobile-more-item svg { color: #64748b; }
+    .client-mobile-more-item span { white-space: nowrap; }
+
+    .client-mobile-more-enter-active,
+    .client-mobile-more-leave-active {
+        transition: opacity 170ms ease, transform 170ms ease;
+    }
+
+    .client-mobile-more-enter-from,
+    .client-mobile-more-leave-to {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    .client-mobile-nav-item {
+        display: flex;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 650;
+        line-height: 1.2;
+        transform: translateY(3px);
+    }
+
+    .client-mobile-nav-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 0.75rem;
+    }
+
+    .client-mobile-nav-item.is-active { color: var(--client-brand); }
+    .client-mobile-nav-item.is-active .client-mobile-nav-icon { background: var(--client-brand); color: #fff; }
+    .client-mobile-nav-item.is-open:not(.is-active) { color: #475569; }
+    .client-mobile-nav-item.is-open:not(.is-active) .client-mobile-nav-icon { background: #f1f4f9; color: #475569; }
+    .client-mobile-nav-item.is-profile .client-mobile-nav-icon svg { width: 1.68rem; height: 1.68rem; }
+}

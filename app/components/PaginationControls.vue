@@ -57,14 +57,14 @@ const goToNextPage = () => {
 
 <template>
     <div v-if="lastPage > 1" class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p v-if="showSummary" class="text-sm text-gray-500 dark:text-gray-400">
+        <p v-if="showSummary" class="text-sm font-semibold" style="color: #334155 !important; opacity: 0.8 !important;">
             Página {{ currentPage }} de {{ lastPage }}
         </p>
 
         <div class="flex items-center gap-2">
             <button
                 type="button"
-                class="w-9 h-9 rounded-lg border border-gray-200 dark:border-surface-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-9 h-9 rounded-lg !border-[#94a3b8] dark:border-surface-700 !text-[#334155] dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-surface-700 disabled:opacity-100 disabled:!text-[#64748b] disabled:cursor-not-allowed"
                 :disabled="!canGoToPreviousPage || loading"
                 @click="goToPreviousPage"
             >
@@ -79,7 +79,7 @@ const goToNextPage = () => {
                     'w-9 h-9 rounded-lg border text-sm font-medium transition-colors',
                     page === currentPage
                         ? 'bg-it-primary border-it-primary text-white'
-                        : 'border-gray-200 dark:border-surface-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-700'
+                        : '!border-[#94a3b8] dark:border-surface-700 !text-[#334155] dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-surface-700'
                 ]"
                 :disabled="loading"
                 @click="goToPage(page)"
@@ -89,7 +89,7 @@ const goToNextPage = () => {
 
             <button
                 type="button"
-                class="w-9 h-9 rounded-lg border border-gray-200 dark:border-surface-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-9 h-9 rounded-lg !border-[#94a3b8] dark:border-surface-700 !text-[#334155] dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-surface-700 disabled:opacity-100 disabled:!text-[#64748b] disabled:cursor-not-allowed"
                 :disabled="!canGoToNextPage || loading"
                 @click="goToNextPage"
             >

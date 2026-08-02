@@ -14,10 +14,11 @@ export const useVehicleActions = () => {
                 : 'Tem certeza que deseja excluir este veículo?',
             header: 'Confirmar Exclusão',
             icon: 'pi pi-exclamation-triangle',
-            rejectLabel: 'Não',
-            acceptLabel: 'Sim',
-            rejectClass: 'p-button-danger',
-            acceptClass: 'p-button-success',
+            dismissableMask: true,
+            rejectLabel: 'Cancelar',
+            acceptLabel: 'Excluir veículo',
+            rejectClass: 'p-button-secondary',
+            acceptClass: 'p-button-danger',
             reject: () => {
                 console.log('Exclusão cancelada');
             },

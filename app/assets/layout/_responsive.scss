@@ -2,8 +2,8 @@
     .layout-main,
     .landing-wrapper {
         width: 1504px;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
@@ -63,7 +63,7 @@
     }
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1000px) {
     .blocked-scroll {
         overflow: hidden;
     }
@@ -106,5 +106,10 @@
                 display: block;
             }
         }
+    }
+
+    .layout-wrapper.layout-client .layout-main-container {
+        padding-right: 1.25rem;
+        padding-left: 1.25rem;
     }
 }

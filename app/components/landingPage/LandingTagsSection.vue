@@ -42,7 +42,6 @@ defineEmits<{
                         :class="[tag.tone, { 'tag-carousel-card--active': activeTagIndex === index }]"
                         :tabindex="0"
                         @click="$emit('select-tag', index)"
-                        @mouseenter="$emit('select-tag', index)"
                         @keydown.enter="$emit('select-tag', index)"
                     >
                         <div class="tag-carousel-card__indicator" :class="tag.tone">

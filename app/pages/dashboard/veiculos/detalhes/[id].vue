@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { onBeforeRouteUpdate } from 'vue-router';
+import { CalendarDays, CarFront, List, MapPin, Pencil, ShoppingBag, Tag, Trash2, UserRound } from '@lucide/vue';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
-import ButtonLink from '~/components/ButtonLink.vue';
-import Button from '~/components/forms/Button.vue';
-import PrimeButton from 'primevue/button';
 import { useVehicleActions } from '~/composables/useVehicleActions';
 import { useToast } from 'primevue/usetoast';
 import { getUsageProfileLabel, getVehicleTypeLabel } from '~/utils/vehicleEnums';
@@ -61,7 +59,7 @@ const mapVehicleData = (vehicle: Record<string, any>) => {
         dataCadastro: vehicle.created_at || '',
         etiqueta: vehicle.etiqueta || {
             codigo: 'PIT' + vehicle.id,
-            tipo: vehicle.type_label?.toUpperCase() || 'Indisponível',
+            tipo: (getVehicleTypeLabel(vehicle.type) || vehicle.type_label || 'Indisponível').toUpperCase(),
             imagem: vehicle.tag_color
                 ? assetWithBase(`/images/dashboard/etiquetas/${vehicle.tag_color}.svg`)
                 : assetWithBase('/images/dashboard/etiquetas/azul.svg')
@@ -82,7 +80,7 @@ const fetchVehicleDetails = async (id?: string | string[]) => {
     try {
         const { $api } = useNuxtApp();
         const response = await $api(`/vehicles/${vehicleId}`) as any;
-        const vehicle = response?.data || response;
+        const vehicle = response?.data?.data || response?.data?.vehicle || response?.data || response;
         rawVehicle.value = vehicle;
         vehicleData.value = mapVehicleData(vehicle);
     } catch (error: any) {
@@ -131,149 +129,90 @@ onBeforeRouteUpdate((to) => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="space-y-6 md:space-y-7">
         <!-- Hero -->
         <HeroSection
-            title="Detalhes do Veículo"
-            :subtitle="`Placa: ${vehicleData.placa}`"
+            title="Detalhes do veículo"
+            subtitle="Consulte os dados e as etiquetas vinculadas a este veículo."
             :showButton="true"
-            buttonLabel="Voltar à pagina anterior"
+            buttonLabel="Voltar para meus veículos"
             buttonLinkBack
             buttonIcon="pi pi-arrow-left"
         />
 
-        <!-- Grid com Informações e Etiqueta -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Informações do Veículo -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-full">
-                    <h2 class="text-2xl! font-bold text-gray-900 mb-6">Informações do Veículo</h2>
-                    
-                    <div class="space-y-5">
-                        <!-- Placa -->
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-it-primary shrink-0">
-                                <i class="pi pi-car"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-600 mb-1">Placa</p>
-                                <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900 wrap-break-word uppercase">{{ vehicleData.placa }}</p>
-                            </div>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                <div class="mb-6 flex h-10 items-center justify-between gap-4">
+                    <div class="flex h-10 items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf0ff] text-[#1f46ee]">
+                            <CarFront :size="20" :stroke-width="1.9" aria-hidden="true" />
                         </div>
-
-                        <!-- Tipo -->
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
-                                <i class="pi pi-list"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-600 mb-1">Tipo</p>
-                                <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900">{{ vehicleData.tipo }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Registro -->
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
-                                <i class="pi pi-map-marker"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-600 mb-1">Registro</p>
-                                <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900">{{ vehicleData.registro }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Perfil de Uso -->
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600 shrink-0">
-                                <i class="pi pi-user"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-600 mb-1">Perfil de Uso</p>
-                                <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900">{{ vehicleData.perfilUso }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Data de Cadastro -->
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                                <i class="pi pi-calendar"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-600 mb-1">Data de Cadastro</p>
-                                <Skeleton v-if="loading" width="100%" height="16px" class="mb-1" />
-                                <p v-else class="font-semibold text-gray-900">{{ vehicleData.dataCadastro }}</p>
-                                <!-- Botões de Ação -->
-                                <div class="border-t border-gray-200 pt-6 mt-6 flex flex-col gap-3">
-                                    <PrimeButton @click="handleEditar" label="Editar" icon="pi pi-pencil" severity="info" outlined />
-                                    <PrimeButton @click="handleExcluirVeiculo" :disabled="loading" :label="loading ? 'Excluindo...' : 'Excluir veículo'" icon="pi pi-trash" severity="danger" />
-                                </div>
-                            </div>
-                        </div>
+                        <h2 class="relative -top-3 leading-none text-xl! font-semibold text-[#172b4d] mb-0!">Informações do veículo</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition-colors hover:border-[#1f46ee] hover:bg-[#eef2ff] hover:text-[#1f46ee]" aria-label="Editar veículo" title="Editar veículo" @click="handleEditar">
+                            <Pencil :size="17" :stroke-width="2" aria-hidden="true" />
+                        </button>
+                        <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-white text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Excluir veículo" title="Excluir veículo" :disabled="loading" @click="handleExcluirVeiculo">
+                            <Trash2 :size="17" :stroke-width="2" aria-hidden="true" />
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Kit de Etiquetas -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 h-full">
-                    <h2 class="text-center text-2xl! font-bold text-it-primary mb-8">Meu Kit de Etiquetas Identifica Trânsito</h2>
-                    
-                    <div class="flex flex-col items-center">
-                        <!-- Card da Etiqueta -->
-                        <div class="border-2 border-gray-900 rounded-2xl p-8 w-full max-w-sm bg-linear-to-b from-gray-50 to-white mb-8">
-                            <p class="text-center text-sm font-semibold text-gray-900 mb-2">IDENTIFICA</p>
-                            <p class="text-center text-sm font-semibold text-gray-900 mb-6">TRÂNSITO</p>
-                            
-                            <!-- QR Code -->
-                            <div class="flex justify-center mb-6">
-                                <img
-                                    :src="vehicleData.etiqueta.imagem"
-                                    :alt="vehicleData.etiqueta.tipo"
-                                    class="w-40 h-40 object-contain"
-                                />
-                            </div>
-
-                            <p class="text-center text-xs font-semibold text-gray-900 mb-1">{{ vehicleData.etiqueta.codigo || 'N/A'}}</p>
-                            <Skeleton v-if="loading" width="80px" height="16px" class="mx-auto mb-1" />
-                            <p v-else class="text-center text-xs text-gray-600">{{ vehicleData.etiqueta.tipo }}</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <article v-for="item in [
+                        { label: 'Placa', value: vehicleData.placa, icon: CarFront, uppercase: true },
+                        { label: 'Tipo do veículo', value: vehicleData.tipo, icon: List },
+                        { label: 'Registro', value: vehicleData.registro, icon: MapPin },
+                        { label: 'Perfil de uso', value: vehicleData.perfilUso, icon: UserRound },
+                        { label: 'Data de cadastro', value: vehicleData.dataCadastro, icon: CalendarDays }
+                    ]" :key="item.label" class="flex min-h-[82px] items-center gap-3 rounded-xl border border-slate-200 bg-[#fafafa] px-4 py-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500">
+                            <component :is="item.icon" :size="18" :stroke-width="1.8" aria-hidden="true" />
                         </div>
-
-                        <!-- Informações da Etiqueta -->
-                        <div class="text-center mb-8 w-full">
-                            <p class="text-sm text-gray-600 mb-1">Veículo: 
-                                <Skeleton v-if="loading" width="80px" height="16px" class="mx-auto mb-1" />
-                                <span v-else class="uppercase">{{ vehicleData.placa }}</span>
-                            </p>
-                            <p class="text-sm font-semibold text-gray-900 mb-4">
-                                Código do Kit: <span class="text-it-primary">{{ vehicleData.etiqueta.codigo }}</span>
-                            </p>
-                            <p v-if="canPurchaseTag" class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
-                                Disponível para compra
-                            </p>
-                            <p v-else class="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
-                                Etiqueta já adquirida para esta placa
-                            </p>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium text-slate-500 mb-1">{{ item.label }}</p>
+                            <Skeleton v-if="loading" width="7rem" height="15px" />
+                            <p v-else :class="{ 'uppercase': item.uppercase }" class="truncate text-base font-semibold leading-tight text-[#172b4d] mb-0!">{{ item.value || '—' }}</p>
                         </div>
-
-                        <!-- Botão Comprar -->
-                        <Button
-                            v-if="canPurchaseTag"
-                            @click="handleComprarEtiqueta"
-                            variant="primary"
-                            size="md"
-
-                        >
-                            <i class="pi pi-shopping-cart"></i>
-                            Comprar Kit (2 Etiquetas)
-                        </Button>
-                    </div>
+                    </article>
                 </div>
-            </div>
+            </section>
+
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                <div class="mb-6 flex h-10 items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf0ff] text-[#1f46ee]">
+                        <Tag :size="19" :stroke-width="1.9" aria-hidden="true" />
+                    </div>
+                    <h2 class="relative -top-3 leading-none text-xl! font-semibold text-[#172b4d] mb-0!">Kit de etiquetas</h2>
+                </div>
+
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-full max-w-[17rem] rounded-2xl border border-slate-300 bg-[#fafafa] p-6">
+                        <p class="text-xs font-semibold tracking-[0.1em] text-[#172b4d]">IDENTIFICA TRÂNSITO</p>
+                        <div class="my-5 flex justify-center">
+                            <img :src="vehicleData.etiqueta.imagem" :alt="vehicleData.etiqueta.tipo" class="h-36 w-36 object-contain" />
+                        </div>
+                        <Skeleton v-if="loading" width="6rem" height="15px" class="mx-auto" />
+                        <template v-else>
+                            <p class="text-sm font-semibold text-[#172b4d] mb-1">{{ vehicleData.etiqueta.codigo || 'Indisponível' }}</p>
+                            <p class="text-xs text-slate-500 mb-0!">{{ vehicleData.etiqueta.tipo }}</p>
+                        </template>
+                    </div>
+
+                    <div class="mt-5 space-y-1">
+                        <p class="text-sm text-slate-600 mb-0!">Veículo: <span class="font-semibold uppercase text-[#172b4d]">{{ vehicleData.placa || '—' }}</span></p>
+                        <p class="text-sm text-slate-600 mb-0!">Código do kit: <span class="font-semibold text-[#172b4d]">{{ vehicleData.etiqueta.codigo || '—' }}</span></p>
+                    </div>
+                    <p :class="canPurchaseTag ? 'bg-[#eaf0ff] text-[#1f46ee]' : 'bg-slate-200 text-slate-600'" class="mt-4 inline-flex rounded-full px-3 py-1.5 text-xs font-semibold">
+                        {{ canPurchaseTag ? 'Disponível para compra' : 'Etiqueta já adquirida para esta placa' }}
+                    </p>
+                    <button v-if="canPurchaseTag" type="button" class="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-[#1f46ee] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1739d4]" @click="handleComprarEtiqueta">
+                        <ShoppingBag :size="17" :stroke-width="2" aria-hidden="true" />
+                        Comprar kit
+                    </button>
+                </div>
+            </section>
         </div>
     </div>
 </template>

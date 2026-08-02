@@ -41,7 +41,7 @@ const computedClass = computed(() => {
 
   // Variant styles
   if (props.variant === 'primary') {
-    classes.push('bg-it-primary text-white hover:bg-it-secondary disabled:bg-gray-300');
+    classes.push('bg-it-primary text-white hover:bg-[#1739d4] disabled:bg-gray-300');
   } else if (props.variant === 'secondary') {
     classes.push('bg-it-secondary text-white hover:bg-it-primary disabled:bg-gray-300');
   } else if (props.variant === 'outline') {

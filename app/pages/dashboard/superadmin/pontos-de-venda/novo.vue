@@ -3,6 +3,7 @@ import HeroSection from '~/components/dashboard/HeroSection.vue';
 import FormInputText from '~/components/forms/InputText.vue';
 import Button from '~/components/forms/Button.vue';
 import { useToast } from 'primevue/usetoast';
+import InputSwitch from 'primevue/inputswitch';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Novo Ponto de Venda - SuperAdmin | Identifica Trânsito' });
@@ -53,27 +54,27 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Novo Ponto de Venda"
-            subtitle="Cadastre um novo ponto de venda ou retirada."
-            greeting="SuperAdmin"
+            subtitle="Adicione um novo local de venda ou retirada à sua rede."
+            greeting="Expansão da rede"
             :showButton="true"
             buttonLabel="Voltar para Pontos de Venda"
             buttonLink="/dashboard/superadmin/pontos-de-venda"
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div class="w-full">
+            <div class="admin-user-form-shell pdv-form-shell bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                 <div class="mb-8">
                     <h1 class="text-3xl! font-bold text-it-primary mb-2">Cadastrar Ponto de Venda</h1>
                     <p class="text-gray-600">Preencha as informações para criar um novo ponto de venda.</p>
                 </div>
 
-                <form @submit.prevent="handleSubmit" class="space-y-8">
+                <form @submit.prevent="handleSubmit" class="admin-user-form-grid space-y-8">
                     <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Informações do Ponto</h2>
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-shop"></i></span>Informações do Ponto</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
@@ -152,18 +153,20 @@ const handleSubmit = async () => {
                             :disabled="loading"
                         />
 
-                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                            <input
-                                v-model="form.active"
-                                type="checkbox"
-                                class="rounded border-gray-300 text-it-primary focus:ring-it-primary"
-                                :disabled="loading"
-                            />
-                            Ponto ativo
-                        </label>
                     </div>
 
-                    <div class="border-t border-gray-200"></div>
+                    <div class="space-y-5">
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-verified"></i></span>Status do Ponto</h2>
+                        <p class="text-sm text-gray-500">Defina se este ponto de venda ficará disponível para atendimento e retirada.</p>
+
+                        <div class="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3.5">
+                            <div>
+                                <strong class="block text-[14px] font-semibold text-gray-900 md:text-[14.5px]" style="font-family: 'Figtree', sans-serif;">Ponto ativo</strong>
+                                <small class="text-gray-500">Permitir operações neste local.</small>
+                            </div>
+                            <InputSwitch v-model="form.active" :disabled="loading" />
+                        </div>
+                    </div>
 
                     <Button type="submit" fullWidth :loading="loading" size="lg">
                         <i v-if="!loading" class="pi pi-check"></i>
@@ -174,3 +177,12 @@ const handleSubmit = async () => {
         </div>
     </div>
 </template>
+
+<style scoped>
+:global(.layout-admin .admin-page .pdv-form-shell.pdv-form-shell input:not([type='checkbox']):not([type='radio']):focus),
+:global(.layout-admin .admin-page .pdv-form-shell.pdv-form-shell .p-select:focus-within) {
+    border: 1px solid #64748b !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+</style>

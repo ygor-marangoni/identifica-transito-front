@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import { handleLogout } from '@/utils/general';
 import AppMenuItem from './AppMenuItem.vue';
+import {
+    CarFront, CircleHelp, Cog, House, Info, LayoutDashboard, Phone,
+    List, MapPin, Tag, Ticket, UsersRound
+} from '@lucide/vue';
 
 const auth = useAuth();
 auth.init();
@@ -41,42 +43,51 @@ const handleUnreadChanged = () => {
 
 const clientModel = ref([
     {
-        label: 'Dashboard',
+        label: 'VISÃO GERAL',
         items: [
             {
-                label: 'Resumo',
-                icon: 'pi pi-fw pi-home',
+                label: 'Início',
+                icon: LayoutDashboard,
                 to: '/dashboard'
             }
         ]
     },
     {
-        label: 'Acesso Rápido',
-        path: '/',
+        label: 'VEÍCULOS',
         items: [
             {
                 label: 'Meus Veículos',
-                icon: 'pi pi-fw pi-car',
+                icon: CarFront,
                 to: '/dashboard/veiculos'
             },
             {
-                label: 'Compre Etiquetas',
-                icon: 'pi pi-fw pi-shopping-cart',
+                label: 'Minhas Etiquetas',
+                icon: Tag,
                 to: '/dashboard/etiquetas'
-            },
+            }
+        ]
+    },
+    {
+        label: 'PEDIDOS',
+        items: [
             {
                 label: 'Meus Pedidos',
-                icon: 'pi pi-fw pi-list',
+                icon: List,
                 to: '/dashboard/pedidos'
-            },
+            }
+        ]
+    },
+    {
+        label: 'CONTA E SUPORTE',
+        items: [
             {
                 label: 'Suporte',
-                icon: 'pi pi-fw pi-question-circle',
+                icon: CircleHelp,
                 to: '/dashboard/suporte'
             },
             {
                 label: 'Configurações',
-                icon: 'pi pi-fw pi-cog',
+                icon: Cog,
                 to: '/dashboard/configuracoes'
             }
         ]
@@ -86,7 +97,7 @@ const clientModel = ref([
         items: [
             {
                 label: 'Sobre o Projeto',
-                icon: 'pi pi-fw pi-info-circle',
+                icon: Info,
                 to: '/',
                 target: '_blank',
                 class: 'rotated-icon'
@@ -97,61 +108,76 @@ const clientModel = ref([
 
 const superAdminModel = ref([
     {
-        label: 'Dashboard',
+        label: 'VISÃO GERAL',
         items: [
             {
-                label: 'Resumo',
-                icon: 'pi pi-fw pi-home',
+                label: 'Início',
+                icon: LayoutDashboard,
                 to: '/dashboard/superadmin'
             }
         ]
     },
     {
-        label: 'Gerenciamento',
+        label: 'OPERAÇÃO',
         items: [
             {
-                label: 'Usuários',
-                icon: 'pi pi-fw pi-users',
-                to: '/dashboard/superadmin/usuarios'
-            },
-            {
-                label: 'Veículos',
-                icon: 'pi pi-fw pi-car',
-                to: '/dashboard/superadmin/veiculos'
-            },
-            {
-                label: 'Etiquetas',
-                icon: 'pi pi-fw pi-tag',
-                to: '/dashboard/superadmin/etiquetas'
-            },
-            {
                 label: 'Pedidos',
-                icon: 'pi pi-fw pi-list',
+                icon: List,
                 to: '/dashboard/superadmin/pedidos'
             },
             {
-                label: 'Cupom de Desconto',
-                icon: 'pi pi-fw pi-ticket',
-                to: '/dashboard/superadmin/cupons-de-desconto'
+                label: 'Veículos',
+                icon: CarFront,
+                to: '/dashboard/superadmin/veiculos'
+            }
+        ]
+    },
+    {
+        label: 'REDE E ACESSOS',
+        items: [
+            {
+                label: 'Usuários',
+                icon: UsersRound,
+                to: '/dashboard/superadmin/usuarios'
             },
             {
                 label: 'Pontos de Venda',
-                icon: 'pi pi-fw pi-map-marker',
+                icon: MapPin,
                 to: '/dashboard/superadmin/pontos-de-venda'
+            }
+        ]
+    },
+    {
+        label: 'COMERCIAL',
+        items: [
+            {
+                label: 'Etiquetas',
+                icon: Tag,
+                to: '/dashboard/superadmin/etiquetas'
             },
             {
+                label: 'Cupom de Desconto',
+                icon: Ticket,
+                to: '/dashboard/superadmin/cupons-de-desconto'
+            }
+        ]
+    },
+    {
+        label: 'CONTEÚDO E SUPORTE',
+        items: [
+            {
                 label: 'FAQ',
-                icon: 'pi pi-fw pi-question-circle',
+                icon: CircleHelp,
                 to: '/dashboard/superadmin/faq'
             }
         ]
     },
     {
-        label: 'Projeto',
+        label: 'PROJETO',
         items: [
             {
                 label: 'Sobre o Projeto',
-                icon: 'pi pi-fw pi-info-circle',
+                icon: Info,
                 to: '/',
                 target: '_blank',
                 class: 'rotated-icon'
@@ -162,41 +188,46 @@ const superAdminModel = ref([
 
 const adminModel = ref([
     {
-        label: 'Dashboard',
+        label: 'VISÃO GERAL',
         items: [
             {
-                label: 'Resumo',
-                icon: 'pi pi-fw pi-home',
+                label: 'Início',
+                icon: LayoutDashboard,
                 to: '/dashboard/admin'
             }
         ]
     },
     {
-        label: 'Gerenciamento',
+        label: 'OPERAÇÃO',
         items: [
             {
-                label: 'Usuários',
-                icon: 'pi pi-fw pi-users',
-                to: '/dashboard/admin/usuarios'
-            },
-            {
-                label: 'Veículos',
-                icon: 'pi pi-fw pi-car',
-                to: '/dashboard/admin/veiculos'
-            },
-            {
                 label: 'Pedidos',
-                icon: 'pi pi-fw pi-list',
+                icon: List,
                 to: '/dashboard/admin/pedidos'
             }
         ]
     },
     {
-        label: 'Projeto',
+        label: 'GESTÃO DO PDV',
+        items: [
+            {
+                label: 'Usuários',
+                icon: UsersRound,
+                to: '/dashboard/admin/usuarios'
+            },
+            {
+                label: 'Veículos',
+                icon: CarFront,
+                to: '/dashboard/admin/veiculos'
+            }
+        ]
+    },
+    {
+        label: 'PROJETO',
         items: [
             {
                 label: 'Sobre o Projeto',
-                icon: 'pi pi-fw pi-info-circle',
+                icon: Info,
                 to: '/',
                 target: '_blank',
                 class: 'rotated-icon'
@@ -210,8 +241,6 @@ const model = computed(() => {
     if (isAdmin.value) return adminModel.value;
     return clientModel.value;
 });
-
-const toast = useToast();
 
 onMounted(() => {
     fetchUnreadNotificationsCount();
@@ -239,32 +268,16 @@ onUnmounted(() => {
         </ul>
         
         <!-- Footer menu -->
-        <div class="border-t border-gray-200 p-4 space-y-2">
-            <!-- Notificar um motorista -->
-            <NuxtLink v-if="isClient" to="/dashboard/notificacoes-motoristas" class="flex items-center gap-3 px-4 py-3 bg-orange-100 border border-orange-300 text-orange-900 hover:bg-orange-200 rounded-lg transition-colors shadow-sm">
-                <span class="relative inline-flex items-center justify-center">
-                    <i class="pi pi-bell text-lg"></i>
-                    <span
-                        v-if="unreadNotificationsCount > 0"
-                        class="absolute -top-5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-bold"
-                    >
-                        {{ unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount }}
-                    </span>
+        <div v-if="isClient" class="client-sidebar-footer">
+            <NuxtLink to="/dashboard/notificacoes-motoristas" class="client-driver-notice">
+                <span class="client-driver-notice-icon">
+                    <Phone :size="20" :stroke-width="1.9" />
                 </span>
-                <span class="font-semibold">Notificar um motorista</span>
+                <span class="client-driver-notice-copy">
+                    <strong>Notificar um motorista</strong>
+                    <small>Envie um alerta direto.</small>
+                </span>
             </NuxtLink>
-
-            <!-- Meu Perfil -->
-            <NuxtLink to="/dashboard/perfil" class="flex items-center gap-3 px-4 py-3 text-it-primary hover:bg-blue-50 rounded-lg transition-colors">
-                <i class="pi pi-user text-lg"></i>
-                <span class="font-medium">Meu Perfil</span>
-            </NuxtLink>
-            
-            <!-- Sair -->
-            <button @click="() => handleLogout(toast)" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                <i class="pi pi-sign-out text-lg"></i>
-                <span class="font-medium">Sair</span>
-            </button>
         </div>
     </div>
 </template>

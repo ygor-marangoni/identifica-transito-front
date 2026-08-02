@@ -1,12 +1,38 @@
 <script setup>
 import { useLayout } from '@/layouts/composables/layout';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppMenu from './AppMenu.vue';
+import { PanelLeft } from '@lucide/vue';
 
-const { layoutState, isDesktop, hasOpenOverlay } = useLayout();
+const { layoutState, isDesktop, hasOpenOverlay, toggleMenu } = useLayout();
 const route = useRoute();
 const sidebarRef = ref(null);
+const auth = useAuth();
+auth.init();
+const config = useRuntimeConfig();
+const isClient = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'client' || type === 'cliente' || type === 3;
+});
+const isAdmin = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'admin' || type === 2 || route.path.startsWith('/dashboard/admin');
+});
+const isSuperAdmin = computed(() => {
+    const type = auth.user.value?.type;
+    return type === 'superAdmin' || type === 1 || route.path.startsWith('/dashboard/superadmin');
+});
+const usesProductLayout = computed(() => isClient.value || isAdmin.value || isSuperAdmin.value);
+const dashboardHome = computed(() => isSuperAdmin.value ? '/dashboard/superadmin' : isAdmin.value ? '/dashboard/admin' : '/dashboard');
+const toggleClientSidebar = () => {
+    if (usesProductLayout.value && isDesktop()) {
+        layoutState.clientSidebarCompact = !layoutState.clientSidebarCompact;
+        return;
+    }
+
+    toggleMenu();
+};
 let outsideClickListener = null;
 
 watch(
@@ -60,7 +86,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div ref="sidebarRef" class="layout-sidebar">
+    <div ref="sidebarRef" class="layout-sidebar" :class="{ 'client-sidebar-compact': usesProductLayout && layoutState.clientSidebarCompact }">
+        <div v-if="usesProductLayout" class="client-sidebar-brand">
+            <NuxtLink :to="dashboardHome" aria-label="Identifica Trânsito - resumo">
+                <img class="client-logo-full" :src="`${config.app.baseURL}images/logo-vertical.svg`.replace(/\/+/g, '/')" alt="Identifica Trânsito" />
+                <img class="client-logo-mark" :src="`${config.app.baseURL}images/logo-it-icon.svg`.replace(/\/+/g, '/')" alt="Identifica Trânsito" />
+            </NuxtLink>
+            <button
+                type="button"
+                class="client-sidebar-toggle"
+                :aria-label="layoutState.clientSidebarCompact ? 'Abrir barra lateral' : 'Minimizar barra lateral'"
+                :data-tooltip="layoutState.clientSidebarCompact ? 'Abrir barra lateral' : 'Minimizar barra lateral'"
+                @click="toggleClientSidebar"
+            >
+                <PanelLeft :size="20" :stroke-width="1.9" />
+            </button>
+        </div>
         <AppMenu />
     </div>
 </template>

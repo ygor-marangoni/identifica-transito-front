@@ -2,16 +2,20 @@
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
-import StatsCard from '~/components/superadmin/StatsCard.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
+import { BadgeCheck, Package } from '@lucide/vue';
 
 definePageMeta({ layout: 'dashboard' });
-
-useHead({ title: 'Usuários - Admin | Identifica Trânsito' });
+const route = useRoute();
+const isSuperAdminView = computed(() => route.path.startsWith('/dashboard/superadmin'));
+const usersBaseRoute = computed(() => isSuperAdminView.value ? '/dashboard/superadmin/usuarios' : '/dashboard/admin/usuarios');
+useHead({ title: computed(() => isSuperAdminView.value ? 'Usuários - SuperAdmin | Identifica Trânsito' : 'Usuários - Admin | Identifica Trânsito') });
 
 const { $api } = useNuxtApp();
 const confirm = useConfirm();
 const toast = useToast();
+const usersApiBase = computed(() => isSuperAdminView.value ? '/admin/users' : '/admin-pdv/users');
 
 const config = useRuntimeConfig();
 const assetWithBase = (path: string) => {
@@ -39,7 +43,7 @@ const userStats = ref({ active: 0, deleted: 0 });
 const fetchUserStats = async () => {
     loadingStats.value = true;
     try {
-        const res = await $api('/admin-pdv/users/totals') as any;
+        const res = await $api(`${usersApiBase.value}/totals`) as any;
         const data = res?.data ?? res;
         userStats.value.active = data?.active ?? 0;
         userStats.value.deleted = data?.deleted ?? 0;
@@ -54,14 +58,30 @@ const fetchUserStats = async () => {
 const users = ref<User[]>([]);
 const loading = ref(false);
 const search = ref('');
+const sortBy = ref('recent');
+const filtersOpen = ref(false);
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
 const pagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
+const userSortOptions = [
+    { label: 'Mais recentes', value: 'recent' }, { label: 'Mais antigos', value: 'oldest' },
+    { label: 'Nome: A–Z', value: 'name-asc' }, { label: 'Nome: Z–A', value: 'name-desc' },
+    { label: 'Mais veículos', value: 'vehicles-desc' }, { label: 'Mais etiquetas', value: 'tags-desc' }
+];
+const filteredUsers = computed(() => [...users.value].sort((first, second) => {
+    if (sortBy.value === 'name-asc') return first.name.localeCompare(second.name);
+    if (sortBy.value === 'name-desc') return second.name.localeCompare(first.name);
+    if (sortBy.value === 'oldest') return new Date(first.created_at).getTime() - new Date(second.created_at).getTime();
+    if (sortBy.value === 'vehicles-desc') return (second.vehicles_count ?? 0) - (first.vehicles_count ?? 0);
+    if (sortBy.value === 'tags-desc') return (second.tag_purchases_count ?? 0) - (first.tag_purchases_count ?? 0);
+    return new Date(second.created_at).getTime() - new Date(first.created_at).getTime();
+}));
 
 const fetchUsers = async (page = 1) => {
     loading.value = true;
     try {
         const params = new URLSearchParams({ page: String(page), per_page: '15' });
         if (search.value) params.set('q', search.value);
-        const res = await $api(`/admin-pdv/users?${params}`) as any;
+        const res = await $api(`${usersApiBase.value}?${params}`) as any;
         users.value = Array.isArray(res?.data) ? res.data : [];
         pagination.value.currentPage = Number(res?.meta?.current_page ?? page);
         pagination.value.lastPage = Number(res?.meta?.last_page ?? 1);
@@ -82,6 +102,7 @@ const onSearch = () => {
     pagination.value.currentPage = 1;
     fetchUsers(1);
 };
+const scheduleSearch = () => { if (searchDebounce) clearTimeout(searchDebounce); searchDebounce = setTimeout(onSearch, 280); };
 
 const typeLabel = (type: string | number) => {
     if (type === 'superAdmin' || type === 1) return { label: 'SuperAdmin', class: 'bg-purple-50 text-purple-700' };
@@ -106,7 +127,7 @@ const handleDelete = (user: User) => {
         acceptClass: 'p-button-danger',
         accept: async () => {
             try {
-                await $api(`/admin-pdv/users/${user.id}`, { method: 'DELETE' });
+                await $api(`${usersApiBase.value}/${user.id}`, { method: 'DELETE' });
                 toast.add({ severity: 'success', summary: 'Sucesso!', detail: 'Usuário excluído com sucesso.', life: 3000 });
                 fetchUserStats();
                 fetchUsers(pagination.value.currentPage);
@@ -125,55 +146,32 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Usuários"
-            subtitle="Gerencie todos os usuários cadastrados na plataforma"
-            greeting="Admin"
+            :subtitle="isSuperAdminView ? 'Gerencie todos os níveis de acesso cadastrados na plataforma.' : 'Gerencie os acessos dos usuários vinculados ao seu ponto de venda.'"
+            :greeting="isSuperAdminView ? 'Acessos da plataforma' : 'Acessos do seu PDV'"
             :showButton="true"
             buttonLabel="Novo Usuário"
-            buttonLink="/dashboard/admin/usuarios/novo"
+            :buttonLink="`${usersBaseRoute}/novo`"
             buttonIcon="pi pi-plus"
         />
 
-        <!-- Stats Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <StatsCard
-                title="Usuários Ativos"
-                :value="userStats.active"
-                icon="pi pi-users"
-                color="blue"
-                :loading="loadingStats"
-            />
-            <StatsCard
-                title="Usuários Excluídos"
-                :value="userStats.deleted"
-                icon="pi pi-user-minus"
-                color="orange"
-                :loading="loadingStats"
-            />
-        </section>
-
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <!-- Search -->
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-                <div class="relative flex-1 min-w-60">
+        <div class="admin-orders-page bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div class="mb-4 flex flex-col gap-4 border-b border-gray-100 pb-5 lg:flex-row lg:justify-between"><div><h2 class="text-[#172b4d]" style="margin:0 0 6px;font-size:25px;font-weight:600;line-height:1.1;">Gerenciamento de usuários</h2><p class="text-[#52667f]" style="margin:0;font-size:15px;line-height:1.35;">Acompanhe os usuários cadastrados na plataforma.</p></div><div class="flex items-center gap-4 self-start text-xs font-semibold uppercase tracking-wide text-[#52667f] lg:self-end"><span class="inline-flex items-center gap-1.5"><Package :size="15" class="text-[#1f46ee]" />{{ pagination.total }} usuários</span><span class="inline-flex items-center gap-1.5"><BadgeCheck :size="15" class="text-[#16803c]" />{{ userStats.active }} ativos</span></div></div>
+            <button type="button" class="mb-4 flex w-full items-center justify-between border-b border-gray-100 pb-4 text-[15px] font-medium text-[#52667f] md:hidden" @click="filtersOpen = !filtersOpen"><span><i class="pi pi-filter mr-2 text-xs"></i>Filtros</span><i :class="filtersOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs"></i></button>
+            <div :class="[filtersOpen ? 'max-h-[14rem] mb-6 border-b border-gray-100 pb-5 opacity-100' : 'max-h-0 overflow-hidden opacity-0 pointer-events-none', 'admin-orders-filters grid gap-3 transition-[max-height,opacity,margin,padding] duration-300 md:max-h-none md:overflow-visible md:pointer-events-auto md:mb-6 md:border-b md:border-gray-100 md:pb-5 md:opacity-100 md:grid-cols-2 xl:grid-cols-[minmax(25rem,1.45fr)_minmax(18rem,1fr)] xl:items-center']">
+                <div class="relative">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                     <input
                         v-model="search"
                         type="text"
                         placeholder="Buscar por nome ou e-mail..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        @keyup.enter="onSearch"
+                        class="admin-orders-search h-12 w-full pl-9 pr-4 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                        @input="scheduleSearch"
                     />
                 </div>
-                <button
-                    @click="onSearch"
-                    class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                >
-                    Buscar
-                </button>
-                <span class="text-sm text-gray-500 ml-auto">{{ pagination.total }} usuário(s)</span>
+                <SelectInput v-model="sortBy" :options="userSortOptions" show-icon icon="pi pi-sort-alt" :icon-offset-y="2" wrapper-class="admin-orders-filter-select" select-class="!h-12 !bg-[#fafafa]" list-class="admin-orders-sort-panel" />
             </div>
 
             <!-- Skeleton -->
@@ -190,40 +188,35 @@ onMounted(() => {
             </div>
 
             <!-- Table -->
-            <div v-else-if="users.length > 0" class="overflow-x-auto">
+            <template v-else-if="filteredUsers.length > 0">
+            <div class="admin-orders-table hidden overflow-x-auto rounded-xl border border-[#e8edf5] md:block">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-gray-200 bg-gray-50">
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">#</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">ID</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Foto</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Nome</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">E-mail</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Tipo</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">E-mail</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Tipo</th>
                             <th class="text-center py-3 px-4 text-gray-700 font-semibold">Veículos</th>
                             <th class="text-center py-3 px-4 text-gray-700 font-semibold">Tags</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cadastro</th>
-                            <th class="text-right py-3 px-4 text-gray-700 font-semibold">Ações</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Cadastro</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr
-                            v-for="(u, index) in users"
+                            v-for="u in filteredUsers"
                             :key="u.id"
                             class="border-b border-gray-100 hover:bg-gray-50 transition"
                         >   
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 10 }}</td>
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ u.id }}</td>
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4"><div class="flex items-center gap-2.5">
                                 <img
                                     :src="assetWithBase(u.photo || '/images/dashboard/avatar.jpg')"
                                     :alt="u.name"
                                     class="w-8 h-8 rounded-full object-cover"
-                                />
+                                /><span class="font-medium text-gray-900">{{ u.name }}</span></div>
                             </td>
-                            <td class="py-3 px-4 font-medium text-gray-900">{{ u.name }}</td>
-                            <td class="py-3 px-4 text-gray-600">{{ u.email }}</td>
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 text-center text-gray-600">{{ u.email }}</td>
+                            <td class="py-3 px-4 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="typeLabel(u.type).class">
                                     {{ typeLabel(u.type).label }}
                                 </span>
@@ -240,15 +233,15 @@ onMounted(() => {
                                     {{ u.tag_purchases_count ?? 0 }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-gray-500">{{ formatDate(u.created_at) }}</td>
+                            <td class="py-3 px-4 text-center text-gray-500">{{ formatDate(u.created_at) }}</td>
                             <td class="py-3 px-4">
-                                <div class="flex items-center justify-end gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     <NuxtLink
-                                        :to="`/dashboard/admin/usuarios/${u.id}/editar`"
-                                        class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                                        :to="`${usersBaseRoute}/${u.id}/editar`"
+                                        class="p-1.5 rounded-lg text-[#64748b] hover:bg-[#eef2ff] hover:text-[#1f46ee] transition"
                                         title="Editar"
                                     >
-                                        <i class="pi pi-pencil text-sm"></i>
+                                        <i class="pi pi-pen-to-square text-sm"></i>
                                     </NuxtLink>
                                     <button
                                         @click="handleDelete(u)"
@@ -264,13 +257,33 @@ onMounted(() => {
                 </table>
             </div>
 
+            <div v-if="!loading && filteredUsers.length > 0" class="grid gap-3 md:hidden">
+                <article v-for="u in filteredUsers" :key="u.id" class="rounded-2xl border border-[#e4eaf2] bg-white p-4">
+                    <header class="flex items-center gap-3">
+                        <img :src="assetWithBase(u.photo || '/images/dashboard/avatar.jpg')" :alt="u.name" class="h-11 w-11 rounded-full object-cover ring-2 ring-white" />
+                        <div class="min-w-0 flex-1"><p class="mb-0 truncate text-sm font-bold text-[#172b4d]">{{ u.name }}</p><p class="mt-0.5 mb-0 truncate text-xs text-[#52667f]">{{ u.email }}</p></div>
+                        <span :class="typeLabel(u.type).class" class="shrink-0 rounded-full px-2 py-1 text-xs font-medium">{{ typeLabel(u.type).label }}</span>
+                    </header>
+                    <dl class="mt-4 grid grid-cols-3 border-t border-[#edf1f6] pt-3 text-center text-xs text-[#64748b]">
+                        <div><dt class="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Veículos</dt><dd class="m-0 font-semibold text-[#172b4d]">{{ u.vehicles_count ?? 0 }}</dd></div>
+                        <div><dt class="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Tags</dt><dd class="m-0 font-semibold text-[#172b4d]">{{ u.tag_purchases_count ?? 0 }}</dd></div>
+                        <div><dt class="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#8291a7]">Cadastro</dt><dd class="m-0 font-semibold text-[#172b4d]">{{ formatDate(u.created_at) }}</dd></div>
+                    </dl>
+                    <div class="mt-4 flex gap-2 border-t border-[#edf1f6] pt-3">
+                        <NuxtLink :to="`${usersBaseRoute}/${u.id}/editar`" class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#d8dee8] py-2 text-xs font-semibold text-[#52667f] hover:bg-[#eef2ff] hover:text-[#1f46ee]"><i class="pi pi-pen-to-square"></i>Editar</NuxtLink>
+                        <button @click="handleDelete(u)" class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 py-2 text-xs font-semibold text-red-500 hover:bg-red-50"><i class="pi pi-trash"></i>Excluir</button>
+                    </div>
+                </article>
+            </div>
+            </template>
+
             <div v-else class="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
                 <i class="pi pi-users text-4xl"></i>
                 <p>Nenhum usuário encontrado</p>
             </div>
 
             <!-- Pagination -->
-            <div class="mt-5 pt-4 border-t border-gray-100">
+            <div v-if="pagination.total >= 26" class="mt-5">
                 <PaginationControls
                     :current-page="pagination.currentPage"
                     :last-page="pagination.lastPage"

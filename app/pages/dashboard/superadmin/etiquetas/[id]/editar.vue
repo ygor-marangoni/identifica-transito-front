@@ -52,8 +52,8 @@ const fetchTag = async () => {
 onMounted(() => fetchTag());
 
 const handleSubmit = async () => {
-    if (!form.value.name || !form.value.price) {
-        toast.add({ severity: 'error', summary: 'Campos obrigatórios', detail: 'Preencha o nome e o preço da etiqueta.', life: 3000 });
+    if (!form.value.name || !form.value.color_name || !form.value.price) {
+        toast.add({ severity: 'error', summary: 'Campos obrigatórios', detail: 'Preencha o nome, a cor e o preço da etiqueta.', life: 3000 });
         return;
     }
 
@@ -81,18 +81,18 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Editar Etiqueta"
-            subtitle="Atualize as informações da etiqueta."
-            greeting="SuperAdmin"
+            subtitle="Atualize os dados e a disponibilidade desta etiqueta no catálogo."
+            greeting="Catálogo de identificação"
             :showButton="true"
             buttonLabel="Voltar para Etiquetas"
             buttonLink="/dashboard/superadmin/etiquetas"
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="max-w-3xl mx-auto">
+        <div class="w-full">
             <!-- Skeleton -->
             <div v-if="loadingTag" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
                 <Skeleton width="40%" height="2rem" class="mb-4" />
@@ -104,15 +104,15 @@ const handleSubmit = async () => {
                 <Skeleton height="100px" />
             </div>
 
-            <div v-else class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <div v-else class="admin-user-form-shell catalog-form-shell bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                 <div class="mb-8">
                     <h1 class="text-3xl! font-bold text-it-primary mb-2">Editar Etiqueta</h1>
                     <p class="text-gray-600">Atualize os campos desejados.</p>
                 </div>
 
-                <form @submit.prevent="handleSubmit" class="space-y-8">
-                    <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Informações da Etiqueta</h2>
+                <form @submit.prevent="handleSubmit" class="admin-user-form-grid space-y-8">
+                    <div class="space-y-5 col-span-full">
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-tag"></i></span>Informações da Etiqueta</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
@@ -142,7 +142,7 @@ const handleSubmit = async () => {
                         <FormInputText
                             v-model="form.color_name"
                             id="color_name"
-                            label="Nome da Cor"
+                            label="Nome da Cor *"
                             placeholder="Ex: azul"
                             showIcon
                             icon="pi pi-palette"
@@ -170,7 +170,7 @@ const handleSubmit = async () => {
                                 v-model="form.description"
                                 rows="4"
                                 placeholder="Descreva a etiqueta..."
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400 resize-none"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none placeholder-gray-400 resize-none"
                                 :disabled="loading"
                             ></textarea>
                         </div>
@@ -187,3 +187,13 @@ const handleSubmit = async () => {
         </div>
     </div>
 </template>
+
+<style scoped>
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell input:not([type='checkbox']):not([type='radio']):focus),
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell textarea:focus),
+:global(.layout-admin .admin-page .catalog-form-shell.catalog-form-shell .p-select:focus-within) {
+    border: 1px solid #64748b !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+</style>

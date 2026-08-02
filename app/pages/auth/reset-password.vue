@@ -129,8 +129,8 @@
 
     <!-- Formulário de reset -->
     <div v-else>
-      <h1 class="text-[24px]! font-bold text-it-primary mb-2">Redefinir Senha</h1>
-      <p class="text-it-gray text-md mb-8!">
+      <h1 class="text-[28px] font-bold text-it-primary mb-2">Redefinir Senha</h1>
+      <p class="text-it-gray text-md mb-8">
         Crie uma nova senha para sua conta.
       </p>
 
@@ -141,6 +141,8 @@
             v-model="password"
             id="password"
             label="Nova Senha"
+            showIcon
+            icon="pi pi-lock"
             placeholder="••••••••••••••••"
             required
             minlength="8"
@@ -155,6 +157,8 @@
             v-model="confirmPassword"
             id="confirmPassword"
             label="Confirmar Senha"
+            showIcon
+            icon="pi pi-lock"
             placeholder="••••••••••••••••"
             required
             minlength="8"

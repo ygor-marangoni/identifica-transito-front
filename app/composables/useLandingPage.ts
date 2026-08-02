@@ -430,7 +430,7 @@ export const useLandingPage = () => {
             },
             {
                 rel: 'stylesheet',
-                href: 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap'
+                href: 'https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap'
             },
             {
                 rel: 'preload',

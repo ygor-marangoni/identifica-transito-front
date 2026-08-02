@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
     id?: string;
     autocomplete?: string;
     showIcon?: boolean;
-    icon?: string; // e.g. "pi pi-user"
+    icon?: string | object | Function;
     iconPosition?: IconPosition;
     inputClass?: string;
     wrapperClass?: string;
@@ -44,7 +44,7 @@ const props = withDefaults(defineProps<{
     inputClass: '',
     wrapperClass: '',
     label: '',
-    labelClass: 'block text-md font-bold text-gray-600 mb-2',
+    labelClass: 'block mb-2 text-sm font-semibold text-[#172b4d]',
     mask: undefined,
     slotChar: '_',
     autoClear: true,
@@ -65,7 +65,7 @@ const valueProxy = computed({
 });
 
 const computedInputClass = computed(() => {
-    return `h-[60px] ${props.inputClass}`.trim();
+    return `h-14 sm:h-12 ${props.inputClass}`.trim();
 });
 const InputComponent = computed(() => props.mask ? InputMask : InputText);
 function onInput(event: Event) {
@@ -90,7 +90,8 @@ function onBlur(event: FocusEvent) {
         <!-- With icon -->
         <IconField v-if="showIcon && icon">
             <template v-if="iconPosition === 'left'">
-                <InputIcon :class="icon" />
+                <InputIcon v-if="typeof icon === 'string'" :class="icon" />
+                <component v-else :is="icon" :size="18" :stroke-width="1.8" class="p-inputicon text-slate-400" aria-hidden="true" />
                 <component
                     :is="InputComponent"
                     v-model="valueProxy"
@@ -112,6 +113,9 @@ function onBlur(event: FocusEvent) {
                     @focus="onFocus"
                     @blur="onBlur"
                 />
+                <div v-if="$slots.append" class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <slot name="append"></slot>
+                </div>
             </template>
             <template v-else>
                 <component
@@ -134,7 +138,8 @@ function onBlur(event: FocusEvent) {
                     @focus="onFocus"
                     @blur="onBlur"
                 />
-                <InputIcon :class="icon" />
+                <InputIcon v-if="typeof icon === 'string'" :class="icon" />
+                <component v-else :is="icon" :size="18" :stroke-width="1.8" class="p-inputicon text-slate-400" aria-hidden="true" />
             </template>
         </IconField>
 
@@ -194,10 +199,23 @@ function onBlur(event: FocusEvent) {
 
 <style scoped>
 /* Focus color styling for inputs */
-:deep(.p-inputtext:focus),
-:deep(.p-inputmask:focus),
-:deep(input:focus) {
-    border-color: var(--it-primary-color, #081AE7) !important;
-    outline: none !important;
+:deep(.p-inputtext.p-component:focus),
+:deep(.p-inputmask.p-component:focus),
+:deep(input.p-component:focus) {
+    border-color: #64748b;
+    box-shadow: 0 0 0 1px #64748b;
+    outline: none;
+}
+
+:deep(.p-inputtext.p-component),
+:deep(.p-inputmask.p-component) {
+    height: 56px;
+}
+
+@media (min-width: 640px) {
+    :deep(.p-inputtext.p-component),
+    :deep(.p-inputmask.p-component) {
+        height: 48px;
+    }
 }
 </style>

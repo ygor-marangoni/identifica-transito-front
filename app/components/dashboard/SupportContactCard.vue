@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Mail, MessageCircle, MessagesSquare } from '@lucide/vue';
+
 interface ContactChannel {
     icon: string;
     title: string;
@@ -11,44 +13,46 @@ interface ContactChannel {
 defineProps<{
     channels: ContactChannel[];
 }>();
+
+const channelIcons = {
+    mail: Mail,
+    whatsapp: MessageCircle,
+    chat: MessagesSquare
+};
 </script>
 
 <template>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
         <div
             v-for="(channel, index) in channels"
             :key="index"
-            class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-md hover:border-it-primary transition-all duration-200"
+            class="flex min-h-full flex-col rounded-xl border border-slate-200 bg-white p-5 sm:p-6"
         >
-            <!-- Icon -->
-            <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
-                <i :class="[channel.icon, 'text-it-primary text-2xl']"></i>
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#eaf0ff] text-[#1f46ee]">
+                <component :is="channelIcons[channel.icon as keyof typeof channelIcons]" :size="20" :stroke-width="1.9" aria-hidden="true" />
             </div>
 
-            <!-- Title and Description -->
-            <h3 class="text-xl! font-bold text-gray-900 mb-2!">{{ channel.title }}</h3>
-            <p class="text-md text-gray-600 mb-4 leading-relaxed">{{ channel.description }}</p>
+            <h3 class="relative top-0.5 text-xl! font-semibold text-[#172b4d] mb-2!">{{ channel.title }}</h3>
+            <p class="text-[0.9375rem] leading-6 text-slate-600 mb-3!">{{ channel.description }}</p>
 
-            <!-- Contact Info -->
-            <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
-                <p class="text-sm text-gray-500 mb-1">Entre em contato:</p>
-                <p class="text-base font-semibold text-gray-900">{{ channel.contact }}</p>
+            <div class="mb-4 rounded-lg border border-slate-200 bg-[#fafafa] px-3.5 py-3">
+                <p class="mb-1 text-sm font-medium text-slate-500">Canal de atendimento</p>
+                <p class="truncate text-base font-semibold text-[#172b4d] mb-0!">{{ channel.contact }}</p>
             </div>
 
-            <!-- Action Button -->
             <a
                 :href="channel.href"
                 target="_blank"
                 rel="noopener noreferrer"
                 :class="[
-                    'inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 w-full justify-center',
+                    'mt-auto inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-base font-semibold transition-colors',
                     channel.contact === 'Disponível em breve'
-                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                        : 'bg-it-primary text-white hover:bg-blue-600 hover:shadow-md'
+                        ? 'pointer-events-none bg-slate-100 text-slate-500'
+                        : 'bg-[#1f46ee] text-white hover:bg-[#1739d4]'
                 ]"
-                :disabled="channel.contact === 'Disponível em breve'"
+                :aria-disabled="channel.contact === 'Disponível em breve'"
             >
-                <i :class="[channel.icon]"></i>
+                <component :is="channelIcons[channel.icon as keyof typeof channelIcons]" :size="16" :stroke-width="2" aria-hidden="true" />
                 {{ channel.action }}
             </a>
         </div>

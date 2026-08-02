@@ -8,9 +8,19 @@ export const useAuth = () => {
   const init = () => {
     if (!import.meta.client) return;
 
-    const storedToken = localStorage.getItem('auth_token');
+    let storedToken = localStorage.getItem('auth_token');
     const rawUser = localStorage.getItem('auth_user');
-    const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+    let parsedUser: Record<string, unknown> | null = null;
+
+    try {
+      parsedUser = rawUser ? JSON.parse(rawUser) : null;
+    } catch {
+      // Uma sessão antiga ou corrompida não deve quebrar a inicialização
+      // do dashboard nem gerar erro no console durante a demonstração.
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_token');
+      storedToken = null;
+    }
 
     token.value = storedToken;
     user.value = parsedUser;

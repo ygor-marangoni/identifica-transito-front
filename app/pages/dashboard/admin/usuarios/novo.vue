@@ -9,7 +9,10 @@ import { useToast } from 'primevue/usetoast';
 import { BIOLOGICAL_SEX_OPTIONS } from '~/utils/userBiologicalSex';
 
 definePageMeta({ layout: 'dashboard' });
-useHead({ title: 'Novo Usuário - Admin | Identifica Trânsito' });
+const route = useRoute();
+const isSuperAdminView = computed(() => route.path.startsWith('/dashboard/superadmin'));
+const usersBaseRoute = computed(() => isSuperAdminView.value ? '/dashboard/superadmin/usuarios' : '/dashboard/admin/usuarios');
+useHead({ title: computed(() => isSuperAdminView.value ? 'Novo Usuário - SuperAdmin | Identifica Trânsito' : 'Novo Usuário - Admin | Identifica Trânsito') });
 
 const { $api } = useNuxtApp();
 const toast = useToast();
@@ -33,7 +36,7 @@ const handleSubmit = async () => {
 
     loading.value = true;
     try {
-        await $api('/admin-pdv/users', {
+        await $api(isSuperAdminView.value ? '/admin/users' : '/admin-pdv/users', {
             method: 'POST',
             body: {
                 name: form.value.name,
@@ -46,7 +49,7 @@ const handleSubmit = async () => {
             },
         });
         toast.add({ severity: 'success', summary: 'Usuário cadastrado!', detail: 'O usuário foi criado com sucesso.', life: 3000 });
-        navigateTo('/dashboard/admin/usuarios');
+        navigateTo(usersBaseRoute.value);
     } catch (error: any) {
         const msg = error?.data?.message || error?.data?.error || 'Não foi possível cadastrar o usuário.';
         toast.add({ severity: 'error', summary: 'Erro ao cadastrar', detail: msg, life: 5000 });
@@ -57,28 +60,28 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="space-y-10">
+    <div class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Novo Usuário"
-            subtitle="Cadastre um novo usuário na plataforma."
-            greeting="Admin"
+            subtitle="Crie um acesso para vincular um novo usuário ao seu ponto de venda."
+            greeting="Novo acesso"
             :showButton="true"
             buttonLabel="Voltar para Usuários"
-            buttonLink="/dashboard/admin/usuarios"
+            :buttonLink="usersBaseRoute"
             buttonIcon="pi pi-arrow-left"
         />
 
-        <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div class="w-full">
+            <div class="admin-user-form-shell bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                 <div class="mb-8">
                     <h1 class="text-3xl! font-bold text-it-primary mb-2">Cadastrar Novo Usuário</h1>
                     <p class="text-gray-600">Preencha as informações para criar um novo usuário na plataforma.</p>
                 </div>
 
-                <form @submit.prevent="handleSubmit" class="space-y-8">
+                <form @submit.prevent="handleSubmit" class="admin-user-form-grid space-y-8">
                     <!-- Dados Pessoais -->
                     <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Dados Pessoais</h2>
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-user"></i></span>Dados Pessoais</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormInputText
@@ -170,7 +173,7 @@ const handleSubmit = async () => {
 
                     <!-- Acesso -->
                     <div class="space-y-5">
-                        <h2 class="text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3">Acesso</h2>
+                        <h2 class="flex items-center gap-3 text-lg! font-semibold text-gray-900 border-b border-gray-100 pb-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff] text-[#1f46ee]"><i class="pi pi-key"></i></span>Acesso</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>

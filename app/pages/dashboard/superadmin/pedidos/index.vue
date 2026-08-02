@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import HeroSection from '~/components/dashboard/HeroSection.vue';
+import AdminOrdersPage from '~/pages/dashboard/admin/pedidos/index.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
+import SelectInput from '~/components/forms/SelectInput.vue';
+import { BadgeCheck, Package } from '@lucide/vue';
 import { useToast } from 'primevue/usetoast';
 
 definePageMeta({ layout: 'dashboard' });
@@ -63,6 +66,8 @@ const PAYMENT_STATUS = [
     { label: 'Rejeitado', value: 3 },
 ];
 
+const paymentFilterOptions = [{ label: 'Todos pagamentos', value: 'all' }, ...PAYMENT_STATUS.map((status) => ({ label: status.label, value: String(status.value) }))];
+
 const SHIPMENT_STATUS = [
     { label: 'Aguardando postagem', value: 0 },
     { label: 'Postado', value: 1 },
@@ -72,6 +77,9 @@ const SHIPMENT_STATUS = [
     { label: 'Tentativa falhou', value: 5 },
     { label: 'Devolvido', value: 6 },
 ];
+
+const shipmentStatusOptions = SHIPMENT_STATUS.map((status) => ({ label: status.label, value: status.value }));
+const shipmentFilterOptions = [{ label: 'Todas entregas', value: 'all' }, ...SHIPMENT_STATUS.map((status) => ({ label: status.label, value: String(status.value) }))];
 
 const PICKUP_STATUS = [
     { label: 'Aguardando', value: 0 },
@@ -115,7 +123,17 @@ const getOrderDisplayId = (order: Order) => order.mp_payment_id ?? String(order.
 const orders = ref<Order[]>([]);
 const loading = ref(false);
 const search = ref('');
+const paymentFilter = ref<'all' | string>('all');
+const shipmentFilter = ref<'all' | string>('all');
+const filtersOpen = ref(false);
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
 const pagination = ref({ currentPage: 1, lastPage: 1, total: 0 });
+
+const filteredOrders = computed(() => orders.value.filter((order) =>
+    (paymentFilter.value === 'all' || String(order.status) === paymentFilter.value)
+    && (shipmentFilter.value === 'all' || String(order.shipment?.status ?? 0) === shipmentFilter.value)
+));
+const approvedOrders = computed(() => orders.value.filter((order) => order.status === 1).length);
 
 const fetchOrders = async (page = 1) => {
     loading.value = true;
@@ -142,6 +160,16 @@ const goToPage = (page: number) => {
 const onSearch = () => {
     pagination.value.currentPage = 1;
     fetchOrders(1);
+};
+const scheduleSearch = () => {
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(onSearch, 280);
+};
+const clearFilters = () => {
+    search.value = '';
+    paymentFilter.value = 'all';
+    shipmentFilter.value = 'all';
+    onSearch();
 };
 
 const formatDate = (d: string) => {
@@ -254,7 +282,7 @@ const saveShipmentModal = async () => {
     }
 };
 
-onMounted(() => fetchOrders());
+// A listagem visível reutiliza a implementação validada do Admin acima.
 
 // ── Print label (etiqueta de embalagem) ───────────────────────────────────────
 const showPrintModal = ref(false);
@@ -271,34 +299,41 @@ const printLabel = () => {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <AdminOrdersPage />
+    <div v-if="false" class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Pedidos"
-            subtitle="Gerencie todos os pedidos da plataforma"
-            greeting="SuperAdmin"
+            subtitle="Acompanhe pagamentos, entregas e solicitações em toda a operação."
+            greeting="Operação de pedidos"
             :showButton="false"
         />
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <!-- Search -->
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-                <div class="relative flex-1 min-w-60">
+        <div class="admin-orders-page bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div class="mb-4 flex flex-col gap-4 border-b border-gray-100 pb-5 lg:flex-row lg:justify-between">
+                <div>
+                    <h2 class="text-[#172b4d]" style="margin: 0 0 6px; font-size: 25px; font-weight: 600; line-height: 1.1;">Gerenciamento de pedidos</h2>
+                    <p class="text-[#52667f]" style="margin: 0; font-size: 15px; line-height: 1.35;">Acompanhe pagamentos, entregas e solicitações de toda a plataforma.</p>
+                </div>
+                <div class="flex items-center gap-4 self-start text-xs font-semibold uppercase tracking-wide text-[#52667f] lg:self-end">
+                    <span class="inline-flex items-center gap-1.5"><Package :size="15" :stroke-width="1.9" class="text-[#1f46ee]" />{{ pagination.total }} pedidos</span>
+                    <span class="inline-flex items-center gap-1.5"><BadgeCheck :size="15" :stroke-width="1.9" class="text-[#16803c]" />{{ approvedOrders }} aprovados</span>
+                </div>
+            </div>
+            <button type="button" class="mb-4 flex w-full items-center justify-between border-b border-gray-100 pb-4 text-[15px] font-medium text-[#52667f] md:hidden" :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen"><span class="inline-flex items-center gap-2"><i class="pi pi-filter text-xs text-[#8291a7]"></i>Filtros</span><i :class="filtersOpen ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs text-[#8291a7]"></i></button>
+            <div :class="[filtersOpen ? 'max-h-[32rem] mb-6 border-b border-gray-100 pb-5 opacity-100' : 'max-h-0 overflow-hidden opacity-0 pointer-events-none', 'admin-orders-filters grid gap-3 transition-[max-height,opacity,margin,padding] duration-300 ease-in-out md:max-h-none md:overflow-visible md:pointer-events-auto md:mb-6 md:border-b md:border-gray-100 md:pb-5 md:opacity-100 md:grid-cols-2 xl:grid-cols-[minmax(25rem,1.45fr)_minmax(18rem,1fr)_minmax(18rem,1fr)_auto] xl:items-center']">
+                <div class="relative min-w-0">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                     <input
                         v-model="search"
                         type="text"
                         placeholder="Buscar por cliente, placa..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        @keyup.enter="onSearch"
+                        class="admin-orders-search h-12 w-full border border-gray-300 pl-9 pr-4 text-sm focus:outline-none"
+                        @input="scheduleSearch"
                     />
                 </div>
-                <button
-                    @click="onSearch"
-                    class="px-4 py-2 bg-it-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                >
-                    Buscar
-                </button>
-                <span class="text-sm text-gray-500 ml-auto">{{ pagination.total }} pedido(s)</span>
+                <SelectInput v-model="paymentFilter" :options="paymentFilterOptions" show-icon icon="pi pi-credit-card" :icon-offset-y="2" wrapper-class="admin-orders-filter-select" select-class="!h-12 !bg-[#fafafa]" />
+                <SelectInput v-model="shipmentFilter" :options="shipmentFilterOptions" show-icon icon="pi pi-truck" :icon-offset-y="2" wrapper-class="admin-orders-filter-select" select-class="!h-12 !bg-[#fafafa]" />
+                <button @click="clearFilters" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#d8dee8] px-4 text-sm font-semibold text-[#52667f] transition-colors hover:bg-[#f7f9fc]"><i class="pi pi-filter-slash text-xs"></i>Limpar</button>
             </div>
 
             <!-- Skeleton -->
@@ -318,42 +353,38 @@ const printLabel = () => {
             </div>
 
             <!-- Table -->
-            <div v-else-if="orders.length > 0" class="overflow-x-auto">
+            <div v-else-if="filteredOrders.length > 0" class="admin-orders-table overflow-x-auto rounded-xl border border-[#e8edf5]">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-gray-200 bg-gray-50">
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">#</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Id Pedido</th>
                             <th class="text-left py-3 px-4 text-gray-700 font-semibold">Cliente</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Veículo</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Etiqueta</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Qty</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Total</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Entrega</th>
-                            <th class="text-left py-3 px-4 text-gray-700 font-semibold">Data</th>
-                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Ações</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">ID pedido</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Veículo</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Etiqueta</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">QTD</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Total</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Pagamento</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Entrega</th>
+                            <th class="text-center py-3 px-4 text-gray-700 font-semibold">Data</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr
-                            v-for="(order, index) in orders"
+                            v-for="(order, index) in filteredOrders"
                             :key="order.id"
                             class="border-b border-gray-100 hover:bg-gray-50 transition"
                         >
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 15 }}</td>
+                            <td class="py-3 px-4 text-gray-700 font-medium">{{ order.user_name }}</td>
 
-                            <td class="py-3 px-4 text-gray-700 font-mono text-xs">{{ getOrderDisplayId(order) }}</td>
+                            <td class="py-3 px-4 text-center text-gray-700 font-mono text-xs">{{ getOrderDisplayId(order) }}</td>
 
-                            <td class="py-3 px-4 text-gray-700">{{ order.user_name }}</td>
-
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 text-center">
                                 <p class="font-medium text-gray-900">{{ order.vehicle_name }}</p>
                                 <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 text-xs uppercase">{{ order.vehicle_plate }}</span>
                             </td>
 
                             <td class="py-3 px-4">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     <img
                                         v-if="order.tag_slug"
                                         :src="assetWithBase(`/images/dashboard/etiquetas/${order.tag_slug}.svg`)"
@@ -364,9 +395,9 @@ const printLabel = () => {
                                 </div>
                             </td>
 
-                            <td class="py-3 px-4 text-gray-700">{{ order.qty }}</td>
+                            <td class="py-3 px-4 text-center text-gray-700">{{ order.qty }}</td>
 
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 text-center">
                                 <p class="font-medium text-gray-900">{{ formatCurrency(order.price_total) }}</p>
                                 <span v-if="order.coupon_info" class="text-xs text-green-600">
                                     {{ order.coupon_info.code }}
@@ -378,7 +409,7 @@ const printLabel = () => {
                                 <div v-if="editingPaymentId === order.id" class="flex flex-col gap-2 min-w-38">
                                     <select
                                         v-model="editPaymentStatus"
-                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
                                     >
                                         <option v-for="opt in PAYMENT_STATUS" :key="opt.value" :value="opt.value">
                                             {{ opt.label }}
@@ -420,7 +451,7 @@ const printLabel = () => {
                                 <div v-if="editingShipmentId === order.id" class="flex flex-col gap-2 min-w-38">
                                     <select
                                         v-model="editShipmentStatusInline"
-                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
                                     >
                                         <option v-for="opt in PICKUP_STATUS" :key="opt.value" :value="opt.value">
                                             {{ opt.label }}
@@ -462,17 +493,7 @@ const printLabel = () => {
                                 </div>
                             </td>
 
-                            <td class="py-3 px-4 text-gray-500">{{ formatDate(order.created_at) }}</td>
-
-                            <td class="py-3 px-4 text-center">
-                                <button
-                                    @click="openPrintLabel(order)"
-                                    title="Imprimir etiqueta para embalagem"
-                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-it-primary transition"
-                                >
-                                    <i class="pi pi-print"></i>
-                                </button>
-                            </td>
+                            <td class="py-3 px-4 text-center text-gray-500">{{ formatDate(order.created_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -501,6 +522,7 @@ const printLabel = () => {
             header="Atualizar Entrega"
             :modal="true"
             :closable="true"
+            class="admin-dialog"
             :style="{ width: '440px' }"
         >
             <div v-if="modalOrder" class="space-y-5 pt-2">
@@ -514,7 +536,7 @@ const printLabel = () => {
                     <label class="block text-sm font-semibold text-gray-900 mb-2">Status de Entrega</label>
                     <select
                         v-model="editShipmentStatus"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none"
                     >
                         <option v-for="opt in SHIPMENT_STATUS" :key="opt.value" :value="opt.value">
                             {{ opt.label }}
@@ -527,7 +549,7 @@ const printLabel = () => {
                         v-model="editTrackingCode"
                         type="text"
                         placeholder="Ex: BR123456789BR"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none font-mono"
                     />
                     <p class="text-xs text-gray-400 mt-1">Opcional. Informe o código de rastreio da transportadora.</p>
                 </div>
@@ -560,6 +582,7 @@ const printLabel = () => {
             header="Etiqueta para Embalagem"
             :modal="true"
             :closable="true"
+            class="admin-dialog"
             :style="{ width: '420px' }"
         >
             <div v-if="printOrder" id="print-label-area" class="print-label">

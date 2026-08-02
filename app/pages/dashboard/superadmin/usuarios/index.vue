@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm';
+import AdminUsersPage from '~/pages/dashboard/admin/usuarios/index.vue';
 import { useToast } from 'primevue/usetoast';
 import HeroSection from '~/components/dashboard/HeroSection.vue';
-import StatsCard from '~/components/superadmin/StatsCard.vue';
+import StatsCard from '~/components/dashboard/StatsCard.vue';
 import PaginationControls from '~/components/PaginationControls.vue';
+import { Store, UserMinus, UsersRound } from '@lucide/vue';
 
 definePageMeta({ layout: 'dashboard' });
 
@@ -119,18 +121,16 @@ const handleDelete = (user: User) => {
     });
 };
 
-onMounted(() => {
-    fetchUserStats();
-    fetchUsers();
-});
+// A listagem visível reutiliza a implementação validada do Admin.
 </script>
 
 <template>
-    <div class="space-y-6">
+    <AdminUsersPage />
+    <div v-if="false" class="admin-page space-y-6 md:space-y-7">
         <HeroSection
             title="Usuários"
-            subtitle="Gerencie todos os usuários cadastrados na plataforma"
-            greeting="SuperAdmin"
+            subtitle="Administre perfis, permissões e acessos de toda a plataforma."
+            greeting="Gestão de acessos"
             :showButton="true"
             buttonLabel="Novo Usuário"
             buttonLink="/dashboard/superadmin/usuarios/novo"
@@ -142,21 +142,21 @@ onMounted(() => {
             <StatsCard
                 title="Usuários Ativos"
                 :value="userStats.active"
-                icon="pi pi-users"
+                :icon="UsersRound"
                 color="blue"
                 :loading="loadingStats"
             />
             <StatsCard
                 title="Usuários PdV / PdC"
                 :value="userStats.pdv_pdc"
-                icon="pi pi-shop"
+                :icon="Store"
                 color="green"
                 :loading="loadingStats"
             />
             <StatsCard
                 title="Usuários Excluídos"
                 :value="userStats.deleted"
-                icon="pi pi-user-minus"
+                :icon="UserMinus"
                 color="orange"
                 :loading="loadingStats"
             />
@@ -171,7 +171,7 @@ onMounted(() => {
                         v-model="search"
                         type="text"
                         placeholder="Buscar por nome ou e-mail..."
-                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
                         @keyup.enter="onSearch"
                     />
                 </div>
@@ -220,7 +220,7 @@ onMounted(() => {
                             :key="u.id"
                             class="border-b border-gray-100 hover:bg-gray-50 transition"
                         >   
-                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 10 }}</td>
+                            <td class="py-3 px-4 text-gray-400 text-xs">{{ (index + 1) + (pagination.currentPage - 1) * 15 }}</td>
                             <td class="py-3 px-4 text-gray-400 text-xs">{{ u.id }}</td>
                             <td class="py-3 px-4">
                                 <img
