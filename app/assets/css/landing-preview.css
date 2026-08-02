@@ -2031,7 +2031,8 @@ html.lenis body {
     .landing-preview-page .faq-editorial__heading p { margin-left: 0; }
     .landing-preview-page .faq-editorial__panel { padding: .6rem; border-radius: .9rem; }
     .landing-preview-page .faq-editorial__number { display: none; }
-    .landing-preview-page .faq-editorial__item summary { gap: .75rem; min-height: 4.25rem; padding: 1rem; font-size: 1.09rem; }
+    .landing-preview-page .faq-editorial__item summary { gap: .75rem; min-height: 4.25rem; padding: 1rem 1.75rem 1rem 1rem; font-size: 1.09rem; }
+    .landing-preview-page .faq-editorial__toggle { margin-right: .5rem; }
     .landing-preview-page .faq-editorial__answer p { padding: 0 1rem; }
     .landing-preview-page .faq-editorial__item[open] .faq-editorial__answer p { padding-bottom: 1rem; }
 }
