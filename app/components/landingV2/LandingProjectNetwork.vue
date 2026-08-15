@@ -165,6 +165,7 @@ onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay
 .v2-network__highlights b { font-weight: 700; }
 .v2-network__highlights span { margin-top: 6px; }
 .v2-network__footer { min-height: 44px; padding: 13px 15px; border: 1px solid rgba(20,93,245,.1); border-radius: 14px; background: linear-gradient(90deg,#f0f6ff,#f8fbff); }
+.v2-network__headline-followup { color: var(--navy) !important; }
 
 @media (max-width: 800px) {
     .v2-network__headline-followup {
