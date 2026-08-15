@@ -7,6 +7,7 @@ const labelTarget = ref<HTMLElement | null>(null)
 const heroVideo = ref<HTMLVideoElement | null>(null)
 const heroVideoMobile = ref<HTMLVideoElement | null>(null)
 const isMobile = ref(false)
+const isHydrated = ref(false)
 let motionContext: { revert: () => void } | undefined
 let heroMediaQuery: MediaQueryList | undefined
 
@@ -94,6 +95,7 @@ defineExpose({ hero, heroLabel, labelTarget, heroVideo, heroVideoMobile })
 onMounted(async () => {
   heroMediaQuery = window.matchMedia('(max-width: 1000px)')
   isMobile.value = heroMediaQuery.matches
+  isHydrated.value = true
 
   if (isMobile.value) {
     await nextTick()
@@ -133,9 +135,11 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="top" ref="hero" class="v2-hero" aria-labelledby="v2-hero-title">
-    <video v-if="!isMobile" ref="heroVideo" class="v2-hero__video v2-hero__video--desktop" src="/landing-v2/video/hero-bg-desktop-id.mp4?v=20260815-1" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
+    <video v-if="isHydrated && !isMobile" ref="heroVideo" class="v2-hero__video v2-hero__video--desktop" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
+        <source src="/landing-v2/video/hero-bg-desktop-id.webm?v=20260815-1" type="video/webm">
+        <source src="/landing-v2/video/hero-bg-desktop-id.mp4?v=20260815-1" type="video/mp4">
     </video>
-    <video v-else ref="heroVideoMobile" class="v2-hero__video v2-hero__video--mobile" src="/landing-v2/video/hero-bg-mobile-id.mp4?v=20260815-1" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
+    <video v-else-if="isHydrated" ref="heroVideoMobile" class="v2-hero__video v2-hero__video--mobile" src="/landing-v2/video/hero-bg-mobile-id.mp4?v=20260815-1" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
     </video>
     <div class="v2-hero__overlay" aria-hidden="true"></div>
     <div class="v2-hero__content">
@@ -151,11 +155,11 @@ onBeforeUnmount(() => {
         <a href="#como-funciona" class="v2-hero__secondary">Como funciona <MoveDown :size="17" /></a>
       </div>
       <div class="v2-hero__proof" aria-label="Comunidade Identifica Trânsito">
-        <div class="v2-hero__proof-tags" aria-hidden="true"><img src="/landing-v2/images/hero/etiquetas/vermelho.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/azul.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/amarelo.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/branco.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/verde.svg" alt="" width="36" height="36" decoding="async"></div>
+        <div class="v2-hero__proof-tags" aria-hidden="true"><img src="/landing-v2/images/vermelho.webp" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/azul.webp" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/amarelo.webp" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/branco.webp" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/verde.webp" alt="" width="36" height="36" decoding="async"></div>
         <span>Etiquetas para diferentes perfis, contextos e formas de dirigir.</span>
       </div>
     </div>
-    <img ref="heroLabel" class="v2-hero__label" src="/landing-v2/images/hero/etiquetas/azul.svg" alt="" aria-hidden="true" width="132" height="132" decoding="async">
+    <img ref="heroLabel" class="v2-hero__label" src="/landing-v2/images/azul.webp" alt="" aria-hidden="true" width="132" height="132" decoding="async">
     <span ref="labelTarget" class="v2-hero__label-target" aria-hidden="true"></span>
   </section>
 </template>

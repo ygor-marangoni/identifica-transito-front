@@ -41,37 +41,49 @@ onMounted(async () => {
                 }
             );
         }
+        let journeyHeight = 1;
         progress.value.style.setProperty('--how-steps-progress', '0');
         const syncProgress = () => {
             const journeyRect = journey.getBoundingClientRect();
             const anchor = window.innerHeight * (window.innerWidth <= 600 ? .65 : .8);
-            const distance = journey.offsetHeight + window.innerHeight * .3;
+            const distance = journeyHeight + window.innerHeight * .3;
             const value = Math.max(0, Math.min(1, (anchor - journeyRect.top) / Math.max(1, distance)));
             progress.value.style.setProperty('--how-steps-progress', String(value));
+            progress.value.style.height = `${value * 100}%`;
+            const progressBottom = journeyRect.top + value * journeyHeight;
+            let currentIndex = -1;
+            items.value.forEach((item, index) => {
+                // Compare both values in viewport coordinates. Grid placement
+                // and card entrance transforms can change an item's visual
+                // position relative to its structural offsetTop.
+                const itemRect = item.getBoundingClientRect();
+                const dotCenter = itemRect.top + itemRect.height / 2;
+                const reached = progressBottom >= dotCenter;
+                item.classList.toggle('is-active', reached);
+                if (reached) currentIndex = index;
+            });
+            items.value.forEach((item, index) => item.classList.toggle('is-current', index === currentIndex));
+            return value;
         };
+        const measureJourney = () => {
+            journeyHeight = journey.offsetHeight || 1;
+            syncProgress();
+        };
+        measureJourney();
         progressCleanup = () => {
             window.removeEventListener('scroll', syncProgress);
             window.removeEventListener('resize', syncProgress);
         };
         window.addEventListener('scroll', syncProgress, { passive: true });
         window.addEventListener('resize', syncProgress);
-        syncProgress();
         const trigger = ScrollTrigger.create({
             trigger: journey,
             start: () => window.innerWidth <= 600 ? 'top 65%' : 'top 80%',
             end: () => `+=${journey.offsetHeight + window.innerHeight * .3}`,
             scrub: .7,
             invalidateOnRefresh: true,
-            onUpdate: self => {
-                const journeyHeight = journey.offsetHeight || 1;
-                const journeyProgress = self.progress;
-                syncProgress();
-                items.value.forEach(item => {
-                    const dotPosition = item.offsetTop + item.offsetHeight / 2;
-                    const dotProgress = dotPosition / journeyHeight;
-                    item.classList.toggle('is-active', journeyProgress >= dotProgress);
-                });
-            }
+            onRefresh: measureJourney,
+            onUpdate: () => syncProgress()
         });
         const compact = window.matchMedia('(max-width: 800px)').matches;
         items.value.forEach((item, index) => {
@@ -407,7 +419,9 @@ onBeforeUnmount(() => {
 }
 
 .v2-how-steps__progress {
-    transform: translateX(-50%) scaleY(var(--how-steps-progress, 0));
+    bottom: auto;
+    height: 0;
+    transform: translateX(-50%);
 }
 
 .v2-how-steps__journey {
@@ -416,7 +430,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 800px) {
     .v2-how-steps__progress {
-        transform: scaleY(var(--how-steps-progress, 0));
+        transform: none;
     }
 
     .v2-how-steps__journey {
@@ -425,6 +439,17 @@ onBeforeUnmount(() => {
 
     .v2-how-steps__journey li:first-child .v2-how-steps__dot {
         transform: translate(4px, -50%) !important;
+    }
+}
+
+@media (min-width: 801px) {
+    .v2-how-steps__item article {
+        transition: transform .45s cubic-bezier(.22, 1, .36, 1), box-shadow .45s ease, border-color .3s ease, background .3s ease;
+    }
+
+    .v2-how-steps__item.is-current article {
+        transform: translateY(-8px);
+        box-shadow: 0 24px 52px rgba(23, 105, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .96);
     }
 }
 </style>

@@ -130,8 +130,7 @@ useHead({
 <template>
 <div
     class="landing-v2"
-    :class="{ 'landing-v2--ready': isLandingReady }"
-    :style="isLandingReady ? undefined : { visibility: 'hidden' }"
+    :class="{ 'landing-v2--booting': !isLandingReady, 'landing-v2--ready': isLandingReady }"
     :aria-busy="!isLandingReady"
 >
         <a class="v2-skip-link" href="#conteudo">Ir para o conteúdo principal</a>
@@ -183,6 +182,7 @@ useHead({
     transition: opacity .18s ease;
 }
 
+.landing-v2--booting { visibility: hidden; }
 .landing-v2--ready { opacity: 1; }
 
 .v2-skip-link { position: fixed; z-index: 100; top: 12px; left: 12px; padding: 10px 14px; border-radius: 8px; background: #fff; color: #061333; font-size: 13px; font-weight: 700; transform: translateY(-150%); transition: transform .2s ease; }

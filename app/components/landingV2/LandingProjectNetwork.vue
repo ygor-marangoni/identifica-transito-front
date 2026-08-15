@@ -11,13 +11,7 @@ const progress = ref<HTMLElement | null>(null);
 const activeTab = ref(0);
 const isPaused = ref(false);
 const isVisible = ref(true);
-const labelImages = [
-    '/landing-v2/images/etiqueta.webp',
-    '/landing-v2/images/etiqueta-amarela.webp',
-    '/landing-v2/images/etiqueta-verde.webp',
-    '/landing-v2/images/etiqueta-branca.webp',
-    '/landing-v2/images/etiqueta-vermelha.webp'
-];
+const labelImages = ['/landing-v2/images/etiqueta.webp','/landing-v2/images/etiqueta-amarela.webp','/landing-v2/images/etiqueta-verde.webp','/landing-v2/images/etiqueta-branca.webp','/landing-v2/images/etiqueta-vermelha.webp'];
 const activeLabelIndex = ref(0);
 const activeLabelImage = computed(() => labelImages[activeLabelIndex.value]);
 const nextLabelIndex = ref<number | null>(null);
@@ -54,36 +48,12 @@ let stopTabWatch: (() => void) | undefined;
 let progressStart = 0;
 let elapsed = 0;
 const duration = 9000;
-
 const clearAutoplay = () => { if (autoplay) clearTimeout(autoplay); autoplay = undefined; };
-const clearProgressFrame = () => {
-    if (progressFrame !== undefined) cancelAnimationFrame(progressFrame);
-    progressFrame = undefined;
-};
-const updateProgress = () => {
-    progressFrame = undefined;
-    if (!progress.value || isPaused.value || !isVisible.value) return;
-    const ratio = Math.min(1, (elapsed + (performance.now() - progressStart)) / duration);
-    progress.value.style.transform = `scaleX(${ratio})`;
-    if (ratio < 1) progressFrame = requestAnimationFrame(updateProgress);
-};
-const scheduleAutoplay = () => {
-    clearAutoplay();
-    clearProgressFrame();
-    if (isPaused.value || !isVisible.value) return;
-    progressStart = performance.now();
-    progressFrame = requestAnimationFrame(updateProgress);
-    autoplay = setTimeout(() => { activeTab.value = (activeTab.value + 1) % tabs.length; elapsed = 0; scheduleAutoplay(); }, duration - elapsed);
-};
-const selectTab = (index: number, manual = true) => {
-    activeTab.value = index;
-    elapsed = 0;
-    if (manual) scheduleAutoplay();
-};
-const togglePause = () => {
-    if (isPaused.value) { isPaused.value = false; scheduleAutoplay(); }
-    else { elapsed += performance.now() - progressStart; isPaused.value = true; clearAutoplay(); }
-};
+const clearProgressFrame = () => { if (progressFrame !== undefined) cancelAnimationFrame(progressFrame); progressFrame = undefined; };
+const updateProgress = () => { progressFrame = undefined; if (!progress.value || isPaused.value || !isVisible.value) return; const ratio = Math.min(1, (elapsed + (performance.now() - progressStart)) / duration); progress.value.style.transform = `scaleX(${ratio})`; if (ratio < 1) progressFrame = requestAnimationFrame(updateProgress); };
+const scheduleAutoplay = () => { clearAutoplay(); clearProgressFrame(); if (isPaused.value || !isVisible.value) return; progressStart = performance.now(); progressFrame = requestAnimationFrame(updateProgress); autoplay = setTimeout(() => { activeTab.value = (activeTab.value + 1) % tabs.length; elapsed = 0; scheduleAutoplay(); }, duration - elapsed); };
+const selectTab = (index: number, manual = true) => { activeTab.value = index; elapsed = 0; if (manual) scheduleAutoplay(); };
+const togglePause = () => { if (isPaused.value) { isPaused.value = false; scheduleAutoplay(); } else { elapsed += performance.now() - progressStart; isPaused.value = true; clearAutoplay(); } };
 const onKeydown = (event: KeyboardEvent, index: number) => {
     let next = index;
     if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
@@ -94,22 +64,15 @@ const onKeydown = (event: KeyboardEvent, index: number) => {
     event.preventDefault(); selectTab(next); (event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>('[role=tab]')[next]?.focus();
 };
 const onVisibility = () => { isVisible.value = document.visibilityState === 'visible'; if (isVisible.value) scheduleAutoplay(); else { elapsed += performance.now() - progressStart; clearAutoplay(); clearProgressFrame(); } };
-
 onMounted(async () => {
     if (!section.value) return;
     await waitForLandingV2Ready();
-    labelImages.slice(1).forEach((src) => {
-        const image = new Image();
-        image.src = src;
-    });
+    labelImages.slice(1).forEach((src) => { const image = new Image(); image.src = src; });
     labelAutoplay = setInterval(() => {
         if (nextLabelIndex.value !== null) return;
         nextLabelIndex.value = (activeLabelIndex.value + 1) % labelImages.length;
         if (labelSwapTimeout) clearTimeout(labelSwapTimeout);
-        labelSwapTimeout = setTimeout(() => {
-            activeLabelIndex.value = nextLabelIndex.value as number;
-            nextLabelIndex.value = null;
-        }, 700);
+        labelSwapTimeout = setTimeout(() => { activeLabelIndex.value = nextLabelIndex.value as number; nextLabelIndex.value = null; }, 700);
     }, 5000);
     document.addEventListener('visibilitychange', onVisibility);
     const { default: gsap } = await import('gsap');
@@ -132,23 +95,8 @@ onMounted(async () => {
             gsap.fromTo(activeButton.querySelector('span'), { y: 5, opacity: 0 }, { y: 0, opacity: 1, duration: .35, ease: 'power3.out', overwrite: true });
         }
     });
-    motionContext = gsap.context(() => {
-        if (reduced) { gsap.set([intro.value, panel.value], { clearProps: 'all', autoAlpha: 1 }); }
-        else {
-            const tabsElement = section.value?.querySelector<HTMLElement>('.v2-network__tabs');
-            const progressRow = section.value?.querySelector<HTMLElement>('.v2-network__progress-row');
-            const panelParts = panel.value?.querySelectorAll<HTMLElement>('.v2-network__state-head, .v2-network__highlights > div, .v2-network__footer, .v2-network__qr-stage');
-            const timeline = gsap.timeline({
-                scrollTrigger: { trigger: section.value, start: 'top 78%', once: true }
-            });
-
-            if (intro.value) timeline.from(intro.value, { y: 44, autoAlpha: 0, duration: .76, ease: 'power3.out' });
-            if (tabsElement) timeline.from(tabsElement, { y: 30, autoAlpha: 0, scale: .985, duration: .64, ease: 'power3.out' }, '-=.38');
-            if (panel.value) timeline.from(panel.value, { y: 58, autoAlpha: 0, scale: .97, rotateX: 2, transformPerspective: 900, duration: .84, ease: 'power3.out' }, '-=.34');
-            if (panelParts?.length) timeline.from(panelParts, { y: 26, autoAlpha: 0, scale: .975, duration: .5, stagger: .075, ease: 'power3.out' }, '-=.52');
-            if (progressRow) timeline.from(progressRow, { y: 14, autoAlpha: 0, duration: .42, ease: 'power2.out' }, '-=.42');
-        }
-    }, section.value);
+    // Mantém o conteúdo visível e remove somente a animação de entrada da seção.
+    motionContext = gsap.context(() => { gsap.set([intro.value, panel.value], { clearProps: 'all', autoAlpha: 1 }); }, section.value);
     scheduleAutoplay();
 });
 onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay) clearInterval(labelAutoplay); if (labelSwapTimeout) clearTimeout(labelSwapTimeout); stopTabWatch?.(); document.removeEventListener('visibilitychange', onVisibility); motionContext?.revert(); });
@@ -159,7 +107,7 @@ onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay
         <div class="v2-network__inner">
             <header ref="intro" class="v2-network__intro">
                 <p class="v2-network__eyebrow">{ O PROJETO }</p>
-                <h2 id="v2-network-title">Cada motorista tem um <span class="heading-highlight">perfil</span>&nbsp;<br>A etiqueta ajuda a torná-lo visível.</h2>
+                <h2 id="v2-network-title">Cada motorista tem um <span class="heading-highlight">perfil</span>&nbsp;<br><span class="v2-network__headline-followup">A etiqueta ajuda a torná-lo visível.</span></h2>
                 <p>O Identifica Trânsito utiliza diferentes etiquetas para representar perfis de condução e tornar esses sinais mais fáceis de reconhecer no trânsito.</p>
             </header>
             <div class="v2-network__tabs" role="tablist" aria-label="Ecossistema Identifica Trânsito">
@@ -217,6 +165,12 @@ onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay
 .v2-network__highlights b { font-weight: 700; }
 .v2-network__highlights span { margin-top: 6px; }
 .v2-network__footer { min-height: 44px; padding: 13px 15px; border: 1px solid rgba(20,93,245,.1); border-radius: 14px; background: linear-gradient(90deg,#f0f6ff,#f8fbff); }
+
+@media (max-width: 800px) {
+    .v2-network__headline-followup {
+        text-transform: lowercase;
+    }
+}
 
 /* Keep the medallion aligned to the panel's inner right gutter. */
 .v2-network__qr-stage {
@@ -613,4 +567,8 @@ onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay
 @media (min-width: 1121px) {
     .v2-network__qr-stage { background: none !important; }
 }
+
+/* Mantém a barra de progresso visível; somente a animação de entrada foi removida. */
+.v2-network__progress-row { display: flex !important; }
+
 </style>

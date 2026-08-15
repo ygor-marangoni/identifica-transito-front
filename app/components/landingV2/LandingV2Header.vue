@@ -8,6 +8,7 @@ const activeSection = ref('top');
 let lastScrollY = 0;
 let hasBottomNavEntered = false;
 let bottomNavRevealScroll = 0;
+let navigationFrame: number | undefined;
 
 const links = [
     { label: 'O Projeto', id: 'o-projeto' },
@@ -54,16 +55,26 @@ const updateNavigation = () => {
     lastScrollY = currentScrollY;
 };
 
+const scheduleNavigationUpdate = () => {
+    if (navigationFrame !== undefined) return;
+    navigationFrame = requestAnimationFrame(() => {
+        navigationFrame = undefined;
+        updateNavigation();
+    });
+};
+
 onMounted(() => {
     updateNavigation();
-    window.addEventListener('scroll', updateNavigation, { passive: true });
-    window.addEventListener('resize', updateNavigation);
+    window.addEventListener('scroll', scheduleNavigationUpdate, { passive: true });
+    window.addEventListener('resize', scheduleNavigationUpdate);
     document.body.classList.toggle('landing-menu-open', isMenuOpen.value);
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('scroll', updateNavigation);
-    window.removeEventListener('resize', updateNavigation);
+    window.removeEventListener('scroll', scheduleNavigationUpdate);
+    window.removeEventListener('resize', scheduleNavigationUpdate);
+    if (navigationFrame !== undefined) cancelAnimationFrame(navigationFrame);
+    navigationFrame = undefined;
     document.body.classList.remove('landing-menu-open');
 });
 

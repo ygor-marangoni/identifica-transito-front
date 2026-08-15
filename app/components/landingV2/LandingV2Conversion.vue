@@ -61,7 +61,7 @@ onBeforeUnmount(() => pricingAnimation?.kill());
                     <li><span class="v2-pricing__benefit-icon"><CarFront :size="14" /></span><span>Etiquetas para todos os veículos da sua casa ou frota</span></li>
                     <li><span class="v2-pricing__benefit-icon"><HelpCircle :size="14" /></span><span>Suporte via e-mail e WhatsApp</span></li>
                 </ul>
-                <div class="v2-pricing__tags"><span>Etiquetas disponíveis:</span><div><figure v-for="tag in ['vermelho','azul','amarelo','branco','verde']" :key="tag"><img :src="`/landing-v2/images/pricing/${tag}.svg`" :alt="`Etiqueta ${tag}`" loading="lazy" width="61" height="61"></figure></div></div>
+                <div class="v2-pricing__tags"><span>Etiquetas disponíveis:</span><div><figure v-for="tag in ['vermelho','azul','amarelo','branco','verde']" :key="tag"><img :src="`/landing-v2/images/${tag}.webp`" :alt="`Etiqueta ${tag}`" loading="lazy" width="61" height="61"></figure></div></div>
             </article>
             <p class="v2-pricing__footnote"><span aria-hidden="true">!</span> Permitida a compra de 1 kit de etiqueta por veículo.</p>
         </div>
