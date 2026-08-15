@@ -145,7 +145,7 @@
             icon="pi pi-lock"
             placeholder="••••••••••••••••"
             required
-            minlength="8"
+            :minlength="8"
             inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
           />
           <PasswordStrengthIndicator :password="password" />
@@ -161,7 +161,7 @@
             icon="pi pi-lock"
             placeholder="••••••••••••••••"
             required
-            minlength="8"
+            :minlength="8"
             inputClass="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent placeholder-gray-400"
           />
           <div v-if="confirmPassword" class="mt-2">

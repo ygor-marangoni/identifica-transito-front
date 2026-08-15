@@ -5,7 +5,9 @@
     const config = useRuntimeConfig();
     const assetWithBase = (path: string) => {
         if (path.startsWith('data:') || path.startsWith('http')) return path;
-        return `${config.app.baseURL}${path}`.replace(/\/+/g, '/').replace(':/', '://');
+        const rawBase = String(config.app.baseURL || '/').trim().replace(/^&+/, '');
+        const base = rawBase === '/' ? '' : `/${rawBase.replace(/^\/+|\/+$/g, '')}`;
+        return `${base}/${path.replace(/^\/+/, '')}`.replace(/\/+/g, '/');
     };
 
     const benefits = [

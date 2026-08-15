@@ -3,10 +3,11 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
     ssr: true,
     routeRules: {
         '/': { prerender: true },
+        '/landing-v2': { prerender: true },
         '/dashboard/**': { ssr: false },
         '/auth/**': { ssr: false },
         '/uikit/**': { prerender: false },
@@ -17,7 +18,7 @@ export default defineNuxtConfig({
         prerender: {
             failOnError: false,
             crawlLinks: false,
-            routes: ['/']
+            routes: ['/', '/landing-v2']
         }
     },
     runtimeConfig: {
