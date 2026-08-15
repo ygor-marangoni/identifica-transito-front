@@ -21,6 +21,8 @@ const actions = [
 ];
 
 onMounted(async () => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    await waitForLandingV2Ready();
     const { gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
@@ -28,14 +30,14 @@ onMounted(async () => {
     const intro = section.value.querySelector<HTMLElement>('.v2-faq__intro');
     const actions = section.value.querySelectorAll<HTMLElement>('.v2-faq__action');
     const items = section.value.querySelectorAll<HTMLElement>('.v2-faq__item');
-    animation = gsap.from([intro, ...actions, ...items].filter(Boolean), {
-        scrollTrigger: { trigger: section.value, start: 'top 78%', once: true },
-        y: 20,
-        opacity: 0,
-        duration: .58,
-        stagger: .07,
-        ease: 'power3.out'
-    });
+    const introParts = intro ? Array.from(intro.children) as HTMLElement[] : [];
+    const compact = window.matchMedia('(max-width: 850px)').matches;
+    animation = gsap.timeline({
+        scrollTrigger: { trigger: section.value, start: 'top 80%', once: true }
+    })
+        .from(introParts, { y: 42, autoAlpha: 0, duration: .7, stagger: .1, ease: 'power3.out' })
+        .from(actions, { x: compact ? -18 : -34, y: 18, autoAlpha: 0, duration: .52, stagger: .09, ease: 'power3.out' }, '-=.48')
+        .from(items, { x: compact ? 18 : 44, y: 26, autoAlpha: 0, scale: .985, duration: .56, stagger: .085, ease: 'power3.out' }, '-=.54');
 });
 
 onBeforeUnmount(() => animation?.kill());
@@ -46,7 +48,7 @@ onBeforeUnmount(() => animation?.kill());
         <div class="v2-faq__grid">
             <header class="v2-faq__intro">
                 <p class="v2-faq__eyebrow">FAQ</p>
-                <h2 id="v2-faq-title">Ficou com<br>alguma dúvida?</h2>
+                <h2 id="v2-faq-title">Ficou com<br>alguma <span class="heading-highlight">dúvida?</span></h2>
                 <p class="v2-faq__description">Reunimos as principais respostas sobre o projeto, as etiquetas e o funcionamento da plataforma.</p>
                 <div class="v2-faq__actions">
                     <a v-for="action in actions" :key="action.title" class="v2-faq__action" :href="action.href">

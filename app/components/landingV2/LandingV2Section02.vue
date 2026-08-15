@@ -9,7 +9,7 @@ defineExpose({ section, labelTarget, materialCard })
   <section id="contexto" ref="section" class="v2-section02" aria-labelledby="v2-section02-title">
     <div class="v2-section02__head">
       <p class="v2-section02__eyebrow">POR TRÁS DA ETIQUETA</p>
-      <h2 id="v2-section02-title">Pequena no vidro<br>Grande no <span>trânsito.</span></h2>
+      <h2 id="v2-section02-title">Pequena no vidro<br>Grande no <span class="heading-highlight">trânsito.</span></h2>
       <p class="v2-section02__copy">A etiqueta combina sinalização visual, material refletivo e acesso rápido às informações do veículo para tornar o contexto mais claro no trânsito.</p>
     </div>
 

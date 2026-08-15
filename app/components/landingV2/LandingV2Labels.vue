@@ -1,54 +1,145 @@
 <script setup lang="ts">
-import { ArrowRight, GripVertical } from '@lucide/vue';
-import LandingV2TagArt from './LandingV2TagArt.vue';
+import { GripVertical } from '@lucide/vue';
 
 type TagColor = 'vermelha' | 'azul' | 'amarela' | 'branca' | 'verde';
-const tags: { color: TagColor; title: string; profile: string; description: string; }[] = [
-    { color: 'vermelha', title: 'Vermelha', profile: 'CNH temporária', description: 'Para motoristas em período de habilitação provisória.' },
-    { color: 'azul', title: 'Azul', profile: 'Uso profissional', description: 'Para veículos de aplicativo, locadora, empresa ou frota.' },
-    { color: 'amarela', title: 'Amarela', profile: 'Gestante ou recém-nascido', description: 'Um sinal de atenção para situações que pedem mais cuidado.' },
-    { color: 'branca', title: 'Branca', profile: 'Pessoa idosa ou condição não visível', description: 'Contexto para pessoas com mais de 60 anos, PCD ou condições não visíveis.' },
-    { color: 'verde', title: 'Verde', profile: 'CNH definitiva', description: 'Para condutores com habilitação definitiva.' }
+const tags: { color: TagColor; title: string; profile: string; description: string; image: string; background: string; }[] = [
+    { color: 'vermelha', title: 'Vermelha', profile: 'CNH temporária', description: 'Para motoristas em período de habilitação provisória.', image: '/landing-v2/images/vermelho.webp', background: '/landing-v2/images/nova-imagem-etiqueta vermelha.webp' },
+    { color: 'azul', title: 'Azul', profile: 'Uso profissional', description: 'Para veículos de aplicativo, locadora, empresa ou frota.', image: '/landing-v2/images/azul.webp', background: '/landing-v2/images/nova-imagem-etiqueta azul.webp' },
+    { color: 'amarela', title: 'Amarela', profile: 'Gestante ou recém-nascido', description: 'Um sinal de atenção para situações que pedem mais cuidado.', image: '/landing-v2/images/amarelo.webp', background: '/landing-v2/images/nova-imagem-etiqueta amarela.webp' },
+    { color: 'branca', title: 'Branca', profile: 'Pessoa idosa ou condição não visível', description: 'Perfil para pessoas com mais de 60 anos, PCD ou condições não visíveis.', image: '/landing-v2/images/branco.webp', background: '/landing-v2/images/nova-imagem-etiqueta branca.webp' },
+    { color: 'verde', title: 'Verde', profile: 'CNH definitiva', description: 'Para condutores com habilitação definitiva.', image: '/landing-v2/images/verde.webp', background: '/landing-v2/images/nova-imagem-etiqueta verde.webp' }
 ];
-const activeIndex = ref(3);
+const activeIndex = ref(0);
 const comparison = ref(49);
 const activeTag = computed(() => tags[activeIndex.value] ?? tags[0]!);
+const activeBackgroundStyle = computed(() => ({ backgroundImage: `url("${activeTag.value.background}")` }));
 const section = ref<HTMLElement | null>(null);
-let motionContext: { revert: () => void } | undefined;
-
-const selectTag = async (index: number) => {
-    activeIndex.value = index;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const { default: gsap } = await import('gsap');
-    const tagWrap = section.value?.querySelector<HTMLElement>('.v2-labels__tag-wrap');
-    if (!tagWrap) return;
-    gsap.fromTo(tagWrap, { opacity: .45, rotate: -11, scale: .9 }, { opacity: 1, rotate: 0, scale: 1, duration: .45, ease: 'back.out(1.6)', overwrite: true });
-};
+const daynight = ref<HTMLElement | null>(null);
+let motionMedia: { revert: () => void } | undefined;
+let daynightAnimation: { kill: () => void } | undefined;
 
 onMounted(async () => {
-    if (!section.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const { default: gsap } = await import('gsap');
-    const { ScrollTrigger } = await import('gsap/ScrollTrigger');
+    if (
+        !section.value
+        || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) return;
+    await waitForLandingV2Ready();
+    const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger')
+    ]);
     gsap.registerPlugin(ScrollTrigger);
-    motionContext = gsap.context(() => {
-        const showcase = section.value?.querySelector<HTMLElement>('.v2-labels__showcase');
-        if (showcase) gsap.from(showcase, { scrollTrigger: { trigger: section.value, start: 'top 70%' }, y: 52, opacity: 0, duration: .8, ease: 'power3.out' });
-    }, section.value);
+    if (daynight.value) {
+        const headerParts = Array.from(daynight.value.querySelectorAll<HTMLElement>('header > *'));
+        const compare = daynight.value.querySelector<HTMLElement>('.v2-daynight__compare');
+        const scenes = daynight.value.querySelectorAll<HTMLElement>('.v2-daynight__scene > img');
+        const controls = daynight.value.querySelectorAll<HTMLElement>('.v2-daynight__needle, .v2-daynight__handle');
+        daynightAnimation = gsap.timeline({
+            scrollTrigger: { trigger: daynight.value, start: 'top 78%', once: true }
+        })
+            .from(headerParts, { y: 44, autoAlpha: 0, duration: .74, stagger: .12, ease: 'power3.out' })
+            .from(compare, { y: 58, autoAlpha: 0, scale: .955, rotateX: 3, transformPerspective: 900, duration: .9, ease: 'power3.out' }, '-=.34')
+            .from(scenes, { scale: 1.08, duration: 1.05, stagger: .06, ease: 'power2.out' }, '-=.72')
+            .from(controls, { autoAlpha: 0, scale: .65, duration: .42, stagger: .08, ease: 'back.out(1.8)' }, '-=.44');
+    }
+    motionMedia = gsap.matchMedia();
+    motionMedia.add('(min-width: 1101px)', () => {
+        const context = gsap.context(() => {
+            const root = section.value!;
+            const cards = Array.from(root.querySelectorAll<HTMLElement>('.v2-labels__stage-card'));
+            const progress = root.querySelector<HTMLElement>('.v2-labels__progress-fill');
+            const dots = Array.from(root.querySelectorAll<HTMLElement>('.v2-labels__progress-step'));
+            const eyebrow = root.querySelector<HTMLElement>('.v2-labels__eyebrow');
+            const titleParts = Array.from(root.querySelectorAll<HTMLElement>('.v2-labels__journey-heading span'));
+            const intro = root.querySelector<HTMLElement>('.v2-labels__intro');
+            if (!cards.length || !progress) return;
+
+            const setProgress = gsap.quickSetter(progress, 'scaleX');
+            let visibleStage = -1;
+            const syncStage = (nextStage: number) => {
+                if (visibleStage === nextStage) return;
+                visibleStage = nextStage;
+                activeIndex.value = nextStage;
+                dots.forEach((dot, index) => dot.classList.toggle('is-active', index <= nextStage));
+            };
+
+            syncStage(0);
+            gsap.set([eyebrow, ...titleParts, intro], { autoAlpha: 0, y: 28 });
+            gsap.set(cards, { autoAlpha: 0, y: 48, scale: .98, force3D: true });
+            gsap.set(cards[0], { autoAlpha: 1, y: 0, scale: 1 });
+
+            const stageForProgress = (value: number) => Math.min(tags.length - 1, Math.floor(value * tags.length));
+            const timeline = gsap.timeline({
+                scrollTrigger: {
+                    trigger: root,
+                    start: 'top top',
+                    end: () => `+=${Math.round(window.innerHeight * 7)}`,
+                    pin: root,
+                    refreshPriority: -2,
+                    scrub: .2,
+                    anticipatePin: 1,
+                    invalidateOnRefresh: true,
+                    onUpdate: self => {
+                        const progressValue = Math.min(.999, self.progress);
+                        setProgress(progressValue);
+                        syncStage(stageForProgress(progressValue));
+                    }
+                }
+            });
+
+            timeline
+                .to(eyebrow, { autoAlpha: 1, y: 0, duration: .1, ease: 'power2.out' }, .02)
+                .to(titleParts, { autoAlpha: 1, y: 0, duration: .14, stagger: .04, ease: 'power2.out' }, .08)
+                .to(intro, { autoAlpha: 1, y: 0, duration: .12, ease: 'power2.out' }, .16);
+
+            cards.forEach((card, index) => {
+                if (index === 0) return;
+                const start = .16 + (index - 1) * .18;
+                timeline.to(cards[index - 1], { autoAlpha: 0, y: -34, scale: .985, duration: .15, ease: 'power1.inOut' }, start)
+                    .to(card, { autoAlpha: 1, y: 0, scale: 1, duration: .15, ease: 'power2.out' }, start + .01);
+            });
+        }, section.value);
+
+        requestAnimationFrame(() => ScrollTrigger.refresh());
+        return () => context.revert();
+    });
 });
-onBeforeUnmount(() => motionContext?.revert());
+onBeforeUnmount(() => {
+    motionMedia?.revert();
+    daynightAnimation?.kill();
+});
 </script>
 
 <template>
     <section id="etiquetas" ref="section" class="v2-labels" :class="`v2-labels--${activeTag.color}`" aria-labelledby="v2-labels-title">
-        <header class="v2-labels__head"><div><p class="v2-pill">As etiquetas</p><h2 id="v2-labels-title">Uma cor.<br>Um contexto.</h2></div><p>Conheça as etiquetas disponíveis e descubra qual delas representa melhor o contexto do seu veículo.</p></header>
-        <div class="v2-labels__showcase">
-            <div class="v2-labels__art"><div class="v2-labels__tag-wrap"><LandingV2TagArt :color="activeTag.color" size="large" /></div><span class="v2-labels__reflection"></span><small>material refletivo · leitura rápida</small></div>
-            <div class="v2-labels__details"><span>Etiqueta {{ activeTag.title }}</span><h3>{{ activeTag.profile }}</h3><p>{{ activeTag.description }}</p><a href="#como-funciona">Ver como escolher <ArrowRight :size="17" /></a></div>
+        <div class="v2-labels__pin">
+            <Transition name="v2-labels-bg">
+                <div :key="activeTag.color" class="v2-labels__background" :style="activeBackgroundStyle" aria-hidden="true"></div>
+            </Transition>
+            <div class="v2-labels__journey">
+                <p class="v2-labels__eyebrow">{ AS ETIQUETAS }</p>
+                <h2 id="v2-labels-title" class="v2-labels__journey-heading" aria-label="Uma cor, um perfil.">
+                    <span>Uma cor</span>
+                    <span>um <strong class="heading-highlight">perfil.</strong></span>
+                </h2>
+                <p class="v2-labels__intro">Cada cor comunica um perfil diferente e ajuda a tornar a convivência no trânsito mais humana.</p>
+                <div class="v2-labels__stage" aria-live="polite">
+                    <article v-for="(tag, index) in tags" :key="tag.color" class="v2-labels__stage-card" :class="[`v2-labels__stage-card--${tag.color}`, { 'is-active': activeIndex === index }]" :aria-current="activeIndex === index ? 'step' : undefined">
+                        <div class="v2-labels__stage-art"><img :src="tag.image" :alt="`Etiqueta ${tag.title}`" width="150" height="150" loading="lazy" decoding="async"></div>
+                        <p class="v2-labels__stage-kicker">Perfil {{ tag.title }}</p>
+                        <h3>{{ tag.profile }}</h3>
+                        <p class="v2-labels__stage-description">{{ tag.description }}</p>
+                    </article>
+                </div>
+            </div>
+            <div class="v2-labels__progress" :aria-label="`Etiqueta ${activeIndex + 1} de ${tags.length}`">
+                <span class="v2-labels__progress-track"><i ref="progress" class="v2-labels__progress-fill"></i></span>
+                <span v-for="(tag, index) in tags" :key="tag.color" class="v2-labels__progress-step" :class="[`v2-labels__progress-step--${tag.color}`, { 'is-active': activeIndex >= index }]" :aria-label="tag.title"><i></i><b>0{{ index + 1 }}</b></span>
+            </div>
         </div>
-        <div class="v2-labels__tabs" role="tablist" aria-label="Tipos de etiquetas"><button v-for="(tag,index) in tags" :key="tag.color" type="button" role="tab" :aria-selected="activeIndex === index" :class="{ 'is-active': activeIndex === index }" @click="selectTag(index)"><i :class="`v2-labels__tab-dot--${tag.color}`"></i>{{ tag.title }}</button></div>
     </section>
-    <section class="v2-daynight" aria-labelledby="v2-daynight-title">
-        <header><div><p class="v2-daynight__eyebrow">{ LEITURA EM QUALQUER LUZ }</p><h2 id="v2-daynight-title"><span class="v2-daynight__day">De dia</span>, mais visível<br><span class="v2-daynight__night">à noite</span>, mais contexto.</h2></div><p class="v2-daynight__lead">A etiqueta mantém a informação clara durante o dia e ganha força quando a luz diminui.</p></header>
+    <section ref="daynight" class="v2-daynight" aria-labelledby="v2-daynight-title">
+        <header><div><p class="v2-daynight__eyebrow">{ LEITURA EM QUALQUER LUZ }</p><h2 id="v2-daynight-title"><span class="v2-daynight__day">De dia</span>, mais visível<br><span class="v2-daynight__night heading-highlight">à noite</span>, mais contexto.</h2></div><p class="v2-daynight__lead">A etiqueta mantém a informação clara durante o dia e ganha força quando a luz diminui.</p></header>
         <div class="v2-daynight__compare">
             <div class="v2-daynight__scene v2-daynight__scene--day"><img :src="'/landing-v2/images/fundo-dia.webp'" alt="Visibilidade da etiqueta durante o dia" loading="lazy" decoding="async" width="1250" height="640"><span>DIA</span></div>
             <div class="v2-daynight__scene v2-daynight__scene--night" :style="{ clipPath: `inset(0 ${100 - comparison}% 0 0)` }"><img :src="'/landing-v2/images/fundo-noite.webp'" alt="Visibilidade da etiqueta durante a noite" loading="lazy" decoding="async" width="1250" height="640"><span>NOITE</span></div>
@@ -102,4 +193,396 @@ onBeforeUnmount(() => motionContext?.revert());
 .v2-daynight__handle svg { position:relative; z-index:1; }
 @media (max-width:800px){.v2-daynight__lead{width:100%;max-width:390px;margin-left:0!important;margin-right:0!important;justify-self:start;text-align:left}.v2-daynight__eyebrow{margin-bottom:22px;font-size:11px}}
 @media (max-width:560px){.v2-daynight__eyebrow{font-size:11px;letter-spacing:.1em}.v2-daynight__lead{width:100%;max-width:none;margin-left:0!important;margin-right:0!important;text-align:left}}
+</style>
+
+<style scoped>
+/* Jornada editorial das etiquetas: composição inspirada na referência Bellatrix. */
+.v2-labels {
+    --labels-bg: #090d12;
+    --labels-glow: rgba(20, 93, 245, .28);
+    --card-bg: rgba(20, 35, 52, .72);
+    --eyebrow-color: #8fa0b0;
+    position: relative;
+    z-index: 0;
+    min-height: 100dvh;
+    width: 100vw;
+    margin-right: calc(50% - 50vw);
+    margin-left: calc(50% - 50vw);
+    padding: 0;
+    overflow: clip;
+    background: var(--labels-bg);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    color: #fff;
+    transition: background .65s ease;
+}
+
+.v2-labels::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    content: '';
+    background:
+        linear-gradient(0deg, color-mix(in srgb, var(--card-bg) 88%, #02070a 12%) 0%, color-mix(in srgb, var(--card-bg) 56%, transparent) 34%, transparent 68%),
+        radial-gradient(circle at 50% 46%, var(--labels-glow), transparent 48%),
+        linear-gradient(180deg, rgba(2, 7, 10, .46), rgba(2, 7, 10, .18) 43%, rgba(2, 7, 10, .72));
+    backdrop-filter: blur(3px) saturate(84%);
+    pointer-events: none;
+}
+
+.v2-labels--vermelha { --labels-bg: #120d11; --labels-glow: rgba(246, 73, 75, .14); --card-bg: rgba(105, 25, 32, .96); --eyebrow-color: #ff9ca3; }
+.v2-labels--azul { --labels-bg: #0b1015; --labels-glow: rgba(20, 93, 245, .16); --card-bg: rgba(20, 57, 125, .96); --eyebrow-color: #a9c7ff; }
+.v2-labels--amarela { --labels-bg: #15130d; --labels-glow: rgba(255, 200, 66, .13); --card-bg: rgba(117, 82, 11, .96); --eyebrow-color: #ffe198; }
+.v2-labels--branca { --labels-bg: #121416; --labels-glow: rgba(190, 204, 225, .12); --card-bg: rgba(95, 108, 125, .96); --eyebrow-color: #f5f8ff; }
+.v2-labels--verde { --labels-bg: #0b1512; --labels-glow: rgba(50, 172, 119, .14); --card-bg: rgba(10, 95, 65, .96); --eyebrow-color: #91ebc5; }
+
+.v2-labels__pin {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.v2-labels__pin::before {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    content: '';
+    background:
+        linear-gradient(0deg, color-mix(in srgb, var(--card-bg) 88%, #02070a 12%) 0%, color-mix(in srgb, var(--card-bg) 56%, transparent) 34%, transparent 68%),
+        radial-gradient(circle at 50% 46%, var(--labels-glow), transparent 48%),
+        linear-gradient(180deg, rgba(2, 7, 10, .46), rgba(2, 7, 10, .18) 43%, rgba(2, 7, 10, .72));
+    backdrop-filter: blur(3px) saturate(84%);
+    pointer-events: none;
+}
+
+/* Mantém a fotografia legível, sem o brilho excessivo da camada anterior. */
+.v2-labels::before,
+.v2-labels__pin::before {
+    background:
+        linear-gradient(0deg, color-mix(in srgb, var(--card-bg) 64%, #02070a 36%) 0%, color-mix(in srgb, var(--card-bg) 34%, transparent) 36%, transparent 72%),
+        radial-gradient(circle at 50% 46%, var(--labels-glow), transparent 52%),
+        linear-gradient(180deg, rgba(2, 7, 10, .62), rgba(2, 7, 10, .34) 44%, rgba(2, 7, 10, .84));
+    backdrop-filter: none;
+}
+
+.v2-labels__background {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: saturate(.9) contrast(1.04) brightness(.82);
+    will-change: opacity;
+    transform: translateZ(0);
+}
+
+.v2-labels-bg-enter-active,
+.v2-labels-bg-leave-active { transition: opacity .35s ease; }
+.v2-labels-bg-enter-from,
+.v2-labels-bg-leave-to { opacity: 0; }
+
+.v2-labels__journey {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    height: 100dvh;
+    padding: clamp(28px, 5vh, 52px) clamp(24px, 5vw, 80px) clamp(76px, 9vh, 112px);
+}
+
+.v2-labels__eyebrow {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #cfe0ff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .13em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.v2-labels__journey-heading {
+    position: absolute;
+    inset: 0 clamp(24px, 5vw, 80px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr) minmax(0, 1fr);
+    align-items: center;
+    margin: 0;
+    pointer-events: none;
+}
+
+.v2-labels__journey-heading span {
+    max-width: 360px;
+    color: rgba(255, 255, 255, .96);
+    font-size: clamp(44px, 5vw, 74px);
+    font-weight: 500;
+    letter-spacing: -.025em;
+    line-height: 1.02;
+}
+
+.v2-labels__journey-heading span:first-child { grid-column: 1; justify-self: start; }
+.v2-labels__journey-heading span:last-child { grid-column: 3; justify-self: end; text-align: right; }
+.v2-labels__journey-heading span:last-child strong {
+    color: #f8f6ff;
+    font: inherit;
+}
+
+.v2-labels__intro {
+    position: absolute;
+    top: calc(50% + 150px);
+    left: 50%;
+    width: min(350px, 25vw);
+    margin: 0;
+    color: rgba(207, 224, 255, .62);
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.v2-labels__stage {
+    position: relative;
+    z-index: 2;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 460px);
+    height: 430px;
+    transform: translateY(0);
+}
+
+.v2-labels__stage-card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 34px clamp(28px, 3.2vw, 44px) 32px;
+    overflow: hidden;
+    border: 1px solid rgba(185, 211, 255, .28);
+    border-radius: 24px;
+    background: var(--card-bg);
+    box-shadow: 0 20px 54px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .09);
+    backdrop-filter: none;
+    will-change: transform, opacity;
+}
+
+.v2-labels__stage-card::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    border-radius: inherit;
+    background: linear-gradient(116deg, rgba(255, 255, 255, .055), transparent 28%, transparent 72%, var(--card-accent, var(--labels-glow)));
+    pointer-events: none;
+}
+
+.v2-labels__stage-card > * { position: relative; z-index: 1; }
+.v2-labels__stage-card:nth-child(1) { z-index: 1; }
+.v2-labels__stage-card:nth-child(2) { z-index: 2; }
+.v2-labels__stage-card:nth-child(3) { z-index: 3; }
+.v2-labels__stage-card:nth-child(4) { z-index: 4; }
+.v2-labels__stage-card:nth-child(5) { z-index: 5; }
+.v2-labels__stage-card--vermelha { --card-mobile-bg: linear-gradient(145deg, rgba(190, 34, 55, .96), rgba(112, 14, 36, .92)); --card-label-color: #ffabb4; --card-accent: rgba(246, 73, 75, .14); }
+.v2-labels__stage-card--azul { --card-mobile-bg: linear-gradient(145deg, rgba(37, 105, 232, .96), rgba(15, 52, 132, .92)); --card-label-color: #a9c7ff; --card-accent: rgba(90, 151, 255, .14); }
+.v2-labels__stage-card--amarela { --card-mobile-bg: linear-gradient(145deg, rgba(198, 145, 18, .96), rgba(111, 76, 6, .92)); --card-label-color: #ffe29a; --card-accent: rgba(255, 208, 75, .13); }
+.v2-labels__stage-card--branca { --card-mobile-bg: linear-gradient(145deg, rgba(123, 142, 164, .96), rgba(58, 74, 95, .92)); --card-label-color: #e8eff9; --card-accent: rgba(221, 234, 249, .12); }
+.v2-labels__stage-card--verde { --card-mobile-bg: linear-gradient(145deg, rgba(15, 141, 96, .96), rgba(5, 79, 55, .92)); --card-label-color: #98efcb; --card-accent: rgba(70, 208, 143, .14); }
+
+.v2-labels__stage-art { position: absolute; top: 34px; right: 50%; transform: translateX(50%); opacity: .16; pointer-events: none; }
+.v2-labels__stage-art img { display: block; width: 176px; height: 176px; object-fit: contain; filter: drop-shadow(0 22px 24px rgba(0, 0, 0, .3)); }
+.v2-labels__stage-card.is-active .v2-labels__stage-art { opacity: .92; }
+.v2-labels__stage-kicker { margin: 218px 0 0; color: var(--card-label-color, var(--eyebrow-color)); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.v2-labels__stage-card h3 { max-width: 365px; margin: 12px 0 0; color: #f8f6ff; font-size: clamp(24px, 2vw, 31px); font-weight: 500; letter-spacing: -.02em; line-height: 1.06; }
+.v2-labels__stage-description { max-width: 370px; margin: 12px 0 0; color: #b9b1ca; font-size: 15px; line-height: 1.52; }
+
+.v2-labels__progress { position: absolute; z-index: 20; right: 0; bottom: clamp(30px, 5vh, 58px); left: 0; display: flex; align-items: flex-start; justify-content: space-between; width: min(640px, 54vw); margin: 0 auto; padding: 0; transform: none; }
+.v2-labels__progress-track { position: absolute; z-index: 0; top: 5px; right: 6px; left: 6px; height: 2px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .3); }
+.v2-labels__progress-fill { position: absolute; z-index: 1; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #145df5, #8fb8ff); transform: scaleX(0); transform-origin: left; will-change: transform; }
+.v2-labels__progress-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgba(207, 224, 255, .65); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.v2-labels__progress-step { z-index: 2; }
+.v2-labels__progress-step i { display: block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, .84); border-radius: 50%; background: #101722; box-shadow: 0 0 0 2px rgba(8, 14, 22, .18); opacity: 1; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.v2-labels__progress-step.is-active { color: var(--step-color); }
+.v2-labels__progress-step.is-active i { border-color: var(--step-color); background: var(--step-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--step-color), transparent 78%); transform: scale(1.08); }
+.v2-labels__progress-step--vermelha { --step-color: #ff4e58; }
+.v2-labels__progress-step--azul { --step-color: #3c82ff; }
+.v2-labels__progress-step--amarela { --step-color: #ffc83d; }
+.v2-labels__progress-step--branca { --step-color: #dce8f6; }
+.v2-labels__progress-step--verde { --step-color: #39c58a; }
+
+@media (max-width: 1100px) {
+    .v2-labels { min-height: 0; padding: 0; }
+    .v2-labels__pin { height: auto; min-height: 0; }
+    .v2-labels__journey { display: block; height: auto; padding: 86px 20px 78px; }
+    .v2-labels__eyebrow { text-align: left; }
+    .v2-labels__journey-heading { position: relative; inset: auto; display: block; margin-top: 28px; }
+    .v2-labels__journey-heading span { display: block; max-width: none; font-size: clamp(38px, 10vw, 58px); }
+    .v2-labels__journey-heading span:last-child { margin-top: 3px; text-align: left; }
+    .v2-labels__intro { position: relative; top: auto; left: auto; width: 100%; margin-top: 26px; transform: none; text-align: left; }
+    .v2-labels__stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; width: 100%; height: auto; margin-top: 42px; transform: none; }
+    .v2-labels__stage-card { position: relative; min-height: 340px; padding: 28px; opacity: 1 !important; transform: none !important; filter: none !important; }
+    .v2-labels__stage-card h3 { margin-top: 18px; font-size: 26px; }
+    .v2-labels__stage-description { font-size: 14px; }
+    .v2-labels__stage-art { top: 28px; right: 50%; transform: translateX(50%); }
+    .v2-labels__stage-art img { width: 150px; height: 150px; }
+    .v2-labels__stage-kicker { margin-top: 184px; }
+    .v2-labels__progress { position: relative; bottom: auto; left: auto; width: 100%; margin-top: 32px; transform: none; }
+}
+
+@media (max-width: 560px) {
+    .v2-labels__journey { padding: 72px 20px 70px; }
+    .v2-labels__stage { grid-template-columns: 1fr; gap: 12px; margin-top: 36px; }
+    .v2-labels__stage-card { min-height: 315px; padding: 24px 21px; border-radius: 20px; }
+    .v2-labels__stage-card h3 { margin-top: 12px; font-size: 24px; }
+    .v2-labels__progress { margin-top: 26px; }
+}
+
+/* Mesma escala editorial das seções anteriores. */
+.v2-labels__journey-heading span { text-wrap: balance; }
+@media (min-width: 1601px) {
+    .v2-labels__journey-heading span { font-size: 56px; }
+}
+@media (min-width: 1441px) and (max-width: 1600px) {
+    .v2-labels__journey-heading span { font-size: 52px; }
+}
+@media (min-width: 1200px) and (max-width: 1440px) {
+    .v2-labels__journey-heading span { font-size: 48px; }
+}
+@media (min-width: 1001px) and (max-width: 1199px) {
+    .v2-labels__journey-heading span { font-size: 42px; }
+}
+@media (max-width: 1000px) {
+    .v2-labels__journey-heading span { font-size: 32px; line-height: 1.04; }
+}
+@media (max-width: 390px) {
+    .v2-labels__journey-heading span { font-size: 30px; }
+}
+
+@media (max-width: 800px) {
+    .v2-labels__journey-heading span,
+    .v2-labels__journey-heading span:last-child {
+        font-size: 32px;
+        font-weight: 500;
+        line-height: 1.04;
+    }
+}
+
+@media (max-width: 1100px) {
+    .v2-labels {
+        background: #061333;
+    }
+
+    .v2-labels__background {
+        display: none !important;
+    }
+
+    .v2-labels__stage-card,
+    .v2-labels__progress-fill {
+        will-change: auto;
+    }
+
+    .v2-labels__pin {
+        background:
+            linear-gradient(rgba(143, 184, 255, .025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(143, 184, 255, .025) 1px, transparent 1px),
+            radial-gradient(circle at 88% 8%, rgba(20, 93, 245, .2), transparent 35%),
+            linear-gradient(155deg, #0a1d46, #061333 56%, #040d25);
+        background-size: 28px 28px, 28px 28px, auto, auto;
+    }
+
+    .v2-labels::before,
+    .v2-labels__pin::before {
+        background: linear-gradient(180deg, rgba(2, 8, 23, .08), rgba(2, 8, 23, .44));
+    }
+
+    .v2-labels__journey-heading {
+        max-width: 360px;
+        margin-top: 0;
+    }
+
+    .v2-labels__journey-heading span,
+    .v2-labels__journey-heading span:last-child {
+        display: inline;
+        margin: 0;
+        font-size: clamp(30px, 8.5vw, 38px);
+        line-height: 1.05;
+        text-align: left;
+    }
+
+    .v2-labels__eyebrow,
+    .v2-labels__journey-heading span,
+    .v2-labels__intro {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .v2-labels__journey-heading span:first-child::after {
+        content: ' ';
+        white-space: pre;
+    }
+
+    .v2-labels__stage-card {
+        border-color: rgba(233, 243, 255, .34);
+        background: var(--card-mobile-bg, var(--card-bg)) !important;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .2);
+    }
+
+    .v2-labels__eyebrow {
+        margin-bottom: 16px;
+    }
+
+    .v2-labels__intro {
+        margin-top: 20px;
+    }
+
+    .v2-labels__stage-card h3 {
+        margin-top: 10px;
+        font-size: 24px;
+        line-height: 1.1;
+    }
+
+    .v2-labels__stage-card .v2-labels__stage-art {
+        opacity: .92;
+    }
+
+    .v2-labels__progress {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .v2-labels__stage-card { opacity: 1 !important; transform: none !important; filter: none !important; }
+}
+</style>
+
+<style scoped>
+@media (max-width: 800px) {
+    .v2-labels__journey-heading span,
+    .v2-labels__journey-heading span:last-child {
+        font-size: 32px !important;
+        font-weight: 500 !important;
+        line-height: 1.04 !important;
+    }
+}
+
+@media (max-width: 390px) {
+    .v2-labels__journey-heading span,
+    .v2-labels__journey-heading span:last-child {
+        font-size: 30px !important;
+    }
+}
 </style>

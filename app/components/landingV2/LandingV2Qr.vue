@@ -7,6 +7,7 @@ let motionContext: { revert: () => void } | undefined;
 onMounted(async () => {
     if (!section.value) return;
 
+    await waitForLandingV2Ready();
     const { default: gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
@@ -39,6 +40,7 @@ onMounted(async () => {
                 pin: section.value,
                 pinSpacing: true,
                 scrub: 1.15,
+                refreshPriority: 2,
                 invalidateOnRefresh: true
             }
         })
@@ -53,6 +55,8 @@ onMounted(async () => {
             .to(scanner, { opacity: 0, duration: .35, ease: 'power2.out' }, 2.08)
             .to(result, { width: '100%', maxWidth: 'none', x: 0, borderRadius: 25, duration: 1.05, ease: 'power2.inOut' }, 2.1);
     }, section.value);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => ScrollTrigger.refresh()));
 });
 
 onBeforeUnmount(() => motionContext?.revert());
@@ -62,7 +66,7 @@ onBeforeUnmount(() => motionContext?.revert());
     <section class="v2-qr" ref="section" aria-labelledby="v2-qr-title">
         <div class="v2-qr__intro">
             <p class="v2-qr__eyebrow">{ LEITURA QUE INFORMA }</p>
-            <h2 id="v2-qr-title">Um código.<br>Uma leitura.<br><span>Mais clareza.</span></h2>
+            <h2 id="v2-qr-title">Um código.<br>Uma leitura.<br><span class="heading-highlight">Mais clareza.</span></h2>
             <p class="v2-qr__lead">O QR Code conecta a etiqueta às informações do veículo, sem expor dados pessoais.</p>
             <a href="#etiquetas" class="v2-qr__link"><span class="v2-qr__link-label">Ver as etiquetas</span><span aria-hidden="true"><i>»</i></span></a>
         </div>

@@ -74,13 +74,13 @@ watch(isMenuOpen, (open) => document.body.classList.toggle('landing-menu-open', 
     <div class="v2-header-shell">
     <header class="v2-nav" :class="{ 'v2-nav--scrolled': isScrolled, 'v2-nav--menu-open': isMenuOpen }">
         <div class="v2-nav__inner">
-            <button class="v2-nav__brand" type="button" aria-label="Ir para o topo da página" @click="goTo('top')"><img src="/images/logo-vertical.svg" alt="Identifica Trânsito"></button>
+            <button class="v2-nav__brand" type="button" aria-label="Ir para o topo da página" @click="goTo('top')"><img src="/landing-v2/images/branding/logo-vertical.svg" alt="Identifica Trânsito"></button>
             <nav class="v2-nav__links" aria-label="Navegação principal da Landing V2"><a v-for="link in links" :key="link.id" :href="`#${link.id}`" :class="{ 'v2-nav__link--active': activeSection === link.id }" :aria-current="activeSection === link.id ? 'location' : undefined">{{ link.label }}</a></nav>
             <div class="v2-nav__actions"><NuxtLink to="/auth/Login" class="v2-nav__cta"><span>Acessar plataforma</span><span class="v2-nav__cta-arrow"><ArrowRight :size="15" /></span></NuxtLink><button class="v2-nav__toggle" type="button" :class="{ 'v2-nav__toggle--open': isMenuOpen }" :aria-expanded="isMenuOpen" :aria-label="isMenuOpen ? 'Fechar menu' : 'Abrir menu'" @click="isMenuOpen = !isMenuOpen"><span class="v2-nav__toggle-line"></span><span class="v2-nav__toggle-line"></span><span class="v2-nav__toggle-line"></span></button></div>
         </div>
         <nav v-if="isMenuOpen" class="v2-nav__mobile-links" aria-label="Navegação mobile da Landing V2"><div class="v2-nav__mobile-menu"><a href="#top" @click="isMenuOpen = false">Início</a><a v-for="link in links" :key="`mobile-${link.id}`" :href="`#${link.id}`" @click="isMenuOpen = false">{{ link.label }}</a></div><NuxtLink to="/auth/Login" class="v2-nav__mobile-cta"><span>Acessar plataforma</span><span><ArrowRight :size="22" /></span></NuxtLink></nav>
     </header>
-    <nav class="v2-bottom-nav" :class="{ 'v2-bottom-nav--visible': isBottomNavVisible }" aria-label="Navegação rápida da Landing V2"><a href="#top" :class="{ 'is-active': activeSection === 'top' }" :aria-current="activeSection === 'top' ? 'location' : undefined">Início</a><a v-for="link in links" :key="`bottom-${link.id}`" :href="`#${link.id}`" :class="{ 'is-active': activeSection === link.id }" :aria-current="activeSection === link.id ? 'location' : undefined">{{ link.label }}</a><NuxtLink to="/auth/register" class="v2-bottom-nav__cta"><span>Criar minha conta</span><span><ArrowRight :size="15" /></span></NuxtLink></nav>
+    <nav class="v2-bottom-nav" :class="{ 'v2-bottom-nav--visible': isBottomNavVisible }" aria-label="Navegação rápida da Landing V2"><a href="#top" @click.prevent="goTo('top')" :class="{ 'is-active': activeSection === 'top' }" :aria-current="activeSection === 'top' ? 'location' : undefined">Início</a><a v-for="link in links" :key="`bottom-${link.id}`" :href="`#${link.id}`" @click.prevent="goTo(link.id)" :class="{ 'is-active': activeSection === link.id }" :aria-current="activeSection === link.id ? 'location' : undefined">{{ link.label }}</a><NuxtLink to="/auth/register" class="v2-bottom-nav__cta"><span>Criar minha conta</span><span><ArrowRight :size="15" /></span></NuxtLink></nav>
 </div>
 </template>
 
@@ -113,14 +113,16 @@ watch(isMenuOpen, (open) => document.body.classList.toggle('landing-menu-open', 
     .v2-nav__inner { min-height: 64px; }
     .v2-nav__brand { width: 9rem; }
     .v2-nav__brand { position: relative; z-index: 64; }
-    .v2-nav__toggle { z-index: 64; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.11); border-radius: 12px; background: rgba(0,0,0,.12); box-shadow: 0 5px 16px rgba(0,0,0,.12); }
+    .v2-nav__toggle { z-index: 64; width: 44px; height: 44px; overflow: visible; border: 1px solid rgba(255,255,255,.11); border-radius: 12px; background: rgba(0,0,0,.12); box-shadow: 0 5px 16px rgba(0,0,0,.12); }
     .v2-nav--menu-open .v2-nav__toggle { border-color: rgba(6,12,40,.1); background: rgba(6,12,40,.04); box-shadow: none; }
     .v2-nav__toggle-line { position: absolute; left: 50%; display: block; width: 18px; height: 2px; margin: 0 !important; border-radius: 999px; background: currentColor; transform-origin: center; transition: transform 320ms cubic-bezier(.22, 1, .36, 1), opacity 180ms ease; }
-    .v2-nav__toggle-line:first-child { top: 15.5px; transform: translateX(-50%); }
+    .v2-nav__toggle-line:first-child { height: 3px; }
+    .v2-nav__toggle-line:first-child { top: 16px; transform: translateX(-50%); }
     .v2-nav__toggle-line:nth-child(2) { display: none; }
-    .v2-nav__toggle-line:last-child { top: 24.5px; transform: translateX(-50%); }
-    .v2-nav__toggle--open .v2-nav__toggle-line:first-child { transform: translateX(-50%) translateY(4.5px) rotate(45deg); }
-    .v2-nav__toggle--open .v2-nav__toggle-line:last-child { transform: translateX(-50%) translateY(-4.5px) rotate(-45deg); }
+    .v2-nav__toggle-line:last-child { top: 26px; transform: translateX(-50%); }
+    .v2-nav__toggle--open .v2-nav__toggle-line:first-child { transform: translateX(-50%) translateY(4px) rotate(45deg); }
+    .v2-nav__toggle--open .v2-nav__toggle-line:last-child { transform: translateX(-50%) translateY(-5px) rotate(-45deg); }
+    .v2-nav__toggle--open .v2-nav__toggle-line { height: 2px; }
     .v2-nav__toggle svg { display: none !important; }
 }
 .v2-nav__brand { padding: 0; background: transparent; }

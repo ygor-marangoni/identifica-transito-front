@@ -4,6 +4,7 @@ const root = ref<HTMLElement | null>(null);
 const progress = ref<HTMLElement | null>(null);
 const items = ref<HTMLElement[]>([]);
 let animationContext: { revert: () => void } | undefined;
+let progressCleanup: (() => void) | undefined;
 const steps = [
     { title: 'Crie sua conta', description: 'Entre na plataforma e faça seu cadastro para começar.', image: '/landing-v2/images/passo-1.webp' },
     { title: 'Cadastre seu veículo', description: 'Adicione os dados do veículo que receberá a etiqueta.', image: '/landing-v2/images/passo-2.webp' },
@@ -15,47 +16,102 @@ onMounted(async () => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !root.value || !progress.value) return;
     const journey = root.value.querySelector<HTMLElement>('.v2-how-steps__journey');
     if (!journey) return;
+    await waitForLandingV2Ready();
     const { default: gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
     animationContext = gsap.context(() => {
-        gsap.set(progress.value, { scaleY: 0 });
+        const intro = root.value!.querySelector<HTMLElement>('.v2-how-steps__intro');
+        const introParts = intro ? Array.from(intro.children) as HTMLElement[] : [];
+        if (introParts.length) {
+            gsap.fromTo(introParts,
+                { opacity: 0, y: 24 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: .7,
+                    stagger: .1,
+                    ease: 'power3.out',
+                    immediateRender: false,
+                    scrollTrigger: {
+                        trigger: root.value,
+                        start: 'top 90%',
+                        toggleActions: 'play none none reverse'
+                    }
+                }
+            );
+        }
+        progress.value.style.setProperty('--how-steps-progress', '0');
+        const syncProgress = () => {
+            const journeyRect = journey.getBoundingClientRect();
+            const anchor = window.innerHeight * (window.innerWidth <= 600 ? .65 : .8);
+            const distance = journey.offsetHeight + window.innerHeight * .3;
+            const value = Math.max(0, Math.min(1, (anchor - journeyRect.top) / Math.max(1, distance)));
+            progress.value.style.setProperty('--how-steps-progress', String(value));
+        };
+        progressCleanup = () => {
+            window.removeEventListener('scroll', syncProgress);
+            window.removeEventListener('resize', syncProgress);
+        };
+        window.addEventListener('scroll', syncProgress, { passive: true });
+        window.addEventListener('resize', syncProgress);
+        syncProgress();
         const trigger = ScrollTrigger.create({
             trigger: journey,
             start: () => window.innerWidth <= 600 ? 'top 65%' : 'top 80%',
-            end: () => window.innerWidth <= 600
-                ? 'bottom 42%'
-                : window.innerWidth >= 1024
-                    ? 'bottom 50%'
-                    : window.innerHeight <= 900 ? 'bottom 5%' : 'bottom 40%',
+            end: () => `+=${journey.offsetHeight + window.innerHeight * .3}`,
             scrub: .7,
             invalidateOnRefresh: true,
             onUpdate: self => {
-                gsap.set(progress.value, { scaleY: self.progress });
                 const journeyHeight = journey.offsetHeight || 1;
+                const journeyProgress = self.progress;
+                syncProgress();
                 items.value.forEach(item => {
                     const dotPosition = item.offsetTop + item.offsetHeight / 2;
                     const dotProgress = dotPosition / journeyHeight;
-                    item.classList.toggle('is-active', self.progress >= dotProgress);
+                    item.classList.toggle('is-active', journeyProgress >= dotProgress);
                 });
             }
         });
-        items.value.forEach((item, index) => gsap.fromTo(item,
-            { opacity: .28, x: index % 2 ? -34 : 34, y: 14 },
-            { opacity: 1, x: 0, y: 0, duration: .5, scrollTrigger: { trigger: item, start: 'top 82%', end: 'top 58%', scrub: .6 } }
-        ));
+        const compact = window.matchMedia('(max-width: 800px)').matches;
+        items.value.forEach((item, index) => {
+            const offset = compact ? (index % 2 ? -22 : 22) : (index % 2 ? -112 : 112);
+            gsap.fromTo(item,
+                { autoAlpha: 0, x: offset, y: compact ? 40 : 34, scale: compact ? .975 : .94, rotateY: compact ? 0 : (index % 2 ? 3 : -3), transformPerspective: 900 },
+                {
+                    autoAlpha: 1,
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                    rotateY: 0,
+                    duration: .8,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: item,
+                        start: compact ? 'top 88%' : 'top 90%',
+                        end: compact ? 'top 49%' : 'top 48%',
+                        scrub: compact ? .55 : .72,
+                        invalidateOnRefresh: true
+                    }
+                }
+            );
+        });
         trigger.refresh();
+        requestAnimationFrame(() => ScrollTrigger.refresh());
     }, root.value);
 });
 
-onBeforeUnmount(() => animationContext?.revert());
+onBeforeUnmount(() => {
+    progressCleanup?.();
+    animationContext?.revert();
+});
 </script>
 
 <template>
     <section id="como-funciona" ref="root" class="v2-how-steps" aria-labelledby="v2-how-steps-title">
         <header class="v2-how-steps__intro">
             <p class="v2-how-steps__eyebrow">Comece em poucos passos</p>
-            <h2 id="v2-how-steps-title">Da escolha ao vidro.</h2>
+            <h2 id="v2-how-steps-title">Da escolha ao <span class="heading-highlight">vidro.</span></h2>
             <p>Do cadastro à aplicação, tudo acontece em poucos passos.</p>
         </header>
         <div class="v2-how-steps__journey">
@@ -316,6 +372,13 @@ onBeforeUnmount(() => animationContext?.revert());
 
 @media (min-width: 801px) {
     .v2-how-steps__progress {
+        left: 50% !important;
+        width: 3px !important;
+        margin-left: -1.5px;
+        transform: scaleY(var(--how-steps-progress, 0)) !important;
+    }
+
+    .v2-how-steps__progress {
         left: calc(50% + 1px);
         width: 3px;
     }
@@ -340,6 +403,28 @@ onBeforeUnmount(() => animationContext?.revert());
     .v2-how-steps__journey li:nth-child(even) .v2-how-steps__dot {
         right: calc(-1 * var(--connector) - 9px);
         transform: translate(-1px, -50%) !important;
+    }
+}
+
+.v2-how-steps__progress {
+    transform: translateX(-50%) scaleY(var(--how-steps-progress, 0));
+}
+
+.v2-how-steps__journey {
+    margin-top: clamp(52px, 6vw, 88px);
+}
+
+@media (max-width: 800px) {
+    .v2-how-steps__progress {
+        transform: scaleY(var(--how-steps-progress, 0));
+    }
+
+    .v2-how-steps__journey {
+        margin-top: 48px;
+    }
+
+    .v2-how-steps__journey li:first-child .v2-how-steps__dot {
+        transform: translate(4px, -50%) !important;
     }
 }
 </style>

@@ -14,6 +14,7 @@ onMounted(async () => {
   const materialCard = sectionRef.value?.materialCard
   if (!label || !hero || !target || !section || !materialCard || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+  await waitForLandingV2Ready()
   const { default: gsap } = await import('gsap')
   const { ScrollTrigger } = await import('gsap/ScrollTrigger')
   gsap.registerPlugin(ScrollTrigger)

@@ -11,48 +11,68 @@ const progress = ref<HTMLElement | null>(null);
 const activeTab = ref(0);
 const isPaused = ref(false);
 const isVisible = ref(true);
+const labelImages = [
+    '/landing-v2/images/etiqueta.webp',
+    '/landing-v2/images/etiqueta-amarela.webp',
+    '/landing-v2/images/etiqueta-verde.webp',
+    '/landing-v2/images/etiqueta-branca.webp',
+    '/landing-v2/images/etiqueta-vermelha.webp'
+];
+const activeLabelIndex = ref(0);
+const activeLabelImage = computed(() => labelImages[activeLabelIndex.value]);
+const nextLabelIndex = ref<number | null>(null);
+const nextLabelImage = computed(() => nextLabelIndex.value === null ? '' : labelImages[nextLabelIndex.value]);
 
 const tabs = [
     {
-        title: 'Motorista', image: '/landing-v2/images/motorista.webp', alt: 'Motorista ao lado de um carro',
-        body: 'Escolhe o contexto adequado ao seu veículo e contribui para uma condução mais clara e segura para todos.',
-        footer: 'Sem dados pessoais. Apenas informações associadas ao contexto do veículo.',
-        highlights: [{ title: 'Privacidade', body: 'Sem identificação pessoal.', icon: LockKeyhole }, { title: 'Mais clareza', body: 'Contexto certo, menos ruído.', icon: Eye }, { title: 'Responsabilidade', body: 'Todos colaboram por uma via melhor.', icon: ShieldCheck }]
+        title: 'Diferentes perfis', image: '/landing-v2/images/motorista.webp', alt: 'Motorista ao lado de um carro',
+        body: 'Cada etiqueta representa um perfil de condutor. A identificação visual ajuda quem está ao redor a perceber que aquela situação pode exigir mais atenção.',
+        footer: 'Perfis visíveis sem expor a identidade civil do motorista.',
+        highlights: [{ title: '5 perfis', body: 'Diferentes contextos de condução.', icon: LockKeyhole }, { title: 'Identificação visual', body: 'Cada perfil possui sua própria cor.', icon: Eye }, { title: 'Leitura rápida', body: 'Um sinal simples de reconhecer.', icon: ShieldCheck }]
     },
     {
-        title: 'Rede de parceiros', image: '/landing-v2/images/rede-parceiros.webp', alt: 'Instituição representando uma rede de parceiros',
-        body: 'Prefeituras, pontos de distribuição e parceiros ajudam a aproximar o projeto das cidades e da população.',
-        footer: 'Uma rede preparada para ampliar o acesso ao projeto.',
-        highlights: [{ title: 'Mais alcance', body: 'Identificação mais acessível.', icon: Network }, { title: 'Distribuição', body: 'Aproxima as etiquetas dos motoristas.', icon: Handshake }, { title: 'Colaboração', body: 'Projeto construído com diferentes agentes.', icon: UsersRound }]
+        title: 'Rede de acesso', image: '/landing-v2/images/rede-parceiros.webp', alt: 'Instituição representando uma rede de parceiros',
+        body: 'Prefeituras, pontos de distribuição e parceiros podem ampliar o acesso às etiquetas e aproximar o projeto de mais motoristas.',
+        footer: 'Mais pontos de acesso ajudam diferentes perfis a se tornarem visíveis na via.',
+        highlights: [{ title: 'Prefeituras', body: 'Apoio para ampliar o alcance.', icon: Network }, { title: 'Distribuição', body: 'Acesso mais próximo do motorista.', icon: Handshake }, { title: 'Parcerias', body: 'Uma rede construída em conjunto.', icon: UsersRound }]
     },
     {
         title: 'Mais atenção na via', image: '/landing-v2/images/pessoas.webp', alt: 'Grupo de pessoas representando a comunidade',
-        body: 'Com sinais mais claros, outros condutores conseguem compreender melhor determinadas situações e reagir com mais atenção.',
-        footer: 'Mais clareza para tornar a convivência no trânsito mais humana.',
-        highlights: [{ title: 'Mais segurança', body: 'Decisões com mais informação.', icon: ShieldCheck }, { title: 'Mais empatia', body: 'Compreensão antes do julgamento.', icon: HeartHandshake }, { title: 'Mais atenção', body: 'Sinais simples para situações importantes.', icon: Eye }]
+        body: 'Ao reconhecer um sinal, outros condutores podem compreender melhor a situação e agir com mais atenção, paciência e responsabilidade.',
+        footer: 'O objetivo não é identificar pessoas. É tornar situações mais fáceis de compreender.',
+        highlights: [{ title: 'Mais atenção', body: 'Um sinal muda a percepção.', icon: ShieldCheck }, { title: 'Mais empatia', body: 'Compreender antes de reagir.', icon: HeartHandshake }, { title: 'Mais segurança', body: 'Decisões com mais informação.', icon: Eye }]
     }
 ];
 
 const current = computed(() => tabs[activeTab.value]);
 let motionContext: { revert: () => void } | undefined;
 let autoplay: ReturnType<typeof setTimeout> | undefined;
+let labelAutoplay: ReturnType<typeof setInterval> | undefined;
+let labelSwapTimeout: ReturnType<typeof setTimeout> | undefined;
+let progressFrame: number | undefined;
 let stopTabWatch: (() => void) | undefined;
 let progressStart = 0;
 let elapsed = 0;
 const duration = 9000;
 
 const clearAutoplay = () => { if (autoplay) clearTimeout(autoplay); autoplay = undefined; };
+const clearProgressFrame = () => {
+    if (progressFrame !== undefined) cancelAnimationFrame(progressFrame);
+    progressFrame = undefined;
+};
 const updateProgress = () => {
+    progressFrame = undefined;
     if (!progress.value || isPaused.value || !isVisible.value) return;
     const ratio = Math.min(1, (elapsed + (performance.now() - progressStart)) / duration);
     progress.value.style.transform = `scaleX(${ratio})`;
-    if (ratio < 1) requestAnimationFrame(updateProgress);
+    if (ratio < 1) progressFrame = requestAnimationFrame(updateProgress);
 };
 const scheduleAutoplay = () => {
     clearAutoplay();
+    clearProgressFrame();
     if (isPaused.value || !isVisible.value) return;
     progressStart = performance.now();
-    requestAnimationFrame(updateProgress);
+    progressFrame = requestAnimationFrame(updateProgress);
     autoplay = setTimeout(() => { activeTab.value = (activeTab.value + 1) % tabs.length; elapsed = 0; scheduleAutoplay(); }, duration - elapsed);
 };
 const selectTab = (index: number, manual = true) => {
@@ -73,10 +93,24 @@ const onKeydown = (event: KeyboardEvent, index: number) => {
     else return;
     event.preventDefault(); selectTab(next); (event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>('[role=tab]')[next]?.focus();
 };
-const onVisibility = () => { isVisible.value = document.visibilityState === 'visible'; if (isVisible.value) scheduleAutoplay(); else { elapsed += performance.now() - progressStart; clearAutoplay(); } };
+const onVisibility = () => { isVisible.value = document.visibilityState === 'visible'; if (isVisible.value) scheduleAutoplay(); else { elapsed += performance.now() - progressStart; clearAutoplay(); clearProgressFrame(); } };
 
 onMounted(async () => {
     if (!section.value) return;
+    await waitForLandingV2Ready();
+    labelImages.slice(1).forEach((src) => {
+        const image = new Image();
+        image.src = src;
+    });
+    labelAutoplay = setInterval(() => {
+        if (nextLabelIndex.value !== null) return;
+        nextLabelIndex.value = (activeLabelIndex.value + 1) % labelImages.length;
+        if (labelSwapTimeout) clearTimeout(labelSwapTimeout);
+        labelSwapTimeout = setTimeout(() => {
+            activeLabelIndex.value = nextLabelIndex.value as number;
+            nextLabelIndex.value = null;
+        }, 700);
+    }, 5000);
     document.addEventListener('visibilitychange', onVisibility);
     const { default: gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
@@ -101,13 +135,23 @@ onMounted(async () => {
     motionContext = gsap.context(() => {
         if (reduced) { gsap.set([intro.value, panel.value], { clearProps: 'all', autoAlpha: 1 }); }
         else {
-            if (intro.value) gsap.from(intro.value, { scrollTrigger: { trigger: section.value, start: 'top 78%', once: true }, y: 22, opacity: 0, duration: .65, ease: 'power3.out' });
-            if (panel.value) gsap.from(panel.value, { scrollTrigger: { trigger: section.value, start: 'top 68%', once: true }, y: 28, opacity: 0, scale: .99, duration: .7, ease: 'power3.out' });
+            const tabsElement = section.value?.querySelector<HTMLElement>('.v2-network__tabs');
+            const progressRow = section.value?.querySelector<HTMLElement>('.v2-network__progress-row');
+            const panelParts = panel.value?.querySelectorAll<HTMLElement>('.v2-network__state-head, .v2-network__highlights > div, .v2-network__footer, .v2-network__qr-stage');
+            const timeline = gsap.timeline({
+                scrollTrigger: { trigger: section.value, start: 'top 78%', once: true }
+            });
+
+            if (intro.value) timeline.from(intro.value, { y: 44, autoAlpha: 0, duration: .76, ease: 'power3.out' });
+            if (tabsElement) timeline.from(tabsElement, { y: 30, autoAlpha: 0, scale: .985, duration: .64, ease: 'power3.out' }, '-=.38');
+            if (panel.value) timeline.from(panel.value, { y: 58, autoAlpha: 0, scale: .97, rotateX: 2, transformPerspective: 900, duration: .84, ease: 'power3.out' }, '-=.34');
+            if (panelParts?.length) timeline.from(panelParts, { y: 26, autoAlpha: 0, scale: .975, duration: .5, stagger: .075, ease: 'power3.out' }, '-=.52');
+            if (progressRow) timeline.from(progressRow, { y: 14, autoAlpha: 0, duration: .42, ease: 'power2.out' }, '-=.42');
         }
     }, section.value);
     scheduleAutoplay();
 });
-onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventListener('visibilitychange', onVisibility); motionContext?.revert(); });
+onBeforeUnmount(() => { clearAutoplay(); clearProgressFrame(); if (labelAutoplay) clearInterval(labelAutoplay); if (labelSwapTimeout) clearTimeout(labelSwapTimeout); stopTabWatch?.(); document.removeEventListener('visibilitychange', onVisibility); motionContext?.revert(); });
 </script>
 
 <template>
@@ -115,8 +159,8 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
         <div class="v2-network__inner">
             <header ref="intro" class="v2-network__intro">
                 <p class="v2-network__eyebrow">{ O PROJETO }</p>
-                <h2 id="v2-network-title">Uma rede para tornar a via<br><span>mais clara</span> antes do julgamento.</h2>
-                <p>Conectamos motoristas, etiquetas e parceiros para entender melhor cada situação na via, com privacidade e responsabilidade.</p>
+                <h2 id="v2-network-title">Cada motorista tem um <span class="heading-highlight">perfil</span>&nbsp;<br>A etiqueta ajuda a torná-lo visível.</h2>
+                <p>O Identifica Trânsito utiliza diferentes etiquetas para representar perfis de condução e tornar esses sinais mais fáceis de reconhecer no trânsito.</p>
             </header>
             <div class="v2-network__tabs" role="tablist" aria-label="Ecossistema Identifica Trânsito">
                 <button v-for="(tab, index) in tabs" :id="`network-tab-${index}`" :key="tab.title" type="button" role="tab" :aria-selected="activeTab === index" :aria-controls="'network-panel'" :tabindex="activeTab === index ? 0 : -1" :class="{ 'is-active': activeTab === index }" @click="selectTab(index)" @keydown="onKeydown($event, index)">
@@ -129,7 +173,7 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
                     <div class="v2-network__highlights"><div v-for="item in current.highlights" :key="item.title"><component :is="item.icon" :size="18" stroke-width="1.8" /><b>{{ item.title }}</b><span>{{ item.body }}</span></div></div>
                     <p class="v2-network__footer"><LockKeyhole :size="16" stroke-width="1.8" />{{ current.footer }}</p>
                 </div>
-                <div class="v2-network__qr-stage"><i v-for="n in 3" :key="n"></i><img src="/landing-v2/images/etiqueta.webp" alt="Medalhão azul Identifica Trânsito com QR Code" loading="lazy" decoding="async" width="912" height="912"></div>
+                <div class="v2-network__qr-stage"><i v-for="n in 3" :key="n"></i><div class="v2-network__label-stage"><img :src="activeLabelImage" alt="Etiqueta Identifica Trânsito com QR Code" loading="lazy" decoding="async" width="912" height="912"><img v-if="nextLabelIndex !== null" class="is-label-next" :src="nextLabelImage" alt="" aria-hidden="true" loading="lazy" decoding="async" width="912" height="912"></div></div>
             </div>
             <div class="v2-network__progress-row">
                 <div class="v2-network__track"><span ref="progress"></span></div>
@@ -156,21 +200,18 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
 .v2-network__tabs .is-active img { filter: none; opacity: 1; }
 .v2-network__panel { max-width: none; margin: 0; border-radius: 0; }
 .v2-network__progress-row { width: 100%; max-width: none; margin: 0; border: 1px solid rgba(20,93,245,.14); border-top: 0; border-radius: 0 0 26px 26px; }
-.v2-network__medallion { width: clamp(165px, 14vw, 220px); }
 .v2-network__state-head>img { width: 100px; height: 100px; }
 .v2-network__state-head>div { min-width: 0; }
 .v2-network__highlights div { position: relative; padding: 14px 12px 14px 42px; }
 .v2-network__highlights svg { position: absolute; top: 14px; left: 13px; color: var(--blue); }
 .v2-network__footer { display: flex; align-items: center; gap: 8px; }
 .v2-network__footer svg { flex: none; color: var(--blue); }
-.v2-network__qr-stage { transform: translateX(clamp(0px, 3vw, 48px)); }
 .v2-network__qr-stage { justify-self: end; transform: translateX(clamp(0px, 5vw, 96px)); }
 .v2-network__highlights div { border-radius: 12px; padding-top: 16px; padding-bottom: 14px; }
 .v2-network__highlights svg { background: #e7f0ff; border-radius: 8px; }
 .v2-network__footer { border-radius: 12px; }
-.v2-network__qr-stage::after { display: none; }
-.v2-network__highlights div { min-height: 82px; padding: 17px 13px 13px 43px; border: 1px solid rgba(20,93,245,.13); border-radius: 16px; background: linear-gradient(145deg,#fbfdff,#f4f8ff); box-shadow: 0 6px 18px rgba(24,68,145,.035); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
-.v2-network__highlights div { min-height: 108px; }
+.v2-network__highlights div { padding: 17px 13px 13px 43px; border: 1px solid rgba(20,93,245,.13); border-radius: 16px; background: linear-gradient(145deg,#fbfdff,#f4f8ff); box-shadow: 0 6px 18px rgba(24,68,145,.035); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.v2-network__highlights div { min-height: 108px; padding-top: 17px; padding-right: 13px; padding-bottom: 13px; }
 .v2-network__highlights div:hover { border-color: rgba(20,93,245,.32); transform: translateY(-2px); box-shadow: 0 10px 22px rgba(24,68,145,.08); }
 .v2-network__highlights svg { top: 15px; left: 13px; width: 22px; height: 22px; padding: 4px; border-radius: 8px; background: #e7f0ff; }
 .v2-network__highlights b { font-weight: 700; }
@@ -266,12 +307,25 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
     z-index: 2;
     border-bottom: 3px solid var(--blue);
 }
-.v2-network__tabs button.is-active::after {
-    display: none;
-}
 .v2-network__qr-stage img {
-    transition: filter .35s ease;
+    transition: opacity .45s ease, filter .35s ease;
     animation: network-qr-float 5.5s ease-in-out infinite;
+}
+.v2-network__label-stage {
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+}
+.v2-network__label-stage img {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    animation: none;
+}
+.v2-network__label-stage img.is-label-next {
+    z-index: 2;
+    clip-path: circle(0% at 50% 50%);
+    animation: label-color-reveal .7s cubic-bezier(.22, .7, .2, 1) forwards;
 }
 .v2-network__qr-stage::before {
     content: '';
@@ -302,14 +356,26 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
     0%, 100% { opacity: .6; transform: scale(.96); }
     50% { opacity: 1; transform: scale(1.04); }
 }
+@keyframes label-color-reveal {
+    from { clip-path: circle(0% at 50% 50%); }
+    to { clip-path: circle(75% at 50% 50%); }
+}
 
 @media(prefers-reduced-motion:reduce) {
     .v2-network__qr-stage img,
     .v2-network__qr-stage i,
     .v2-network__qr-stage::before { animation: none; }
+    .v2-network__qr-stage img { transition: none; }
+    .v2-network__label-stage img.is-label-next {
+        animation: none;
+        clip-path: circle(75% at 50% 50%);
+    }
 }
 
 @media(max-width:800px) {
+    .v2-network__tabs {
+        display: flex;
+    }
     .v2-network__highlights div {
         box-sizing: border-box;
         min-height: unset;
@@ -317,13 +383,13 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
     }
     .v2-network__tabs button {
         gap: 0;
+        flex: 0 0 22%;
         transition: background-color .2s ease, color .2s ease, flex-basis .2s ease;
     }
     .v2-network__tabs button:not(.is-active) span {
         display: none;
     }
     .v2-network__tabs button:not(.is-active) {
-        flex-basis: 22%;
         min-width: 64px;
         padding-inline: 8px;
     }
@@ -389,6 +455,9 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
     .v2-network h2 { font-size: 30px; }
 }
 
+/* Keep the mobile headline natural and remove the decorative line from the QR stage. */
+.v2-network__qr-stage::after { display: none !important; }
+
 @media(min-width:961px) {
     .v2-network__qr-stage {
         isolation: isolate;
@@ -400,33 +469,7 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
         background: radial-gradient(circle, rgba(61, 124, 255, .18) 0%, rgba(61, 124, 255, .07) 34%, transparent 70%);
         filter: blur(8px);
     }
-    .v2-network__qr-stage::after {
-        content: '';
-        display: block;
-        position: absolute;
-        width: min(31vw, 360px);
-        aspect-ratio: 1;
-        border: 1px solid rgba(20, 93, 245, .18);
-        border-top-color: rgba(20, 93, 245, .72);
-        border-right-color: rgba(20, 93, 245, .38);
-        border-radius: 50%;
-        box-shadow: 0 0 0 12px rgba(20, 93, 245, .025), 0 0 38px rgba(20, 93, 245, .1);
-        pointer-events: none;
-        animation: network-orbit 12s linear infinite;
-    }
 }
-
-@keyframes network-orbit {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@media(prefers-reduced-motion:reduce) {
-    .v2-network__qr-stage::after { animation: none; }
-}
-
-/* Keep the mobile headline natural and remove the decorative line from the QR stage. */
-.v2-network__qr-stage::after { display: none !important; }
 
 @media(max-width:560px) {
     .v2-network h2 {
@@ -440,10 +483,134 @@ onBeforeUnmount(() => { clearAutoplay(); stopTabWatch?.(); document.removeEventL
     .v2-network h2 span::before { content: ' '; }
 }
 
+@media(max-width:960px) {
+    .v2-network__label-stage { min-height: 240px; }
+}
+
+@media(max-width:800px) {
+    .v2-network__label-stage { min-height: 230px; }
+}
+
+@media(max-width:560px) {
+    .v2-network__label-stage { min-height: 210px; }
+}
+
 @media(max-width:380px) {
     .v2-network h2 {
         max-width: 340px;
         font-size: 30px;
     }
+}
+
+/* Keep the animated label inside the QR column on compact tablet widths. */
+@media (min-width: 961px) and (max-width: 1120px) {
+    .v2-network__panel {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        min-height: 0;
+    }
+    .v2-network__qr-stage {
+        order: 2;
+        justify-self: center;
+        justify-items: center;
+        transform: none;
+    }
+    .v2-network__label-stage { min-height: 240px; }
+}
+
+/* The label itself stays clean and centered on responsive layouts. */
+.v2-network__qr-stage img { filter: none; }
+@media (max-width: 960px) {
+    .v2-network__qr-stage {
+        width: 100%;
+        justify-self: stretch;
+        justify-items: center;
+        transform: none;
+    }
+    .v2-network__label-stage {
+        width: 100%;
+        justify-self: center;
+    }
+}
+
+@media (min-width: 1121px) {
+    .v2-network__qr-stage {
+        width: 100%;
+        justify-self: stretch;
+        justify-items: end;
+        transform: none;
+        background: none;
+    }
+    .v2-network__label-stage {
+        width: 100%;
+    }
+    .v2-network__label-stage img {
+        left: auto;
+        right: 0;
+        margin-left: auto;
+        margin-right: 0;
+    }
+    .v2-network__qr-stage {
+        background: radial-gradient(circle at calc(100% - min(29vw, 330px) / 2) 50%, rgba(67, 127, 255, .12), transparent 46%);
+    }
+    .v2-network__qr-stage::before {
+        top: 50%;
+        left: calc(100% - (min(29vw, 330px) + min(36vw, 440px)) / 2);
+        transform: translateY(-50%);
+    }
+    .v2-network__qr-stage i {
+        top: 50%;
+        left: calc(100% - min(29vw, 330px) / 2);
+        transform: translate(-50%, -50%);
+        animation: none;
+    }
+}
+
+/* Decorative atmosphere may extend beyond the panel without competing with the label. */
+.v2-network { overflow: visible; }
+.v2-network__qr-stage i {
+    opacity: .3;
+    animation: none !important;
+}
+.v2-network__qr-stage::before {
+    display: none !important;
+    opacity: .45;
+    animation: none !important;
+}
+.v2-network__qr-stage { background: none !important; }
+.v2-network__qr-stage i { display: none; }
+@media (max-width: 1120px) {
+    .v2-network__qr-stage {
+        width: 100%;
+        justify-self: stretch;
+        justify-items: center;
+        transform: none;
+        background: none;
+    }
+    .v2-network__qr-stage::before {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .v2-network__qr-stage i {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@media (max-width: 960px) {
+    .v2-network__label-stage img { width: 220px; }
+}
+@media (max-width: 800px) {
+    .v2-network__label-stage img { width: 210px; }
+}
+@media (max-width: 560px) {
+    .v2-network__label-stage img { width: 190px; }
+    .v2-network__qr-stage { transform: translateX(clamp(0px, 3vw, 16px)); }
+}
+
+@media (min-width: 1121px) {
+    .v2-network__qr-stage { background: none !important; }
 }
 </style>

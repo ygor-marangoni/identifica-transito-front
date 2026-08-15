@@ -104,6 +104,7 @@ onMounted(async () => {
   heroMediaQuery.addEventListener('change', handleHeroViewportChange)
 
   if (!hero.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  await waitForLandingV2Ready()
   const { default: gsap } = await import('gsap')
   motionContext = gsap.context(() => {
     const select = <T extends Element>(selector: string) => hero.value?.querySelector<T>(selector) ?? null
@@ -132,9 +133,9 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="top" ref="hero" class="v2-hero" aria-labelledby="v2-hero-title">
-    <video v-if="!isMobile" ref="heroVideo" class="v2-hero__video v2-hero__video--desktop" src="/landing-v2/video/hero-bg-desktop-id.mp4" autoplay muted playsinline webkit-playsinline loop preload="metadata" aria-hidden="true">
+    <video v-if="!isMobile" ref="heroVideo" class="v2-hero__video v2-hero__video--desktop" src="/landing-v2/video/hero-bg-desktop-id.mp4?v=20260815-1" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
     </video>
-    <video v-else ref="heroVideoMobile" class="v2-hero__video v2-hero__video--mobile" src="/landing-v2/video/hero-bg-mobile-id.mp4" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
+    <video v-else ref="heroVideoMobile" class="v2-hero__video v2-hero__video--mobile" src="/landing-v2/video/hero-bg-mobile-id.mp4?v=20260815-1" autoplay muted playsinline webkit-playsinline loop preload="auto" aria-hidden="true">
     </video>
     <div class="v2-hero__overlay" aria-hidden="true"></div>
     <div class="v2-hero__content">
@@ -142,7 +143,7 @@ onBeforeUnmount(() => {
       <h1 id="v2-hero-title" class="v2-hero__title">
         <span class="v2-hero__title-line">No trânsito,</span>
         <span class="v2-hero__title-line">um pouco de</span>
-        <span class="v2-hero__title-line"><em class="v2-hero__sticker">contexto</em> muda tudo.</span>
+        <span class="v2-hero__title-line"><em class="v2-hero__sticker"><span class="heading-highlight">contexto</span></em> muda tudo.</span>
       </h1>
       <p class="v2-hero__body">Etiquetas refletivas com QR Code que ajudam a tornar visíveis situações que pedem mais atenção, sem expor a identidade civil do motorista.</p>
       <div class="v2-hero__actions">
@@ -150,11 +151,11 @@ onBeforeUnmount(() => {
         <a href="#como-funciona" class="v2-hero__secondary">Como funciona <MoveDown :size="17" /></a>
       </div>
       <div class="v2-hero__proof" aria-label="Comunidade Identifica Trânsito">
-        <div class="v2-hero__proof-tags" aria-hidden="true"><img src="/images/lp/etiquetas/vermelho.svg" alt="" width="36" height="36" decoding="async"><img src="/images/lp/etiquetas/azul.svg" alt="" width="36" height="36" decoding="async"><img src="/images/lp/etiquetas/amarelo.svg" alt="" width="36" height="36" decoding="async"><img src="/images/lp/etiquetas/branco.svg" alt="" width="36" height="36" decoding="async"><img src="/images/lp/etiquetas/verde.svg" alt="" width="36" height="36" decoding="async"></div>
+        <div class="v2-hero__proof-tags" aria-hidden="true"><img src="/landing-v2/images/hero/etiquetas/vermelho.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/azul.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/amarelo.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/branco.svg" alt="" width="36" height="36" decoding="async"><img src="/landing-v2/images/hero/etiquetas/verde.svg" alt="" width="36" height="36" decoding="async"></div>
         <span>Etiquetas para diferentes perfis, contextos e formas de dirigir.</span>
       </div>
     </div>
-    <img ref="heroLabel" class="v2-hero__label" src="/images/lp/etiquetas/azul.svg" alt="" aria-hidden="true" width="132" height="132" decoding="async">
+    <img ref="heroLabel" class="v2-hero__label" src="/landing-v2/images/hero/etiquetas/azul.svg" alt="" aria-hidden="true" width="132" height="132" decoding="async">
     <span ref="labelTarget" class="v2-hero__label-target" aria-hidden="true"></span>
   </section>
 </template>
@@ -212,7 +213,12 @@ onBeforeUnmount(() => {
 @media (max-width: 800px) { .v2-hero__label.is-docked { transform: none !important; } }
 .v2-hero__label.is-docked { transform: none !important; }
 @media (max-width: 800px) { .v2-hero__label-target { display: block; position: absolute; right: 14%; bottom: 16%; width: 72px; height: 72px; pointer-events: none; } }
-@media (max-width: 1000px) { .v2-hero__proof { display: flex; } }
+@media (max-width: 1000px) {
+  .v2-hero__proof { display: flex; flex-direction: row; align-items: center; gap: 12px; }
+  .v2-hero__proof-tags { display: flex; flex: 0 0 auto; align-items: center; padding-left: 4px; }
+  .v2-hero__proof-tags img { display: block; width: 30px; height: 30px; margin-left: -7px; border: 2px solid #061333; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 3px 5px rgba(0,0,0,.2)); }
+  .v2-hero__proof-tags img:first-child { margin-left: 0; }
+}
 @media (min-width: 1001px) {
   .v2-hero__eyebrow { margin-bottom: 22px; color: rgba(220,232,255,.78); font-size: 11px; font-weight: 550; letter-spacing: .12em; }
   .v2-hero__eyebrow { font-size: 0; }

@@ -5,15 +5,22 @@ const section = ref<HTMLElement | null>(null);
 let animation: { kill: () => void } | undefined;
 
 onMounted(async () => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    await waitForLandingV2Ready();
     const { gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
     if (!section.value) return;
     const copy = section.value.querySelectorAll<HTMLElement>('.v2-closing__copy > *');
     const visual = section.value.querySelector<HTMLElement>('.v2-closing__visual');
+    const visualImage = visual?.querySelector('img');
+    const visualLabel = visual?.querySelector('span');
+    const compact = window.matchMedia('(max-width: 900px)').matches;
     animation = gsap.timeline({ scrollTrigger: { trigger: section.value, start: 'top 82%', once: true } })
-        .from(copy, { y: 20, opacity: 0, duration: .52, stagger: .07, ease: 'power3.out' })
-        .from(visual, { y: 18, opacity: 0, scale: .985, duration: .65, ease: 'power3.out' }, '-=.34');
+        .from(copy, { y: 46, autoAlpha: 0, duration: .72, stagger: .1, ease: 'power3.out' })
+        .from(visual, { x: compact ? 0 : 70, y: compact ? 48 : 0, autoAlpha: 0, scale: .94, rotateY: compact ? 0 : -2, transformPerspective: 1000, duration: .92, ease: 'power3.out' }, '-=.54')
+        .from(visualImage, { scale: 1.12, duration: 1.05, ease: 'power2.out' }, '-=.78')
+        .from(visualLabel, { y: 16, autoAlpha: 0, scale: .92, duration: .42, ease: 'back.out(1.5)' }, '-=.52');
 });
 
 onBeforeUnmount(() => animation?.kill());
@@ -71,7 +78,7 @@ onBeforeUnmount(() => animation?.kill());
 @media(max-width:900px){.v2-closing__cta-inner{grid-template-columns:1fr;gap:3rem;max-width:38rem}.v2-closing__visual{width:100%}.v2-closing__footer-inner{grid-template-columns:1fr 1fr}.v2-closing__footer-brand,.v2-closing__contact{grid-column:1/-1}}
 @media(max-width:560px){.v2-closing__cta{padding:5rem 20px 4rem}.v2-closing__brand{width:9rem}.v2-closing h2{font-size:clamp(34px,10vw,46px)}.v2-closing__copy>p{font-size:16px}.v2-closing__button{margin-top:1.5rem}.v2-closing__visual{aspect-ratio:1.1/1}.v2-closing__footer{padding:3.5rem 20px 1.25rem}.v2-closing__footer-inner{grid-template-columns:1fr;gap:2rem}.v2-closing__footer-brand,.v2-closing__contact{grid-column:auto}.v2-closing__footer-brand p{font-size:15px}.v2-closing__group a{font-size:15px}.v2-closing__bottom{grid-column:auto;flex-direction:column;gap:.7rem;margin-top:1rem}.v2-closing__contact form{min-height:3.35rem}}
 .v2-closing__cta,.v2-closing__footer{background:#0b42a8!important}.v2-closing h2{max-width:900px!important;font-size:clamp(36px,3.6vw,56px)!important}.v2-closing__socials svg{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.v2-closing__socials svg path{fill:currentColor;stroke:none}.v2-closing__socials svg .v2-closing__instagram-dot{fill:currentColor;stroke:none}
-.v2-closing__cta,.v2-closing__footer{background:#031AB7!important}
+.v2-closing__cta,.v2-closing__footer{background:#0b42a8!important}
 .v2-closing h2{max-width:760px!important;font-size:clamp(34px,3.1vw,48px)!important}
 @media(max-width:560px){.v2-closing h2{font-size:30px!important}}
 @media(prefers-reduced-motion:reduce){.v2-closing__button,.v2-closing__socials a{transition:none}}

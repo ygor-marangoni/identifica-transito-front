@@ -8,11 +8,11 @@ let motionContext: { revert: () => void } | undefined;
 let projectDragStartX: number | null = null;
 
 const projectSlides = [
-    { image: '/images/dashboard/post-01.jpg', alt: 'Conteúdo sobre direção segura', title: 'Dirija com mais atenção', description: 'Informação simples para decisões mais conscientes no trânsito.' },
-    { image: '/images/dashboard/post-02.jpg', alt: 'Conteúdo sobre respeito no trânsito', title: 'Respeito mútuo na via', description: 'Mais contexto para construir uma convivência mais humana.' },
-    { image: '/images/dashboard/sobre-it.jpg', alt: 'Identifica Trânsito', title: 'Fomento ao respeito mútuo', description: 'Promove respeito entre motoristas e uma convivência mais harmoniosa no trânsito.' },
-    { image: '/images/dashboard/post-03.jpg', alt: 'Conteúdo sobre segurança no trânsito', title: 'Segurança em cada trajeto', description: 'Sinais claros ajudam a transformar informação em cuidado.' },
-    { image: '/images/dashboard/post-01.jpg', alt: 'Conteúdo sobre direção segura', title: 'Mais clareza para todos', description: 'Uma leitura melhor muda a forma como percebemos cada situação.' }
+    { image: '/landing-v2/images/platform/post-01.jpg', alt: 'Conteúdo sobre direção segura', title: 'Dirija com mais atenção', description: 'Informação simples para decisões mais conscientes no trânsito.' },
+    { image: '/landing-v2/images/platform/post-02.jpg', alt: 'Conteúdo sobre respeito no trânsito', title: 'Respeito mútuo na via', description: 'Mais contexto para construir uma convivência mais humana.' },
+    { image: '/landing-v2/images/platform/sobre-it.jpg', alt: 'Identifica Trânsito', title: 'Fomento ao respeito mútuo', description: 'Promove respeito entre motoristas e uma convivência mais harmoniosa no trânsito.' },
+    { image: '/landing-v2/images/platform/post-03.jpg', alt: 'Conteúdo sobre segurança no trânsito', title: 'Segurança em cada trajeto', description: 'Sinais claros ajudam a transformar informação em cuidado.' },
+    { image: '/landing-v2/images/platform/post-01.jpg', alt: 'Conteúdo sobre direção segura', title: 'Mais clareza para todos', description: 'Uma leitura melhor muda a forma como percebemos cada situação.' }
 ];
 
 const activeProjectSlideData = computed(() => projectSlides[activeProjectSlide.value]);
@@ -57,17 +57,20 @@ const finishProjectDrag = (event: PointerEvent) => {
 
 onMounted(async () => {
     if (!section.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    await waitForLandingV2Ready();
     const { default: gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
     motionContext = gsap.context(() => {
-        const intro = section.value?.querySelector('.v2-platform__head');
-        const shell = section.value?.querySelector('.v2-platform__shell');
-        const items = section.value?.querySelectorAll('.v2-platform__reveal');
+        const intro = section.value?.querySelector<HTMLElement>('.v2-platform__head');
+        const shell = section.value?.querySelector<HTMLElement>('.v2-platform__shell');
+        const shellParts = section.value?.querySelectorAll<HTMLElement>('.v2-platform__topbar, .v2-platform__welcome, .v2-platform__quick-head, .v2-platform__quick-grid > article, .v2-platform__dashboard-grid, .v2-platform__register');
+        const items = section.value?.querySelectorAll<HTMLElement>('.v2-platform__reveal');
         const timeline = gsap.timeline({ scrollTrigger: { trigger: section.value, start: 'top 72%', once: true } });
-        if (intro) timeline.from(intro, { y: 30, opacity: 0, duration: .65, ease: 'power3.out' });
-        if (shell) timeline.from(shell, { y: 55, opacity: 0, scale: .98, duration: .8, ease: 'power3.out' }, '-=.3');
-        if (items?.length) timeline.from(items, { y: 16, opacity: 0, stagger: .08, duration: .4, ease: 'power2.out' }, '-=.35');
+        if (intro) timeline.from(intro, { y: 44, autoAlpha: 0, duration: .76, ease: 'power3.out' });
+        if (shell) timeline.from(shell, { y: 70, autoAlpha: 0, scale: .96, rotateX: 2, transformPerspective: 1000, duration: .92, ease: 'power3.out' }, '-=.34');
+        if (shellParts?.length) timeline.from(shellParts, { y: 28, autoAlpha: 0, scale: .98, stagger: .075, duration: .5, ease: 'power3.out' }, '-=.58');
+        if (items?.length) timeline.from(items, { y: 18, autoAlpha: 0, stagger: .07, duration: .42, ease: 'power2.out' }, '-=.42');
     }, section.value);
 });
 
@@ -79,15 +82,15 @@ onBeforeUnmount(() => motionContext?.revert());
         <header class="v2-platform__head">
             <div>
                 <p class="v2-platform__eyebrow">{ TUDO EM UM SÓ LUGAR }</p>
-                <h2 id="v2-platform-title">Uma plataforma.<br>Mais controle.</h2>
+                <h2 id="v2-platform-title">Uma plataforma.<br>Mais <span class="heading-highlight">controle.</span></h2>
             </div>
             <p class="v2-platform__lead">Cadastre veículos, acompanhe etiquetas e consulte cada informação com clareza, em uma experiência simples de usar.</p>
         </header>
 
         <div class="v2-platform__shell">
             <div class="v2-platform__topbar">
-                <div class="v2-platform__brand"><img src="/images/logo-horizontal.svg" alt="Identifica Trânsito"></div>
-                <div class="v2-platform__topbar-actions"><div class="v2-platform__notifications" aria-label="Notificações"><img src="/images/dashboard/icons/sino.svg" alt=""><span></span></div><div class="v2-platform__profile" aria-label="Perfil de Camila"><img class="v2-platform__avatar" src="/images/dashboard/avatar.jpg" alt="Camila"><strong>Camila</strong><img class="v2-platform__profile-chevron" src="/images/dashboard/icons/seta-baixo.svg" alt=""></div></div>
+                <div class="v2-platform__brand"><img src="/landing-v2/images/branding/logo-horizontal.svg" alt="Identifica Trânsito"></div>
+                <div class="v2-platform__topbar-actions"><div class="v2-platform__notifications" aria-label="Notificações"><img src="/landing-v2/images/platform/icons/sino.svg" alt=""><span></span></div><div class="v2-platform__profile" aria-label="Perfil de Camila"><img class="v2-platform__avatar" src="/landing-v2/images/platform/avatar.jpg" alt="Camila"><strong>Camila</strong><img class="v2-platform__profile-chevron" src="/landing-v2/images/platform/icons/seta-baixo.svg" alt=""></div></div>
             </div>
             <div class="v2-platform__preview">
                 <div class="v2-platform__welcome">
@@ -102,7 +105,7 @@ onBeforeUnmount(() => motionContext?.revert());
                     <article><i><Headset :size="17" /></i><b>Suporte</b><small>Fale com a gente</small></article>
                 </div>
                 <div class="v2-platform__dashboard-grid">
-                    <article class="v2-platform__project-card" @pointerdown="startProjectDrag" @pointerup="finishProjectDrag"><div class="v2-platform__project-image"><img src="/images/dashboard/sobre-it.jpg?v=2" alt="Identifica Trânsito" loading="eager" decoding="async"><span><ShieldCheck :size="21" /></span></div><div class="v2-platform__project-copy"><small><ShieldCheck :size="13" /> Dirija com segurança</small><h4>{{ activeProjectSlideData.title }}</h4><p>{{ activeProjectSlideData.description }}</p><div class="v2-platform__dots" aria-label="Slides do projeto"><button v-for="(_, index) in projectSlides" :key="index" type="button" :class="{ 'is-active': activeProjectSlide === index }" :aria-label="`Ir para o slide ${index + 1}`" :aria-current="activeProjectSlide === index ? 'true' : undefined" @click.stop="selectProjectSlide(index)"></button></div><div><button>Saiba mais sobre o projeto</button><button class="is-secondary">Perguntas frequentes</button></div></div></article>
+                    <article class="v2-platform__project-card" @pointerdown="startProjectDrag" @pointerup="finishProjectDrag"><div class="v2-platform__project-image"><img src="/landing-v2/images/platform/sobre-it.jpg?v=2" alt="Identifica Trânsito" loading="eager" decoding="async"><span><ShieldCheck :size="21" /></span></div><div class="v2-platform__project-copy"><small><ShieldCheck :size="13" /> Dirija com segurança</small><h4>{{ activeProjectSlideData.title }}</h4><p>{{ activeProjectSlideData.description }}</p><div class="v2-platform__dots" aria-label="Slides do projeto"><button v-for="(_, index) in projectSlides" :key="index" type="button" :class="{ 'is-active': activeProjectSlide === index }" :aria-label="`Ir para o slide ${index + 1}`" :aria-current="activeProjectSlide === index ? 'true' : undefined" @click.stop="selectProjectSlide(index)"></button></div><div><button>Saiba mais sobre o projeto</button><button class="is-secondary">Perguntas frequentes</button></div></div></article>
                     <article class="v2-platform__orders"><header><span><i><PackageCheck :size="15" /></i><b>Últimos Pedidos</b></span><a href="#plataforma">Ver todos</a></header><div v-for="order in [{name:'Etiqueta Azul - 1 unidade', id:'#PED-PIX-202607-1001', status:'Em rota de entrega', color:'orange', width:'68%'},{name:'Etiqueta Vermelha - 1 unidade', id:'#PED-MP-202607-1002', status:'Em andamento', color:'blue', width:'33%'},{name:'Etiqueta Amarela - 1 unidade', id:'#PED-BOL-202607-1003', status:'Em andamento', color:'blue', width:'33%'}]" :key="order.id" class="v2-platform__order"><i><PackageCheck :size="14" /></i><div><b>{{ order.name }}</b><small>Pedido {{ order.id }}</small><span :class="order.color">{{ order.status }}</span><em :class="order.color" :style="{ width: order.width }"></em></div></div></article>
                 </div>
                 <div class="v2-platform__register"><span><i><CarFront :size="18" /></i><small>IDENTIFICAÇÃO VEICULAR</small><b>Cadastre um novo veículo</b></span><button><Plus :size="15" /> Cadastrar veículo</button></div>

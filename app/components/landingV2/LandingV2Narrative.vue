@@ -7,6 +7,7 @@ const story = ref<HTMLElement | null>(null);
 const manifesto = ref<HTMLElement | null>(null);
 const manifestoViewport = ref<HTMLElement | null>(null);
 const productFlow = ref<HTMLElement | null>(null);
+const signalFlow = ref<HTMLElement | null>(null);
 const flowProgress = ref<HTMLElement | null>(null);
 const flowItems = ref<HTMLElement[]>([]);
 const activeScene = ref(0);
@@ -34,6 +35,7 @@ const flowSteps = [
 
 onMounted(async () => {
     if (!manifesto.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    await waitForLandingV2Ready();
     const { default: gsap } = await import('gsap');
     const { ScrollTrigger } = await import('gsap/ScrollTrigger');
     gsap.registerPlugin(ScrollTrigger);
@@ -108,6 +110,18 @@ onMounted(async () => {
             });
             flowTrigger.refresh();
         }
+        if (signalFlow.value) {
+            const introParts = signalFlow.value.querySelectorAll<HTMLElement>('.v2-product-flow__intro > *');
+            const steps = signalFlow.value.querySelectorAll<HTMLElement>('.v2-product-flow__step');
+            const arrows = signalFlow.value.querySelectorAll<HTMLElement>('.v2-product-flow__arrow');
+            const timeline = gsap.timeline({
+                scrollTrigger: { trigger: signalFlow.value, start: 'top 78%', once: true }
+            });
+
+            if (introParts.length) timeline.from(introParts, { y: 38, autoAlpha: 0, duration: .72, stagger: .12, ease: 'power3.out' });
+            if (steps.length) timeline.from(steps, { y: 56, autoAlpha: 0, scale: .94, rotateX: 5, transformPerspective: 900, duration: .72, stagger: .11, ease: 'power3.out' }, '-=.28');
+            if (arrows.length) timeline.from(arrows, { autoAlpha: 0, scale: .55, rotate: -70, duration: .42, stagger: .07, ease: 'back.out(1.6)' }, '-=.5');
+        }
     }, manifesto.value);
 });
 onBeforeUnmount(() => {
@@ -122,7 +136,7 @@ onBeforeUnmount(() => {
             <div ref="manifestoViewport" class="v2-section03__viewport">
                 <div class="v2-section03__copy">
                     <p class="v2-pill v2-section03__eyebrow">{ POR QUE EXISTE }</p>
-                    <h2 id="v2-manifesto-title">Quando falta<br><span>contexto,</span><br>sobra interpretação.</h2>
+                    <h2 id="v2-manifesto-title">Quando falta<br><span class="heading-highlight">contexto,</span><br>sobra interpretação.</h2>
                     <p class="v2-section03__supporting">No trânsito, uma situação pode parecer pressa, descuido ou risco. O projeto nasce para tornar sinais importantes visíveis e gerar mais atenção entre motoristas.</p>
                     <div class="v2-section03__chips"><span><MessageCircle :size="14" />Mais contexto</span><span><HeartHandshake :size="14" />Mais empatia</span><span><UsersRound :size="14" />Mais atenção</span></div>
                 </div>
@@ -195,11 +209,11 @@ onBeforeUnmount(() => {
                 </li>
             </ol>
         </section>
-        <section class="v2-product-flow" aria-labelledby="v2-flow-title">
+        <section ref="signalFlow" class="v2-product-flow" aria-labelledby="v2-flow-title">
             <div class="v2-product-flow__intro">
                 <div>
                     <p class="v2-pill">Na prática</p>
-                    <h2 id="v2-flow-title">Do sinal à <span>compreensão.</span></h2>
+                    <h2 id="v2-flow-title">Do sinal à <span class="heading-highlight">compreensão.</span></h2>
                 </div>
                 <p class="v2-product-flow__lead">A etiqueta transforma um gesto simples em uma sequência de informação: do veículo à leitura, do sinal à compreensão.</p>
             </div>
@@ -218,6 +232,7 @@ onBeforeUnmount(() => {
 .v2-story { height:350vh; margin-top:clamp(72px,10vw,130px); background:#061333; color:#fff; }.v2-story__viewport { position:relative; display:grid; min-height:100vh; grid-template-columns:1.08fr .92fr; align-items:center; gap:5vw; padding:120px clamp(24px,7vw,104px) 60px; overflow:hidden; }.v2-story__visual { position:relative; aspect-ratio:1.1; overflow:hidden; border:1px solid rgba(185,211,255,.25); border-radius:32px; background:radial-gradient(circle at 67% 20%,#255cc0,transparent 22%),linear-gradient(155deg,#0e357b,#061333 65%); transition:transform .75s ease,filter .75s ease; }.v2-story__street { position:absolute; left:-11%; right:-11%; bottom:-25%; height:68%; background:repeating-linear-gradient(90deg,transparent 0 12%,rgba(255,255,255,.8) 12% 18%,transparent 18% 32%),linear-gradient(#31496f,#071226); transform:perspective(350px) rotateX(57deg); }.v2-story__car { position:absolute; left:24%; bottom:25%; width:54%; height:33%; border:1px solid #a9c8ff; border-radius:40% 48% 13% 13%; background:linear-gradient(160deg,#c8ddff,#2456a2 25%,#0b1d3d 72%); box-shadow:0 25px 30px rgba(0,0,0,.3); transition:transform .8s ease; }.v2-story__car::before { content:''; position:absolute; top:11%; left:27%; width:45%; height:45%; border:1px solid #c8deff; border-radius:42% 42% 6% 6%; background:rgba(208,229,255,.28); }.v2-story__car>span { position:absolute; bottom:-16%; width:18%; aspect-ratio:1; border:7px solid #071226; border-radius:50%; background:#69768e; }.v2-story__car>span:first-child{left:17%}.v2-story__car>span:nth-child(2){right:14%}.v2-story__car :deep(.tag-art) { position:absolute; z-index:2; right:13%; bottom:13%; width:24%; transform:rotate(-6deg); opacity:.2; transition:opacity .55s ease,transform .55s ease; }.v2-story__scan { position:absolute; top:27%; right:15%; display:grid; place-items:center; width:62px; height:62px; border:1px solid #8bb2ff; border-radius:50%; color:#fff; opacity:0; transform:scale(.5); transition:.55s ease; }.v2-story__scan i { position:absolute; left:-50%; right:-50%; top:50%; height:1px; background:#8bb2ff; }.v2-story__context-card { position:absolute; right:8%; bottom:14%; display:flex; align-items:center; gap:10px; padding:14px 16px; border:1px solid rgba(255,255,255,.2); border-radius:13px; background:rgba(255,255,255,.94); color:#091a3c; font-size:12px; opacity:0; transform:translateY(20px); transition:.6s ease; }.v2-story__context-card svg{color:#145df5}.v2-story__copy { max-width:520px; }.v2-pill--light { border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.09); color:#d6e4ff; }.v2-story__copy h2 { margin:0; font-size:clamp(44px,5.3vw,75px); letter-spacing:-.06em; line-height:.99; }.v2-story__copy>p:not(.v2-pill) { max-width:390px; margin:28px 0 0; color:#cbd8f0; font-size:18px; line-height:1.55; }.v2-story__dots{display:flex;gap:7px;margin-top:36px}.v2-story__dots i{width:8px;height:8px;border:1px solid #8bb2ff;border-radius:50%;transition:.3s}.v2-story__dots .is-active{width:29px;border-radius:9px;background:#8bb2ff}.v2-story__visual--scene-1 .v2-story__car{transform:scale(1.16) translate(-4%,8%)}.v2-story__visual--scene-1{filter:brightness(.86)}.v2-story__visual--scene-2 .v2-story__car :deep(.tag-art),.v2-story__visual--scene-3 .v2-story__car :deep(.tag-art){opacity:1;transform:rotate(-6deg) scale(1.3)}.v2-story__visual--scene-2 .v2-story__scan,.v2-story__visual--scene-3 .v2-story__scan{opacity:1;transform:scale(1)}.v2-story__visual--scene-3 .v2-story__context-card{opacity:1;transform:none}
  .v2-product-flow { padding:clamp(105px,12vw,170px) var(--v2-grid-inset); background:#fafaf7; font-family:'Instrument Sans',Arial,sans-serif; }.v2-product-flow__intro { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(280px,.7fr); align-items:end; gap:clamp(48px,9vw,150px); width:100%; max-width:var(--v2-grid-max); margin:0 auto; }.v2-product-flow__intro .v2-pill { width:max-content; }.v2-product-flow h2 { max-width:780px; margin:0; color:#29374d; font-size:clamp(48px,5.4vw,78px); font-weight:700; letter-spacing:-.065em; line-height:.98; }.v2-product-flow h2 span { color:#145df5; }.v2-product-flow__lead { max-width:390px; margin:0 0 8px; color:#69717d; font-size:18px; line-height:1.55; }.v2-product-flow__path { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; width:100%; max-width:var(--v2-grid-max); margin:clamp(66px,8vw,108px) auto 0; }.v2-product-flow__step { position:relative; min-height:180px; padding:24px 24px 22px; border:1px solid #dbe2ee; border-radius:18px; background:rgba(255,255,255,.76); box-shadow:0 12px 30px rgba(20,45,90,.035); transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease; }.v2-product-flow__step::after { content:'→'; position:absolute; top:50%; right:-20px; z-index:2; display:grid; width:38px; height:38px; place-items:center; border:1px solid #c8d8f6; border-radius:50%; background:#fafaf7; color:#145df5; font-size:20px; transform:translateY(-50%); }.v2-product-flow__step:nth-of-type(4)::after { display:none; }.v2-product-flow__step:hover { border-color:#9ebcf2; box-shadow:0 18px 38px rgba(20,65,145,.09); transform:translateY(-4px); }.v2-product-flow__step i { display:block; margin-bottom:42px; color:#145df5; font-size:12px; font-style:normal; font-weight:750; letter-spacing:.06em; }.v2-product-flow__step i img { display:block; box-sizing:border-box; width:64px; height:64px; padding:10px; object-fit:contain; }.v2-product-flow__step span { display:block; color:#101114; font-size:clamp(21px,2.2vw,31px); font-weight:700; letter-spacing:-.045em; }.v2-product-flow__step small { display:block; max-width:170px; margin-top:9px; color:#70747c; font-size:13px; line-height:1.4; }.v2-product-flow__arrow { display:none; }
 @media(max-width:800px){.v2-story{height:auto}.v2-story__viewport{grid-template-columns:1fr;min-height:auto;padding:100px 24px}.v2-story__visual{max-width:660px;width:100%;margin:auto}.v2-story__copy{max-width:660px;margin:auto}.v2-story__visual :deep(.tag-art){opacity:1;transform:rotate(-6deg) scale(1.2)}.v2-story__scan,.v2-story__context-card{opacity:1;transform:none}.v2-product-flow__intro{display:block}.v2-product-flow__path{grid-template-columns:1fr;gap:0;max-width:550px}.v2-product-flow__arrow{justify-self:start;margin:-4px 0}.v2-product-flow__step{min-height:auto;padding:22px 0}.v2-product-flow__step i{margin-bottom:11px}}
+@media (min-width:801px) and (max-height:760px){.v2-story__viewport{min-height:calc(100vh + 72px);padding-top:170px;padding-bottom:90px}}
 @media(max-width:560px){.v2-manifesto{padding-left:20px;padding-right:20px}.v2-manifesto h2,.v2-product-flow h2{font-size:45px}.v2-manifesto>p:last-child{margin-left:0}.v2-story__copy h2{font-size:48px}.v2-story__viewport{padding-left:20px;padding-right:20px}.v2-product-flow{padding-left:20px;padding-right:20px}.v2-product-flow__lead{font-size:16px}.v2-product-flow__path{gap:12px}.v2-product-flow__step{min-height:150px;padding:20px}.v2-product-flow__step::after{top:auto;right:auto;bottom:-25px;left:50%;content:'↓';width:36px;height:36px;transform:translateX(-50%)}.v2-product-flow__step:nth-of-type(4)::after{display:none}.v2-product-flow__step i{margin-bottom:24px}.v2-ribbon div{animation-duration:35s}}@media(prefers-reduced-motion:reduce){.v2-ribbon div{animation:none}}
 </style>
 
@@ -228,6 +243,12 @@ onBeforeUnmount(() => {
     .v2-product-flow__step::after {
         left: 25px !important;
         width: 48px !important;
+    }
+}
+
+@media (max-width: 800px) {
+    .v2-product-flow__lead {
+        margin-top: 22px !important;
     }
 }
 </style>
@@ -456,6 +477,7 @@ onBeforeUnmount(() => {
  .v2-product-flow__step span { color:#1d3150; font-size:clamp(20px,1.75vw,27px); font-weight:550; letter-spacing:-.035em; line-height:1.08; }
  .v2-product-flow__step small { max-width:180px; margin-top:14px; color:#718096; font-size:14px; font-weight:500; letter-spacing:normal; line-height:1.48; text-transform:none; }
 @media (max-width:1100px) { .v2-product-flow__intro{grid-template-columns:minmax(0,1fr) minmax(230px,.6fr);gap:42px}.v2-product-flow__path{grid-template-columns:repeat(2,minmax(0,1fr))}.v2-product-flow__step{min-width:0}.v2-product-flow__step:nth-child(2){border-right:0}.v2-product-flow__step:nth-child(3),.v2-product-flow__step:nth-child(4){border-top:1px solid #e1e5eb} }
+@media (min-width:801px) and (max-width:1100px) { .v2-product-flow__step:nth-child(odd){border-left:0} }
 @media (max-width:800px) { .v2-product-flow__intro{grid-template-columns:1fr;gap:26px}.v2-product-flow__lead{margin:0;text-align:left}.v2-product-flow__path{grid-template-columns:1fr 1fr;margin-top:60px}.v2-product-flow__step{min-height:190px;padding:80px 18px 22px;border-bottom:1px solid #d8e0ec}.v2-product-flow__step+.v2-product-flow__step{padding-left:18px}.v2-product-flow__step:nth-child(2){border-right:0}.v2-product-flow__step:nth-child(3),.v2-product-flow__step:nth-child(4){border-bottom:0}.v2-product-flow__step i{margin-bottom:38px}.v2-product-flow__icon-row{top:25px;grid-template-columns:repeat(2,minmax(0,1fr))}.v2-product-flow__icon-row span{margin-left:18px!important} }
 @media (max-width:560px) { .v2-product-flow{padding-left:20px;padding-right:20px}.v2-product-flow__intro .v2-pill{font-size:11px}.v2-product-flow h2{font-size:clamp(34px,10vw,46px)!important;font-weight:600!important;letter-spacing:-.025em!important;line-height:1.04!important}.v2-product-flow__lead{width:100%;font-size:16px}.v2-product-flow__path{position:relative;grid-template-columns:1fr;grid-auto-rows:208px;margin-top:48px}.v2-product-flow__step,.v2-product-flow__step+.v2-product-flow__step{box-sizing:border-box;min-height:190px;margin-bottom:18px;padding:78px 0 32px;border-right:0;border-bottom:1px solid #d8e0ec}.v2-product-flow__step:last-child{margin-bottom:0;border-bottom:0}.v2-product-flow__step i{margin-bottom:26px}.v2-product-flow__icon-row{position:absolute;top:0;right:0;bottom:0;left:0;display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,208px);align-items:start}.v2-product-flow__icon-row span{margin:22px 0 0!important} }
 @media (min-width:1441px) and (max-width:1600px) { .v2-product-flow h2 { font-size:52px!important; } }
@@ -651,10 +673,10 @@ onBeforeUnmount(() => {
         transform: translateX(-4px) scale(1.14);
     }
     .v2-section03__progress i:nth-of-type(1) {
-        transform: translateX(-2px);
+        transform: translateX(-1px);
     }
     .v2-section03__progress i:nth-of-type(1).is-active {
-        transform: translateX(-2px) scale(1.14);
+        transform: translateX(-1px) scale(1.14);
     }
     .v2-section03__progress i:nth-of-type(2),
     .v2-section03__progress i:nth-of-type(3) {
