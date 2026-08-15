@@ -47,10 +47,15 @@ const updateNavigation = () => {
         isBottomNavVisible.value = true;
     }
 
-    const current = [...links].reverse().find((link) => {
-        const element = document.getElementById(link.id);
-        return element && currentScrollY >= element.offsetTop - window.innerHeight * .42;
-    });
+    // Sections can be pinned/transformed by GSAP, so offsetTop is not a
+    // reliable document position and may leave "Etiquetas" active forever.
+    const activationLine = window.innerHeight * .42;
+    const current = links
+        .filter((link) => {
+            const element = document.getElementById(link.id);
+            return element && element.getBoundingClientRect().top <= activationLine;
+        })
+        .at(-1);
     activeSection.value = current?.id || 'top';
     lastScrollY = currentScrollY;
 };
