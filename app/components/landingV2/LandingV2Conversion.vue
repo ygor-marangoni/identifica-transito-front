@@ -28,8 +28,8 @@ onMounted(async () => {
     pricingAnimation = gsap.timeline({
         scrollTrigger: { trigger: pricing.value, start: 'top 80%', once: true }
     })
-        .from(heading, { y: 46, autoAlpha: 0, duration: .76, ease: 'power3.out' })
-        .from(card, { y: 62, autoAlpha: 0, scale: .96, rotateX: 2, transformPerspective: 900, duration: .86, ease: 'power3.out' }, '-=.34')
+        .from(heading, { y: 22, autoAlpha: 0, duration: 1.0, ease: 'power2.out' })
+        .from(card, { y: 24, autoAlpha: 0, scale: .985, duration: 1.1, ease: 'power2.out' }, '-=.48')
         .from(summary, { x: -30, autoAlpha: 0, duration: .54, ease: 'power3.out' }, '-=.46')
         .from(benefits, { x: 34, autoAlpha: 0, duration: .44, stagger: .075, ease: 'power3.out' }, '-=.48')
         .from(tags, { y: 18, autoAlpha: 0, scale: .84, duration: .36, stagger: .055, ease: 'back.out(1.6)' }, '-=.38')

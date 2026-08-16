@@ -67,8 +67,8 @@ onMounted(async () => {
         const shellParts = section.value?.querySelectorAll<HTMLElement>('.v2-platform__topbar, .v2-platform__welcome, .v2-platform__quick-head, .v2-platform__quick-grid > article, .v2-platform__dashboard-grid, .v2-platform__register');
         const items = section.value?.querySelectorAll<HTMLElement>('.v2-platform__reveal');
         const timeline = gsap.timeline({ scrollTrigger: { trigger: section.value, start: 'top 72%', once: true } });
-        if (intro) timeline.from(intro, { y: 44, autoAlpha: 0, duration: .76, ease: 'power3.out' });
-        if (shell) timeline.from(shell, { y: 70, autoAlpha: 0, scale: .96, rotateX: 2, transformPerspective: 1000, duration: .92, ease: 'power3.out' }, '-=.34');
+        if (intro) timeline.from(intro, { y: 22, autoAlpha: 0, duration: 1.0, ease: 'power2.out' });
+        if (shell) timeline.from(shell, { y: 24, autoAlpha: 0, scale: .985, duration: 1.1, ease: 'power2.out' }, '-=.48');
         if (shellParts?.length) timeline.from(shellParts, { y: 28, autoAlpha: 0, scale: .98, stagger: .075, duration: .5, ease: 'power3.out' }, '-=.58');
         if (items?.length) timeline.from(items, { y: 18, autoAlpha: 0, stagger: .07, duration: .42, ease: 'power2.out' }, '-=.42');
     }, section.value);
@@ -78,7 +78,7 @@ onBeforeUnmount(() => motionContext?.revert());
 </script>
 
 <template>
-    <section id="plataforma" ref="section" class="v2-platform" aria-labelledby="v2-platform-title">
+    <section id="plataforma" ref="section" class="v2-platform" aria-labelledby="v2-platform-title"><div class="v2-platform__reveal-shell">
         <header class="v2-platform__head">
             <div>
                 <p class="v2-platform__eyebrow">{ TUDO EM UM SÓ LUGAR }</p>
@@ -127,7 +127,7 @@ onBeforeUnmount(() => motionContext?.revert());
                 </main>
             </div>
         </div>
-    </section>
+    </div></section>
 </template>
 
 <style scoped>

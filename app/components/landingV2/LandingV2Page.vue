@@ -12,6 +12,7 @@ let removeSmoothLinks: (() => void) | undefined;
 let fontSafetyTimeout: ReturnType<typeof setTimeout> | undefined;
 let paintFrame: number | undefined;
 let landingDisposed = false;
+let sectionRevealObserver: IntersectionObserver | undefined;
 const isLandingReady = ref(false);
 
 if (import.meta.client) void waitForLandingV2Ready();
@@ -74,6 +75,27 @@ onMounted(async () => {
     await waitForNextFrame();
 
     if (landingDisposed) return;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && root) {
+        const revealTargets = Array.from(root.querySelectorAll<HTMLElement>([
+            '.v2-network__inner',
+            '.v2-daynight__reveal-shell',
+            '.v2-platform__reveal-shell',
+            '.v2-how-steps__reveal-shell',
+            '.v2-pricing__inner',
+            '.v2-faq__grid',
+            '.v2-closing__cta-inner',
+            '.v2-closing__footer-inner'
+        ].join(',')));
+        revealTargets.forEach((target) => target.classList.add('v2-enter-reveal'));
+        sectionRevealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                (entry.target as HTMLElement).classList.add('is-revealed');
+                sectionRevealObserver?.unobserve(entry.target);
+            });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+        revealTargets.forEach((target) => sectionRevealObserver?.observe(target));
+    }
     isLandingReady.value = true;
     releaseLandingV2Ready();
 });
@@ -84,6 +106,7 @@ onBeforeUnmount(() => {
     if (paintFrame !== undefined) cancelAnimationFrame(paintFrame);
     releaseLandingV2Ready();
     removeSmoothLinks?.();
+    sectionRevealObserver?.disconnect();
 });
 
 useHead({
@@ -184,6 +207,29 @@ useHead({
 
 .landing-v2--booting { visibility: hidden; }
 .landing-v2--ready { opacity: 1; }
+
+/* Reveal preparado antes da seção se tornar visível: sem flash de pintura. */
+.landing-v2 :deep(.v2-enter-reveal) {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    transition: opacity 900ms cubic-bezier(.22, 1, .36, 1), transform 900ms cubic-bezier(.22, 1, .36, 1);
+    will-change: opacity, transform;
+}
+
+.landing-v2 :deep(.v2-enter-reveal.is-revealed) {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.landing-v2 :deep(.v2-daynight__reveal-shell.v2-enter-reveal),
+.landing-v2 :deep(.v2-platform__reveal-shell.v2-enter-reveal),
+.landing-v2 :deep(.v2-how-steps__reveal-shell.v2-enter-reveal),
+.landing-v2 :deep(.v2-pricing__inner.v2-enter-reveal),
+.landing-v2 :deep(.v2-faq__grid.v2-enter-reveal),
+.landing-v2 :deep(.v2-closing__cta-inner.v2-enter-reveal),
+.landing-v2 :deep(.v2-closing__footer-inner.v2-enter-reveal) {
+    transition-duration: 1.4s;
+}
 
 .v2-skip-link { position: fixed; z-index: 100; top: 12px; left: 12px; padding: 10px 14px; border-radius: 8px; background: #fff; color: #061333; font-size: 13px; font-weight: 700; transform: translateY(-150%); transition: transform .2s ease; }
 .v2-skip-link:focus { transform: translateY(0); }
@@ -447,5 +493,6 @@ useHead({
 
 @media (prefers-reduced-motion: reduce) {
     .landing-v2 { transition: none; }
+    .landing-v2 :deep(.v2-enter-reveal) { opacity: 1; transform: none; transition: none; }
 }
 </style>

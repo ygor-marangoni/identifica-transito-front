@@ -37,8 +37,8 @@ onMounted(async () => {
         daynightAnimation = gsap.timeline({
             scrollTrigger: { trigger: daynight.value, start: 'top 78%', once: true }
         })
-            .from(headerParts, { y: 44, autoAlpha: 0, duration: .74, stagger: .12, ease: 'power3.out' })
-            .from(compare, { y: 58, autoAlpha: 0, scale: .955, rotateX: 3, transformPerspective: 900, duration: .9, ease: 'power3.out' }, '-=.34')
+            .from(headerParts, { y: 24, autoAlpha: 0, duration: 1.05, stagger: .12, ease: 'power2.out' })
+            .from(compare, { y: 24, autoAlpha: 0, scale: .985, duration: 1.1, ease: 'power2.out' }, '-=.48')
             .from(scenes, { scale: 1.08, duration: 1.05, stagger: .06, ease: 'power2.out' }, '-=.72')
             .from(controls, { autoAlpha: 0, scale: .65, duration: .42, stagger: .08, ease: 'back.out(1.8)' }, '-=.44');
     }
@@ -73,7 +73,7 @@ onMounted(async () => {
                 scrollTrigger: {
                     trigger: root,
                     start: 'top top',
-                    end: () => `+=${Math.round(window.innerHeight * 7)}`,
+                    end: () => `+=${Math.round(window.innerHeight * 3.5)}`,
                     pin: root,
                     refreshPriority: -2,
                     scrub: .2,
@@ -134,18 +134,18 @@ onBeforeUnmount(() => {
             </div>
             <div class="v2-labels__progress" :aria-label="`Etiqueta ${activeIndex + 1} de ${tags.length}`">
                 <span class="v2-labels__progress-track"><i ref="progress" class="v2-labels__progress-fill"></i></span>
-                <span v-for="(tag, index) in tags" :key="tag.color" class="v2-labels__progress-step" :class="[`v2-labels__progress-step--${tag.color}`, { 'is-active': activeIndex >= index }]" :aria-label="tag.title"><i></i><b>0{{ index + 1 }}</b></span>
+                <span v-for="(tag, index) in tags" :key="tag.color" class="v2-labels__progress-step" :class="[`v2-labels__progress-step--${tag.color}`, { 'is-active': activeIndex >= index }]" :aria-label="tag.title"><i></i></span>
             </div>
         </div>
     </section>
-    <section ref="daynight" class="v2-daynight" aria-labelledby="v2-daynight-title">
+    <section ref="daynight" class="v2-daynight" aria-labelledby="v2-daynight-title"><div class="v2-daynight__reveal-shell">
         <header><div><p class="v2-daynight__eyebrow">{ LEITURA EM QUALQUER LUZ }</p><h2 id="v2-daynight-title"><span class="v2-daynight__day">De dia</span>, mais visível<br><span class="v2-daynight__night heading-highlight">à noite</span>, mais contexto.</h2></div><p class="v2-daynight__lead">A etiqueta mantém a informação clara durante o dia e ganha força quando a luz diminui.</p></header>
         <div class="v2-daynight__compare">
             <div class="v2-daynight__scene v2-daynight__scene--day"><img :src="'/landing-v2/images/fundo-dia.webp'" alt="Visibilidade da etiqueta durante o dia" loading="lazy" decoding="async" width="1250" height="640"><span>DIA</span></div>
             <div class="v2-daynight__scene v2-daynight__scene--night" :style="{ clipPath: `inset(0 ${100 - comparison}% 0 0)` }"><img :src="'/landing-v2/images/fundo-noite.webp'" alt="Visibilidade da etiqueta durante a noite" loading="lazy" decoding="async" width="1250" height="640"><span>NOITE</span></div>
             <input v-model="comparison" class="v2-daynight__range" type="range" min="0" max="100" aria-label="Comparar visibilidade de dia e à noite"><div class="v2-daynight__needle" :style="{ left: `${comparison}%` }" aria-hidden="true"></div><div class="v2-daynight__handle" :style="{ left: `${comparison}%` }"><GripVertical :size="18" /></div>
         </div>
-    </section>
+    </div></section>
 </template>
 
 <style scoped>
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
 .v2-daynight__day { color:#ffd84d; }
 .v2-daynight__night { color:#145df5; }
 .v2-daynight__lead { justify-self:end; color:#e3ebfa; text-align:right; }
-.v2-daynight__scene--night { width:100%; clip-path:inset(0 51% 0 0); border-right:0; box-shadow:none; transition:clip-path .08s linear; }
+.v2-daynight__scene--night { width:100%; clip-path:inset(0 51% 0 0); border-right:0; box-shadow:none; }
 .v2-daynight__needle { position:absolute; z-index:3; top:0; bottom:0; width:2px; transform:translateX(-50%); background:linear-gradient(180deg,rgba(20,93,245,.25),#145df5 16%,#145df5 84%,rgba(20,93,245,.25)); box-shadow:0 0 18px rgba(20,93,245,.5); pointer-events:none; }
 .v2-daynight__handle { position:absolute; background:#fff; }
 .v2-daynight__handle svg { position:relative; z-index:1; }
@@ -414,7 +414,7 @@ onBeforeUnmount(() => {
 .v2-labels__progress-fill { position: absolute; z-index: 1; inset: 0 auto 0 0; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #145df5, #8fb8ff); transform: scaleX(0); transform-origin: left; will-change: transform; }
 .v2-labels__progress-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgba(207, 224, 255, .65); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 .v2-labels__progress-step { z-index: 2; }
-.v2-labels__progress-step i { display: block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, .84); border-radius: 50%; background: #101722; box-shadow: 0 0 0 2px rgba(8, 14, 22, .18); opacity: 1; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.v2-labels__progress-step i { display: block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, .84); border-radius: 4px; background: #101722; box-shadow: 0 0 0 2px rgba(8, 14, 22, .18); opacity: 1; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
 .v2-labels__progress-step.is-active { color: var(--step-color); }
 .v2-labels__progress-step.is-active i { border-color: var(--step-color); background: var(--step-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--step-color), transparent 78%); transform: scale(1.08); }
 .v2-labels__progress-step--vermelha { --step-color: #ff4e58; }

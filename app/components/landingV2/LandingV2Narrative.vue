@@ -11,7 +11,7 @@ const signalFlow = ref<HTMLElement | null>(null);
 const flowProgress = ref<HTMLElement | null>(null);
 const flowItems = ref<HTMLElement[]>([]);
 const activeScene = ref(0);
-const activeCard = ref(-1);
+const activeCard = ref(0);
 const section03Progress = ref(0);
 let motionContext: { revert: () => void } | undefined;
 let section03Media: { revert: () => void } | undefined;
@@ -42,7 +42,7 @@ onMounted(async () => {
     motionContext = gsap.context(() => {
         const cards = gsap.utils.toArray<HTMLElement>('.v2-section03__card', manifesto.value!);
         const setCardState = (progress: number) => {
-            const current = progress <= 0 ? -1 : Math.min(2, Math.floor(progress * 3));
+            const current = Math.min(2, Math.floor(progress * 3));
             activeCard.value = current;
             section03Progress.value = progress;
             cards.forEach((card, index) => {

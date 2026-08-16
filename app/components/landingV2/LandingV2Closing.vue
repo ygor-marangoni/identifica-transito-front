@@ -17,8 +17,8 @@ onMounted(async () => {
     const visualLabel = visual?.querySelector('span');
     const compact = window.matchMedia('(max-width: 900px)').matches;
     animation = gsap.timeline({ scrollTrigger: { trigger: section.value, start: 'top 82%', once: true } })
-        .from(copy, { y: 46, autoAlpha: 0, duration: .72, stagger: .1, ease: 'power3.out' })
-        .from(visual, { x: compact ? 0 : 70, y: compact ? 48 : 0, autoAlpha: 0, scale: .94, rotateY: compact ? 0 : -2, transformPerspective: 1000, duration: .92, ease: 'power3.out' }, '-=.54')
+        .from(copy, { y: 22, autoAlpha: 0, duration: 1.0, stagger: .1, ease: 'power2.out' })
+        .from(visual, { x: 0, y: 24, autoAlpha: 0, scale: .985, duration: 1.1, ease: 'power2.out' }, '-=.48')
         .from(visualImage, { scale: 1.12, duration: 1.05, ease: 'power2.out' }, '-=.78')
         .from(visualLabel, { y: 16, autoAlpha: 0, scale: .92, duration: .42, ease: 'back.out(1.5)' }, '-=.52');
 });

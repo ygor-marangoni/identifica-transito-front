@@ -29,9 +29,9 @@ onMounted(async () => {
                 {
                     opacity: 1,
                     y: 0,
-                    duration: .7,
+                    duration: 1,
                     stagger: .1,
-                    ease: 'power3.out',
+                    ease: 'power2.out',
                     immediateRender: false,
                     scrollTrigger: {
                         trigger: root.value,
@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <section id="como-funciona" ref="root" class="v2-how-steps" aria-labelledby="v2-how-steps-title">
+    <section id="como-funciona" ref="root" class="v2-how-steps" aria-labelledby="v2-how-steps-title"><div class="v2-how-steps__reveal-shell">
         <header class="v2-how-steps__intro">
             <p class="v2-how-steps__eyebrow">Comece em poucos passos</p>
             <h2 id="v2-how-steps-title">Da escolha ao <span class="heading-highlight">vidro.</span></h2>
@@ -146,7 +146,7 @@ onBeforeUnmount(() => {
                 </li>
             </ol>
         </div>
-    </section>
+    </div></section>
 </template>
 
 <style scoped>
@@ -247,12 +247,12 @@ onBeforeUnmount(() => {
     }
 
     .v2-how-steps__journey li:nth-child(odd) .v2-how-steps__dot {
-        left: calc(-1 * var(--connector) - 8px);
-        transform: translate(1px, -50%);
+        left: calc(-1 * var(--connector) - 7px);
+        transform: translateY(-50%);
     }
 
     .v2-how-steps__journey li:nth-child(even) .v2-how-steps__dot {
-        right: calc(-1 * var(--connector) - 8px);
+        right: calc(-1 * var(--connector) - 7px);
         transform: translateY(-50%);
     }
 }
@@ -386,13 +386,8 @@ onBeforeUnmount(() => {
     .v2-how-steps__progress {
         left: 50% !important;
         width: 3px !important;
-        margin-left: -1.5px;
-        transform: scaleY(var(--how-steps-progress, 0)) !important;
-    }
-
-    .v2-how-steps__progress {
-        left: calc(50% + 1px);
-        width: 3px;
+        margin-left: 0;
+        transform: translateX(-50%) scaleY(var(--how-steps-progress, 0)) !important;
     }
 
     .v2-how-steps__journey li:nth-child(odd) .v2-how-steps__dot {
@@ -451,5 +446,15 @@ onBeforeUnmount(() => {
         transform: translateY(-8px);
         box-shadow: 0 24px 52px rgba(23, 105, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .96);
     }
+}
+</style>
+
+<style scoped>
+@media (min-width: 801px) {
+    .v2-how-steps__track,
+    .v2-how-steps__progress { left: 50% !important; margin-left: 0 !important; }
+    .v2-how-steps__progress { transform: translateX(-50%) !important; }
+    .v2-how-steps__journey li:nth-child(odd) .v2-how-steps__dot { left: calc(-1 * var(--connector) - 7px) !important; transform: translateY(-50%) !important; }
+    .v2-how-steps__journey li:nth-child(even) .v2-how-steps__dot { right: calc(-1 * var(--connector) - 7px) !important; transform: translateY(-50%) !important; }
 }
 </style>
