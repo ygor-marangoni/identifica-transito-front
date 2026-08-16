@@ -75,8 +75,8 @@ onBeforeUnmount(() => animation?.kill());
 </template>
 
 <style scoped>
-.v2-faq { display:block!important; width:100%; max-width:none; padding:clamp(105px,12vw,170px) var(--v2-grid-inset); background:#fafaf7; color:#101114; font-family:'Instrument Sans',Arial,sans-serif; }
-.v2-faq__grid { display:grid; grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr); gap:clamp(52px,9vw,150px); width:100%; max-width:var(--v2-grid-max); margin:0 auto; align-items:start; }
+.v2-faq { display:block!important; box-sizing:border-box; width:100%; max-width:none; padding:clamp(105px,12vw,170px) var(--v2-grid-inset); background:#fafaf7; color:#101114; font-family:'Instrument Sans',Arial,sans-serif; }
+.v2-faq__grid { display:grid; grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr); gap:clamp(52px,9vw,150px); width:min(100%,var(--v2-grid-max)); max-width:var(--v2-grid-max); margin:0 auto; align-items:start; box-sizing:border-box; }
 .v2-faq__intro { max-width:470px; }
 .v2-faq__eyebrow { display:block; margin:0 0 21px; color:#145df5; font-size:12px; font-weight:700; letter-spacing:.13em; line-height:1.2; text-transform:uppercase; }
 .v2-faq__eyebrow::before { content:'{ '; }.v2-faq__eyebrow::after { content:' }'; }
